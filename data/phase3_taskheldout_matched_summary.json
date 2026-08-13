@@ -1,0 +1,161 @@
+{
+  "probe_version": "phase3-offline.taskheldout-matched.v1",
+  "status": "completed_with_gate_open",
+  "source": "Google Colab Graph-CLaD.ipynb",
+  "colab_report": "/content/Graph-CLaD-phase2r-scaleup-r3/data/phase3_taskheldout_matched_report.json",
+  "device": "cuda",
+  "dataset": {
+    "version": "phase2r.v2-robot-base",
+    "coordinate_frame": "robot_base",
+    "site_policy": "include_all_sites",
+    "samples": 570,
+    "train_samples": 380,
+    "validation_samples": 76,
+    "test_samples": 114,
+    "normalization_fit": "train_samples_only",
+    "future_state_input_used": false
+  },
+  "split": {
+    "unit": "task_family",
+    "validation_task_families": ["libero_90:1", "libero_spatial:8"],
+    "test_task_families": ["libero_90:2", "libero_goal:0", "libero_object:0"],
+    "train_task_families": "all remaining families",
+    "episode_overlap": false
+  },
+  "parameter_matching": {
+    "enabled": true,
+    "target_parameter_count": 70000,
+    "hidden_dims": {
+      "p0_flat_mlp": 56,
+      "p1_node_no_message": 80,
+      "p2_gnn_empty_edge": 72,
+      "p3_gnn_geometry": 64,
+      "p4_gnn_soft_attention": 56
+    },
+    "actual_parameter_counts": {
+      "p0_flat_mlp": 76684,
+      "p1_node_no_message": 66500,
+      "p2_gnn_empty_edge": 75764,
+      "p3_gnn_geometry": 78036,
+      "p4_gnn_soft_attention": 67333
+    }
+  },
+  "models": {
+    "p0_flat_mlp": {
+      "future_macro_f1_mean": 0.6584917395,
+      "future_macro_f1_std": 0.0123597769,
+      "changed_macro_f1_mean": 0.1394108903,
+      "changed_macro_f1_std": 0.0299462868,
+      "inside_future_f1_mean": 0.2309031506,
+      "inside_future_f1_std": 0.1075338424,
+      "holding_future_f1_mean": 0.0,
+      "controls_changed_macro_f1_mean": {
+        "correct": 0.1394108903,
+        "no_action": 0.1648277258,
+        "shuffled_action": 0.1518655055,
+        "shuffled_edge": 0.1394108903
+      }
+    },
+    "p1_node_no_message": {
+      "future_macro_f1_mean": 0.6081316101,
+      "future_macro_f1_std": 0.0010431892,
+      "changed_macro_f1_mean": 0.1288519022,
+      "changed_macro_f1_std": 0.0169264451,
+      "inside_future_f1_mean": 0.1180771934,
+      "inside_future_f1_std": 0.0248919403,
+      "holding_future_f1_mean": 0.0,
+      "controls_changed_macro_f1_mean": {
+        "correct": 0.1288519022,
+        "no_action": 0.1840449441,
+        "shuffled_action": 0.1775177565,
+        "shuffled_edge": 0.3038979068
+      }
+    },
+    "p2_gnn_empty_edge": {
+      "future_macro_f1_mean": 0.5818669268,
+      "future_macro_f1_std": 0.0083408801,
+      "changed_macro_f1_mean": 0.2222572648,
+      "changed_macro_f1_std": 0.0675947364,
+      "inside_future_f1_mean": 0.0623306233,
+      "inside_future_f1_std": 0.0881488128,
+      "holding_future_f1_mean": 0.0,
+      "controls_changed_macro_f1_mean": {
+        "correct": 0.2222572648,
+        "no_action": 0.2612122796,
+        "shuffled_action": 0.2662346064,
+        "shuffled_edge": 0.3024586554
+      }
+    },
+    "p3_gnn_geometry": {
+      "future_macro_f1_mean": 0.6229453529,
+      "future_macro_f1_std": 0.0099439338,
+      "changed_macro_f1_mean": 0.2222436300,
+      "changed_macro_f1_std": 0.0360924613,
+      "inside_future_f1_mean": 0.2017853833,
+      "inside_future_f1_std": 0.0391690319,
+      "holding_future_f1_mean": 0.0,
+      "controls_changed_macro_f1_mean": {
+        "correct": 0.2222436300,
+        "no_action": 0.2490843565,
+        "shuffled_action": 0.2519063723,
+        "shuffled_edge": 0.2589508369
+      }
+    },
+    "p4_gnn_soft_attention": {
+      "future_macro_f1_mean": 0.6069615976,
+      "future_macro_f1_std": 0.0154430535,
+      "changed_macro_f1_mean": 0.1998048543,
+      "changed_macro_f1_std": 0.0425190714,
+      "inside_future_f1_mean": 0.0791476408,
+      "inside_future_f1_std": 0.1119316670,
+      "holding_future_f1_mean": 0.0,
+      "controls_changed_macro_f1_mean": {
+        "correct": 0.1998048543,
+        "no_action": 0.2304856837,
+        "shuffled_action": 0.2303160186,
+        "shuffled_edge": 0.2634705457
+      }
+    }
+  },
+  "relation_coverage": {
+    "test_future_positive_counts_by_family": {
+      "on": {
+        "libero_90:2": 190,
+        "libero_goal:0": 228
+      },
+      "inside": {
+        "libero_object:0": 76
+      },
+      "holding": {}
+    },
+    "inside_metric_support_per_seed": 988,
+    "inside_positive_per_seed": 76,
+    "holding_metric_support_per_seed": 1900,
+    "holding_positive_per_seed": 0,
+    "holding_explanation": "This historical run had zero positive holding labels. The graph already contains robot0; the collector did not normalize gripper0_* runtime body names to logical robot0, and its gripper-closure threshold was too strict for object-in-hand states. See data/phase2r_holding_probe_summary.json for the corrected follow-up collection."
+  },
+  "gates": {
+    "all_15_runs_complete": true,
+    "task_family_split_disjoint": true,
+    "parameter_matching": true,
+    "inside_positive_support": true,
+    "holding_positive_support": false,
+    "graph_changed_f1_advantage_over_p0": true,
+    "action_conditioning_signal": false,
+    "robust_shuffled_edge_degradation": false,
+    "phase3_gate": "open"
+  },
+  "interpretation": [
+    "P2 and P3 improve changed-relation F1 over P0 by about 0.083 on this held-out split.",
+    "P0 remains strongest on overall future macro-F1, so graph advantage is specific to relation changes rather than general classification.",
+    "Correct-action performance is not better than no-action or shuffled-action for any model, so action-conditioned foresight is not yet demonstrated.",
+    "Shuffled-edge performance is not consistently worse than correct-edge performance, so the causal use of edge assignment is not established.",
+    "Holding is not a valid evaluation target in the current dataset because its positive support is zero."
+  ],
+  "next_required": [
+    "Keep the existing robot0 graph node and use the corrected gripper0_* contact mapping plus calibrated closure threshold.",
+    "Recollect enough trajectories across the intended held-out task families to provide holding-positive support.",
+    "Repeat the same task-family-held-out, parameter-matched probe after fixing holding coverage.",
+    "Use purposeful manipulation actions or demonstrations so no-action controls are meaningfully weaker before Phase 4 integration."
+  ]
+}

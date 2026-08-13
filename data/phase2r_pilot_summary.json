@@ -1,0 +1,72 @@
+{
+  "dataset_version": "phase2r.v1-pilot-compact",
+  "capture_status": "live_oracle_pilot",
+  "source": "Google Colab Graph-CLaD.ipynb",
+  "colab_workdir": "/content/Graph-CLaD-phase2r",
+  "compact_archive_in_colab": "/content/phase2r_compact_results.zip",
+  "privileged_oracle": true,
+  "suite": "libero_spatial",
+  "task_id": 0,
+  "task_name": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+  "controller": "JOINT_POSITION",
+  "action_probe": {
+    "type": "bounded_deterministic_nonzero_probe",
+    "amplitude": 0.025,
+    "action_dim": 8
+  },
+  "temporal": {
+    "steps_per_episode": 24,
+    "primary_tau": 6,
+    "eligible_samples_per_episode": 19,
+    "sample_count": 76
+  },
+  "node_and_edge_audit": {
+    "node_selection": "task_relevant_entities_without_sites",
+    "nodes_per_graph": 8,
+    "directed_edges_per_graph": 56,
+    "sites_in_primary_graph": false,
+    "object_of_interest_in_core_feature": false,
+    "coordinate_frame": "raw_world_pilot",
+    "frame_freeze_required_before_scale_up": "robot_base_or_task_local"
+  },
+  "split": {
+    "unit": "episode",
+    "assignments": {
+      "libero_spatial:task0:init0:seed0": "train",
+      "libero_spatial:task0:init1:seed0": "train",
+      "libero_spatial:task0:init2:seed0": "validation",
+      "libero_spatial:task0:init3:seed0": "test"
+    },
+    "normalization_fit_on": "train_only",
+    "threshold_fit_on": "train_only"
+  },
+  "audit": {
+    "episode_count": 4,
+    "sample_count": 76,
+    "nonzero_action_count": 96,
+    "changed_relation_count": 194,
+    "compact_json_bytes": 11368186,
+    "compact_zip_bytes": 558772
+  },
+  "relation_stats": {
+    "left": {"valid": 4256, "changed": 1},
+    "right": {"valid": 4256, "changed": 1},
+    "front": {"valid": 4256, "changed": 0},
+    "behind": {"valid": 4256, "changed": 0},
+    "above": {"valid": 4256, "changed": 86},
+    "below": {"valid": 4256, "changed": 86},
+    "contact": {"valid": 4256, "changed": 20},
+    "on": {"valid": 0},
+    "inside": {"valid": 0},
+    "holding": {"valid": 0},
+    "open": {"valid": 0},
+    "close": {"valid": 0}
+  },
+  "interpretation": [
+    "The action-bearing temporal contract and episode split executed successfully.",
+    "This pilot is not a manipulation-demonstration success claim.",
+    "Semantic relations on/inside/holding/open/close remain invalid and need capability-aware label handlers.",
+    "Above/below and contact changes are present, but their semantic stability must be checked before scale-up.",
+    "The full compact archive remains in the active Colab runtime; the local workspace stores this reproducibility manifest."
+  ]
+}

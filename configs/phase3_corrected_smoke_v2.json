@@ -1,0 +1,75 @@
+{
+  "protocol": "phase3B-R1-corrected-smoke-v2",
+  "manifest": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1/corrected_protocol_v2/phase3B_R1_eval_manifest_v2.json",
+  "folds": ["test_task1"],
+  "seeds": [0],
+  "models": [
+    {
+      "comparison_id": "B1-v2",
+      "model_id": "b1_pair_feature_mlp_v2",
+      "training_action_mode": "correct"
+    },
+    {
+      "comparison_id": "G1-late-action",
+      "model_id": "g1_sparse_holder_object_gnn",
+      "training_action_mode": "correct"
+    },
+    {
+      "comparison_id": "S-0-G1",
+      "model_id": "s0_g1_no_action_holder_object_gnn_v2",
+      "training_action_mode": "correct"
+    },
+    {
+      "comparison_id": "G1-train-shuffled",
+      "model_id": "g1_sparse_holder_object_gnn",
+      "training_action_mode": "episode_disjoint_matched"
+    }
+  ],
+  "training": {
+    "epochs": 10,
+    "patience": 3,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "current_head_contract": "action_free_pair",
+    "current_loss_weight": 0.25,
+    "checkpoint_criterion": "holding_event_pr_auc",
+    "checkpoint_validation_view": "natural_validation",
+    "training_action_shuffle": "task-local, episode-disjoint, marginal-preserving, action/state-matched donor"
+  },
+  "parameter_matching": {
+    "enabled": true,
+    "target": "corrected G1 hidden_dim=48 trainable parameter count including the common action-free current head",
+    "reference_model_id": "g1_sparse_holder_object_gnn",
+    "reference_hidden_dim": 48,
+    "candidate_hidden_dims": [40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80]
+  },
+  "evaluation": {
+    "primary_metric": "holding.conditional_oracle_current_change_event.pr_auc",
+    "secondary_metrics": [
+      "holding.conditional_oracle_current_change_event.f1",
+      "holding.end_to_end_change_event.pr_auc",
+      "holding.end_to_end_change_event.f1",
+      "holding.onset.f1",
+      "holding.release.f1",
+      "holding.hard_negative.false_positive_rate",
+      "holding.conditional_oracle_current_change_event.brier_score",
+      "holding.conditional_oracle_current_change_event.ece"
+    ],
+    "threshold_source": "natural_validation_correct_action_only",
+    "frozen_threshold_applies_to": ["natural_test", "challenge_stress_view", "all_controls"],
+    "challenge_interpretation": "stress analysis only; not an independent generalization test",
+    "control_modes": ["correct", "global_shuffled_action", "shuffled_edge"]
+  },
+  "artifacts": {
+    "output_root": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1/corrected_protocol_v2/smoke_task1_seed0",
+    "result": "phase3_corrected_smoke_task1_seed0_v2.json",
+    "checkpoints": "checkpoints",
+    "predictions": "predictions",
+    "code_snapshot": "code_snapshot",
+    "runtime_manifest": "runtime_manifest.json"
+  },
+  "runtime": {
+    "require_cuda": true,
+    "require_persistent_drive_output": true
+  }
+}

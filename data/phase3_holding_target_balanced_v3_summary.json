@@ -1,0 +1,55 @@
+{
+  "analysis_version": "phase3-holding-target-balanced-analysis.v3",
+  "persistent_root": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holding_target_balanced_v3",
+  "run_count": 45,
+  "fold_count": 3,
+  "sampling": {
+    "method": "category_aware_v1",
+    "category_quota": 120,
+    "important_note": "Category counts are multi-label and the quota traversal is greedy by episode; this is not a strictly balanced or truly round-robin sample."
+  },
+  "sampling_preflight": {
+    "libero_spatial:0": {"selected_samples": 600, "episode_count": 50, "category_counts": {"future_holding_positive": 135, "holding_changed": 120, "hard_negative": 125, "background": 290}},
+    "libero_spatial:1": {"selected_samples": 600, "episode_count": 50, "category_counts": {"future_holding_positive": 130, "holding_changed": 120, "hard_negative": 140, "background": 299}},
+    "libero_spatial:2": {"selected_samples": 600, "episode_count": 50, "category_counts": {"future_holding_positive": 132, "holding_changed": 120, "hard_negative": 132, "background": 292}}
+  },
+  "changed_relation_ranking": [
+    {"model_id": "p0_flat_mlp", "mean": 0.40811630425630735, "std": 0.06384425290477312},
+    {"model_id": "p3_gnn_geometry", "mean": 0.3923508075180058, "std": 0.10965814750357099},
+    {"model_id": "p4_gnn_soft_attention", "mean": 0.38585300408861234, "std": 0.10263580469406015},
+    {"model_id": "p2_gnn_empty_edge", "mean": 0.37324498247724014, "std": 0.054843314638630854},
+    {"model_id": "p1_node_no_message", "mean": 0.37240804696855945, "std": 0.06087061413301398}
+  ],
+  "models": {
+    "p0_flat_mlp": {
+      "holding_future_f1": {"mean": 0.6210123387176175, "std": 0.11023064005942179, "n": 9},
+      "holding_changed_f1": {"mean": 0.7700835298173037, "std": 0.13190792170365798, "n": 9},
+      "action_delta_no_action": {"mean": 0.11857465307679299, "std": 0.05048068210357643, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.03081056236918957, "std": 0.019428524111679998, "n": 9}
+    },
+    "p1_node_no_message": {
+      "holding_future_f1": {"mean": 0.28848366913326395, "std": 0.11602500865784614, "n": 9},
+      "holding_changed_f1": {"mean": 0.020202020202020204, "std": 0.06060606060606061, "n": 9},
+      "action_delta_no_action": {"mean": 0.07933957592115688, "std": 0.07151889472540753, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.010751168796753696, "std": 0.01359321258841511, "n": 9}
+    },
+    "p2_gnn_empty_edge": {
+      "holding_future_f1": {"mean": 0.38036712440536335, "std": 0.08444401503567286, "n": 9},
+      "holding_changed_f1": {"mean": 0.016836916027239898, "std": 0.02529032158548603, "n": 9},
+      "action_delta_no_action": {"mean": 0.052045295414551204, "std": 0.059193642608548626, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.011457308181470591, "std": 0.011840205546686933, "n": 9}
+    },
+    "p3_gnn_geometry": {
+      "holding_future_f1": {"mean": 0.3917458613844372, "std": 0.1433222761137731, "n": 9},
+      "holding_changed_f1": {"mean": 0.15455609180342877, "std": 0.30697019197831654, "n": 9},
+      "action_delta_no_action": {"mean": 0.018384814996473434, "std": 0.025361861376343615, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.004347202594935657, "std": 0.009288114608868848, "n": 9}
+    },
+    "p4_gnn_soft_attention": {
+      "holding_future_f1": {"mean": 0.439753470832727, "std": 0.17317577559673358, "n": 9},
+      "holding_changed_f1": {"mean": 0.235954035343753, "std": 0.2983579917583011, "n": 9},
+      "action_delta_no_action": {"mean": 0.06664300211032367, "std": 0.053947700806336346, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.011393551087663921, "std": 0.01273705256548331, "n": 9}
+    }
+  }
+}

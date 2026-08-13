@@ -1,0 +1,49 @@
+{
+  "protocol": "phase3B-R1-eval-v2-corrected",
+  "purpose": "Freeze corrected natural-validation and stress-view sample IDs before the auxiliary-head-confound-free architecture gate",
+  "task_ids": [0, 1, 2],
+  "primary_tau": 6,
+  "source_roots": {
+    "natural": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_full_demo_v2_inputclean_stream1",
+    "target_aligned": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_holding_target_v2_inputclean_stream1",
+    "split_manifest": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_demo_split_manifest.json"
+  },
+  "relations": [
+    "left",
+    "right",
+    "front",
+    "behind",
+    "above",
+    "below",
+    "contact",
+    "on",
+    "holding"
+  ],
+  "training_sampling": {
+    "method": "category_aware_episode_round_robin_v2",
+    "cap_per_task": 600,
+    "category_quota": 120,
+    "categories": [
+      "holding_changed",
+      "future_holding_positive",
+      "hard_negative",
+      "background"
+    ]
+  },
+  "split_contract": {
+    "outer_test": "one held-out task family",
+    "train": "target-aligned samples from remaining task source-train episodes",
+    "validation": "all natural samples from remaining task source-validation episodes",
+    "validation_source": "natural",
+    "natural_test": "held-out task source-test episodes without category balancing",
+    "holding_challenge_test": "future-event-selected stress subset of the same natural held-out episodes",
+    "episode_overlap_forbidden": true,
+    "challenge_subset_of_natural_required": true,
+    "overlap_payload_hash_required": true,
+    "normalization_fit": "train_only",
+    "checkpoint_fit": "natural_validation_holding_event_pr_auc",
+    "threshold_fit": "natural_validation_correct_action_only",
+    "future_graph_input_forbidden": true
+  },
+  "output_root": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1/corrected_protocol_v2"
+}

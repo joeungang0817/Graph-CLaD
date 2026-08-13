@@ -1,0 +1,87 @@
+{
+  "capture_status": "live_summary",
+  "source": "LIBERO simulator inspection executed in Google Colab",
+  "captured_on": "2026-08-05",
+  "runtime": {
+    "gpu": "A100",
+    "controller": "JOINT_POSITION",
+    "mujoco_gl": "egl",
+    "compatibility_notes": [
+      "robosuite 1.4.0 mass-matrix access was patched for the current MuJoCo wrapper",
+      "LIBERO init-state loading used weights_only=False for trusted local official init files"
+    ]
+  },
+  "suite": "libero_spatial",
+  "task_id": 0,
+  "task_name": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+  "language": "pick up the black bowl between the plate and the ramekin and place it on the plate",
+  "seed": 0,
+  "init_state_id": 0,
+  "simulator": {
+    "flat_state_dim": 92,
+    "model_nbody": 38,
+    "model_nsite": 31,
+    "model_ngeom": 270,
+    "model_njnt": 18,
+    "action_dim": 8
+  },
+  "snapshot_count": 2,
+  "object_state_count_per_snapshot": 23,
+  "observation_schema": {
+    "agentview_image": {"shape": [128, 128, 3], "dtype": "uint8"},
+    "robot0_eye_in_hand_image": {"shape": [128, 128, 3], "dtype": "uint8"},
+    "robot0_eef_pos": {"shape": [3], "dtype": "float64"},
+    "robot0_eef_quat": {"shape": [4], "dtype": "float64"},
+    "robot0_gripper_qpos": {"shape": [2], "dtype": "float64"},
+    "robot0_gripper_qvel": {"shape": [2], "dtype": "float64"},
+    "robot0_joint_pos": {"shape": [7], "dtype": "float64"},
+    "robot0_joint_vel": {"shape": [7], "dtype": "float64"},
+    "robot0_proprio-state": {"shape": [39], "dtype": "float64"},
+    "object-state": {"shape": [70], "dtype": "float64"},
+    "object_pose_and_eef_relation_keys": "present for task objects; each position is [3] and quaternion is [4]"
+  },
+  "robot_state_step_0": {
+    "eef_pos": [-0.2108148623929717, -0.01515982145785171, 1.1756771209255328],
+    "eef_quat": [0.9993743055619546, -0.026609451583890387, -0.02257722155216463, -0.005762250944626783],
+    "gripper_qpos": [0.020833, -0.020833],
+    "joint_pos_dim": 7,
+    "joint_vel_dim": 7,
+    "available_keys": [
+      "robot0_eef_pos",
+      "robot0_eef_quat",
+      "robot0_eye_in_hand_image",
+      "robot0_gripper_qpos",
+      "robot0_gripper_qvel",
+      "robot0_joint_pos",
+      "robot0_joint_pos_cos",
+      "robot0_joint_pos_sin",
+      "robot0_joint_vel",
+      "robot0_proprio-state"
+    ]
+  },
+  "object_examples_step_0": [
+    {
+      "logical_id": "akita_black_bowl_1",
+      "node_type": "object",
+      "is_object_of_interest": true,
+      "body_id": 23,
+      "position": [-0.06348281771240429, 0.20206256199913958, 0.97],
+      "quaternion": [0.7071067811865475, 0.0, 0.0, 0.7071067811865476]
+    },
+    {
+      "logical_id": "plate_1",
+      "node_type": "object",
+      "is_object_of_interest": true,
+      "body_id": 27,
+      "position": [0.05340948090240665, 0.2051822687952773, 0.9582687800211497],
+      "quaternion": [0.7071067854920263, -0.00000885460861810572, -0.000007760221081130942, 0.7071067767830458]
+    }
+  ],
+  "probe_limitations": [
+    "The full live output contains all 23 object/fixture/site entries and two snapshots; this repository file is a compact manifest for reproducibility.",
+    "Generic get_joint_state/is_open/is_close probes returned object-specific IndexError or NotImplementedError for some nodes under this runtime combination.",
+    "logical_id is the graph identity; body_id is runtime MuJoCo metadata only.",
+    "Quaternion ordering and coordinate frame remain raw and must be verified before normalization.",
+    "The capture is privileged simulator state and is not an RGB-perception result."
+  ]
+}

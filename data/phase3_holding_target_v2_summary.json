@@ -1,0 +1,46 @@
+{
+  "analysis_version": "phase3-holding-target-analysis.v2",
+  "persistent_root": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holding_target_v2",
+  "run_count": 45,
+  "fold_count": 3,
+  "sampling": "episode_round_robin",
+  "changed_relation_ranking": [
+    {"model_id": "p1_node_no_message", "mean": 0.30761584953350696, "std": 0.13974506169448309},
+    {"model_id": "p3_gnn_geometry", "mean": 0.2890525263454357, "std": 0.16273755938141085},
+    {"model_id": "p4_gnn_soft_attention", "mean": 0.2823187258595945, "std": 0.09788256841096714},
+    {"model_id": "p0_flat_mlp", "mean": 0.2720009857994581, "std": 0.06578759258360356},
+    {"model_id": "p2_gnn_empty_edge", "mean": 0.22155559773275413, "std": 0.1295271495553615}
+  ],
+  "models": {
+    "p0_flat_mlp": {
+      "holding_future_f1": {"mean": 0.08626730466374966, "std": 0.16055050223548564, "n": 9},
+      "holding_changed_f1": {"mean": 0.126174020910863, "std": 0.23571095377542392, "n": 9},
+      "action_delta_no_action": {"mean": 0.02256582921026486, "std": 0.03936898913047528, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.005221103762349059, "std": 0.02098614054042709, "n": 9}
+    },
+    "p1_node_no_message": {
+      "holding_future_f1": {"mean": 0.0, "std": 0.0, "n": 9},
+      "holding_changed_f1": {"mean": 0.0, "std": 0.0, "n": 9},
+      "action_delta_no_action": {"mean": 0.009084953136525764, "std": 0.030513590079790737, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.009565698030075424, "std": 0.020119684648182277, "n": 9}
+    },
+    "p2_gnn_empty_edge": {
+      "holding_future_f1": {"mean": 0.0, "std": 0.0, "n": 9},
+      "holding_changed_f1": {"mean": 0.0, "std": 0.0, "n": 9},
+      "action_delta_no_action": {"mean": 0.013188393505257726, "std": 0.01943165788980383, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.0045915808849828765, "std": 0.01217945621043105, "n": 9}
+    },
+    "p3_gnn_geometry": {
+      "holding_future_f1": {"mean": 0.005420054200542005, "std": 0.016260162601626018, "n": 9},
+      "holding_changed_f1": {"mean": 0.02222222222222222, "std": 0.06666666666666667, "n": 9},
+      "action_delta_no_action": {"mean": 0.013914683521362286, "std": 0.0361412953498364, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.006355480233784677, "std": 0.011767925694767334, "n": 9}
+    },
+    "p4_gnn_soft_attention": {
+      "holding_future_f1": {"mean": 0.0, "std": 0.0, "n": 9},
+      "holding_changed_f1": {"mean": 0.0, "std": 0.0, "n": 9},
+      "action_delta_no_action": {"mean": 0.019317740578289215, "std": 0.035170446191499206, "n": 9},
+      "action_delta_shuffled_action": {"mean": 0.005108706178853738, "std": 0.009119072317134914, "n": 9}
+    }
+  }
+}

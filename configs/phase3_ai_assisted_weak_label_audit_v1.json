@@ -1,0 +1,29 @@
+{
+  "protocol": "phase3-ai-assisted-weak-label-audit-v1",
+  "rubric_version": "continuous_pair_trajectory_v1",
+  "thresholds": {
+    "closed_gripper_max_abs_qpos": 0.025,
+    "stable_relative_span": 0.03,
+    "following_residual": 0.03,
+    "minimum_motion": 0.005,
+    "minimum_contact_fraction": 0.6666666667,
+    "minimum_closed_fraction": 0.6666666667,
+    "segment_frames": 3
+  },
+  "masked_evidence_fields": [
+    "trajectory[].holding",
+    "trajectory[].holding_state",
+    "trajectory[].holding_confidence",
+    "trajectory[].holding_evidence",
+    "current.edge.relations.holding.evidence",
+    "future.edge.relations.holding.evidence"
+  ],
+  "allowed_outputs": [
+    "likely_pass",
+    "likely_label_error",
+    "ambiguous"
+  ],
+  "label_policy": "Never modify training, validation, or test labels from this audit.",
+  "use_policy": "Use decisions only for QA triage and predeclared sensitivity subsets.",
+  "claim_limit": "AI-assisted internal-consistency audit, not human ground truth or independent visual validation."
+}

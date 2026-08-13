@@ -1,0 +1,79 @@
+{
+  "protocol": "phase3-controlled-taskfamily-holding-target-balanced-v4-samplingfix",
+  "purpose": "Isolate the sampler correction under the previous fold definition; not the final holder-object graph protocol.",
+  "probe_version": "phase3-offline.v1-controlled-taskfamily-holding-target-balanced-v4-samplingfix",
+  "models": [
+    "p0_flat_mlp",
+    "p1_node_no_message",
+    "p2_gnn_empty_edge",
+    "p3_gnn_geometry",
+    "p4_gnn_soft_attention"
+  ],
+  "seeds": [0, 1, 2],
+  "parameter_match": true,
+  "target_parameter_count": 70000,
+  "candidate_hidden_dims": [40, 48, 56, 64, 72, 80, 88, 96],
+  "hidden_dim": 64,
+  "batch_size": 64,
+  "epochs": 40,
+  "patience": 8,
+  "learning_rate": 0.001,
+  "current_loss_weight": 0.25,
+  "device": "cuda",
+  "max_samples_per_family": 600,
+  "target_relations": [
+    "left",
+    "right",
+    "front",
+    "behind",
+    "above",
+    "below",
+    "contact",
+    "on",
+    "holding"
+  ],
+  "sampling": {
+    "method": "category_aware_episode_round_robin_v2",
+    "category_quota": 120,
+    "unique_samples": true,
+    "categories": [
+      "holding_changed",
+      "future_holding_positive",
+      "hard_negative",
+      "background"
+    ]
+  },
+  "folds": [
+    {
+      "name": "test_task0",
+      "train": "libero_spatial:2",
+      "validation": "libero_spatial:1",
+      "test": "libero_spatial:0"
+    },
+    {
+      "name": "test_task1",
+      "train": "libero_spatial:0",
+      "validation": "libero_spatial:2",
+      "test": "libero_spatial:1"
+    },
+    {
+      "name": "test_task2",
+      "train": "libero_spatial:0",
+      "validation": "libero_spatial:1",
+      "test": "libero_spatial:2"
+    }
+  ],
+  "dataset_contract": {
+    "artifact_version": "phase2d-holding-target-v2",
+    "source": "phase2d_holding_target_v2_inputclean_stream1",
+    "description": "Phase 2D target-aligned holding JSONL",
+    "holding_relation": "primary",
+    "inside_relation": "deferred",
+    "unknown_policy": "exclude",
+    "selection": "target_aligned_union_strata",
+    "normalization_fit": "train_samples_only",
+    "episode_overlap": false,
+    "future_state_input_forbidden": true
+  },
+  "status": "prepared_not_run"
+}

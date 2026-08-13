@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Local experiment products. Canonical large artifacts live outside Git and
+# are identified by config, manifest, checksum, and code snapshot.
+outputs/checkpoints/
+outputs/logs/
+outputs/figures/
+outputs/metrics/
+*.pt
+*.pth
+*.ckpt
+*.log
+
+# One-off Colab transfer bundles and extracted staging copies. Existing files
+# are deliberately retained; see docs/archive_candidates_20260813.md.
+.tmp_*

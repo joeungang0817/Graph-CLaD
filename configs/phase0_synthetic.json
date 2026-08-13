@@ -1,0 +1,34 @@
+{
+  "purpose": "Documented Phase 0 dimension assumptions; not yet verified against the original data pipeline.",
+  "paper_reference": {
+    "hidden_dim": 1024,
+    "semantic_feature_dim": 1024,
+    "num_views": 2,
+    "action_horizon": 6,
+    "ema_momentum": 0.995,
+    "reconstruction_weight": 0.1
+  },
+  "code_contract": {
+    "flattened_visual_input_dim": "num_views * visual_dim_per_view",
+    "required_visual_input_dim": "2 * semantic_feature_dim",
+    "semantic_output_dim_must_equal": "hidden_dim"
+  },
+  "smoke_test": {
+    "batch_size": 2,
+    "history_length": 2,
+    "num_views": 2,
+    "proprio_dim": 6,
+    "visual_dim_per_view": 64,
+    "semantic_feature_dim": 64,
+    "hidden_dim": 64,
+    "action_dim": 5
+  },
+  "unverified": [
+    "actual proprioception dimension",
+    "actual action dimension and action-history packing",
+    "actual VLM feature dimension and per-view layout",
+    "actual history length and temporal sampling",
+    "whether the reported hidden dimension is used by the supplied checkpoint",
+    "where trainer calls update_ema"
+  ]
+}

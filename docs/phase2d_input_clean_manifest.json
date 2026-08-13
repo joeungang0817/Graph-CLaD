@@ -1,0 +1,38 @@
+{
+  "artifact_version": "phase2d-full-demo.v2+split-fixed-stream1+input-clean-v1",
+  "source_artifact": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_full_demo_v2_splitfixed_stream1",
+  "derived_artifact": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_full_demo_v2_inputclean_stream1",
+  "tasks": [0, 1, 2],
+  "node_feature_schema": {
+    "name": "node_feature_vector_v2_no_task_flag",
+    "node_feature_dim": 24,
+    "reserved_zero_slot": "feature_vector[4]",
+    "removed_feature_key": "is_object_of_interest",
+    "model_input_rule": "do_not_use_task-derived relevance metadata"
+  },
+  "qa": {
+    "status": "pass",
+    "task0": {
+      "records": 150,
+      "samples": 14704,
+      "node_graph_occurrences": 235264,
+      "remaining_task_flag_keys": 0,
+      "nonzero_reserved_task_flag_slots": 0
+    },
+    "task1": {
+      "records": 150,
+      "samples": 19621,
+      "node_graph_occurrences": 313936,
+      "remaining_task_flag_keys": 0,
+      "nonzero_reserved_task_flag_slots": 0
+    },
+    "task2": {
+      "records": 150,
+      "samples": 17146,
+      "node_graph_occurrences": 274336,
+      "remaining_task_flag_keys": 0,
+      "nonzero_reserved_task_flag_slots": 0
+    }
+  },
+  "next_gate": "phase3_action_conditioned_controls"
+}

@@ -1,0 +1,464 @@
+{
+  "graph_spec": "phase2.v1",
+  "source": {
+    "suite": "libero_spatial",
+    "task_id": 0,
+    "task_name": "example_task_name",
+    "seed": 0,
+    "init_state_id": 0
+  },
+  "graphs": [
+    {
+      "step": 0,
+      "node_feature_dim": 24,
+      "nodes": [
+        {
+          "node_id": "robot0",
+          "node_type": "robot",
+          "node_type_one_hot": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "runtime_body_id": null,
+          "raw_pose": {
+            "position": [
+              0.0,
+              -0.1,
+              0.9
+            ],
+            "quaternion": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "features": {
+            "position": [
+              0.0,
+              -0.1,
+              0.9
+            ],
+            "position_valid": 1,
+            "is_object_of_interest": 0,
+            "gripper_qpos": [
+              0.04,
+              0.04
+            ],
+            "gripper_qpos_valid": 1,
+            "joint_pos": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_pos_valid": 0,
+            "joint_vel": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_vel_valid": 0
+          },
+          "feature_vector": [
+            0.0,
+            -0.1,
+            0.9,
+            1.0,
+            0.0,
+            0.04,
+            0.04,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "predicate_state": {},
+          "available_observation_keys": [
+            "robot0_eef_pos",
+            "robot0_eef_quat",
+            "robot0_gripper_qpos"
+          ]
+        },
+        {
+          "node_id": "red_cube",
+          "node_type": "object",
+          "node_type_one_hot": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "runtime_body_id": 12,
+          "raw_pose": {
+            "position": [
+              0.1,
+              0.0,
+              0.84
+            ],
+            "quaternion": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "features": {
+            "position": [
+              0.1,
+              0.0,
+              0.84
+            ],
+            "position_valid": 1,
+            "is_object_of_interest": 1,
+            "gripper_qpos": [
+              0.0,
+              0.0
+            ],
+            "gripper_qpos_valid": 0,
+            "joint_pos": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_pos_valid": 0,
+            "joint_vel": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_vel_valid": 0
+          },
+          "feature_vector": [
+            0.1,
+            0.0,
+            0.84,
+            1.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "predicate_state": {
+            "joint_state": {
+              "value": null,
+              "valid": 0,
+              "status": "unsupported"
+            },
+            "is_open": {
+              "value": false,
+              "valid": 1,
+              "status": "available"
+            },
+            "is_close": {
+              "value": true,
+              "valid": 1,
+              "status": "available"
+            }
+          }
+        },
+        {
+          "node_id": "target_zone",
+          "node_type": "fixture",
+          "node_type_one_hot": [
+            0,
+            0,
+            1,
+            0
+          ],
+          "runtime_body_id": 8,
+          "raw_pose": {
+            "position": [
+              0.35,
+              0.0,
+              0.84
+            ],
+            "quaternion": [
+              1.0,
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "features": {
+            "position": [
+              0.35,
+              0.0,
+              0.84
+            ],
+            "position_valid": 1,
+            "is_object_of_interest": 0,
+            "gripper_qpos": [
+              0.0,
+              0.0
+            ],
+            "gripper_qpos_valid": 0,
+            "joint_pos": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_pos_valid": 0,
+            "joint_vel": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "joint_vel_valid": 0
+          },
+          "feature_vector": [
+            0.35,
+            0.0,
+            0.84,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "predicate_state": {
+            "joint_state": {
+              "value": null,
+              "valid": 0,
+              "status": "unsupported"
+            },
+            "is_open": {
+              "value": false,
+              "valid": 1,
+              "status": "available"
+            },
+            "is_close": {
+              "value": true,
+              "valid": 1,
+              "status": "available"
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "robot0",
+          "target": "red_cube",
+          "edge_type": "spatial_directed",
+          "node_type_pair": [
+            "robot",
+            "object"
+          ],
+          "features": {
+            "relative_position": [
+              0.1,
+              0.1,
+              -0.06000000000000005
+            ],
+            "distance": 0.1536229149573722,
+            "distance_valid": 1
+          },
+          "semantic_relation": {
+            "value": null,
+            "valid": 0,
+            "status": "not_in_phase2_v1"
+          }
+        },
+        {
+          "source": "robot0",
+          "target": "target_zone",
+          "edge_type": "spatial_directed",
+          "node_type_pair": [
+            "robot",
+            "fixture"
+          ],
+          "features": {
+            "relative_position": [
+              0.35,
+              0.1,
+              -0.06000000000000005
+            ],
+            "distance": 0.36891733491393436,
+            "distance_valid": 1
+          },
+          "semantic_relation": {
+            "value": null,
+            "valid": 0,
+            "status": "not_in_phase2_v1"
+          }
+        },
+        {
+          "source": "red_cube",
+          "target": "robot0",
+          "edge_type": "spatial_directed",
+          "node_type_pair": [
+            "object",
+            "robot"
+          ],
+          "features": {
+            "relative_position": [
+              -0.1,
+              -0.1,
+              0.06000000000000005
+            ],
+            "distance": 0.1536229149573722,
+            "distance_valid": 1
+          },
+          "semantic_relation": {
+            "value": null,
+            "valid": 0,
+            "status": "not_in_phase2_v1"
+          }
+        },
+        {
+          "source": "red_cube",
+          "target": "target_zone",
+          "edge_type": "spatial_directed",
+          "node_type_pair": [
+            "object",
+            "fixture"
+          ],
+          "features": {
+            "relative_position": [
+              0.24999999999999997,
+              0.0,
+              0.0
+            ],
+            "distance": 0.24999999999999997,
+            "distance_valid": 1
+          },
+          "semantic_relation": {
+            "value": null,
+            "valid": 0,
+            "status": "not_in_phase2_v1"
+          }
+        },
+        {
+          "source": "target_zone",
+          "target": "robot0",
+          "edge_type": "spatial_directed",
+          "node_type_pair": [
+            "fixture",
+            "robot"
+          ],
+          "features": {
+            "relative_position": [
+              -0.35,
+              -0.1,
+              0.06000000000000005
+            ],
+            "distance": 0.36891733491393436,
+            "distance_valid": 1
+          },
+          "semantic_relation": {
+            "value": null,
+            "valid": 0,
+            "status": "not_in_phase2_v1"
+          }
+        },
+        {
+          "source": "target_zone",
+          "target": "red_cube",
+          "edge_type": "spatial_directed",
+          "node_type_pair": [
+            "fixture",
+            "object"
+          ],
+          "features": {
+            "relative_position": [
+              -0.24999999999999997,
+              0.0,
+              0.0
+            ],
+            "distance": 0.24999999999999997,
+            "distance_valid": 1
+          },
+          "semantic_relation": {
+            "value": null,
+            "valid": 0,
+            "status": "not_in_phase2_v1"
+          }
+        }
+      ],
+      "audit": {
+        "node_count": 3,
+        "edge_count": 6,
+        "predicate_error_count": 0,
+        "missing_position_node_ids": [],
+        "body_id_used_as_identity": false
+      }
+    }
+  ],
+  "temporal_audit": {
+    "ordered_by": "step",
+    "steps": [
+      0
+    ],
+    "future_fields_included": false
+  }
+}

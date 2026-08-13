@@ -1,0 +1,16 @@
+{
+  "purpose": "Phase 1 live LIBERO state inspection; no graph construction yet.",
+  "suite": "libero_spatial",
+  "task_id": 0,
+  "init_state_id": 0,
+  "seed": 0,
+  "steps": 1,
+  "robot_prefix": "robot0",
+  "controller": "JOINT_POSITION",
+  "camera_height": 128,
+  "camera_width": 128,
+  "output": "data/phase1_libero_state_capture.json",
+  "identity_rule": "logical object name is stable graph identity; MuJoCo body_id is runtime metadata only",
+  "quaternion_rule": "record raw simulator quaternion and verify ordering before normalization",
+  "privileged_state_rule": "simulator state is an oracle feasibility signal, not an RGB-perception result"
+}

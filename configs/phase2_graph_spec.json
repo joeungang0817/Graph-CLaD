@@ -1,0 +1,61 @@
+{
+  "spec_version": "phase2.v1",
+  "purpose": "Controlled oracle object-spatial graph for CLaD latent foresight",
+  "state_source": "privileged LIBERO simulator state; not an RGB perception claim",
+  "node_types": ["robot", "object", "fixture", "site"],
+  "identity": {
+    "key": "logical_id",
+    "runtime_metadata": ["body_id"],
+    "runtime_metadata_is_model_input": false
+  },
+  "coordinate_frame": {
+    "name": "world",
+    "position_source": "pose.position or robot eef_pos",
+    "normalization": "fit on training episodes only"
+  },
+  "orientation": {
+    "raw_capture": true,
+    "graph_feature": false,
+    "reason": "LIBERO/MuJoCo quaternion ordering must be verified before normalization"
+  },
+  "node_features": {
+    "feature_layout": [
+      {"name": "position", "dim": 3, "source": "pose.position or robot_state.eef_pos"},
+      {"name": "position_valid", "dim": 1, "source": "derived"},
+      {"name": "is_object_of_interest", "dim": 1, "source": "object_states"},
+      {"name": "gripper_qpos", "dim": 2, "source": "robot_state.gripper_qpos"},
+      {"name": "gripper_qpos_valid", "dim": 1, "source": "derived"},
+      {"name": "joint_pos", "dim": 7, "source": "robot_state.joint_pos"},
+      {"name": "joint_pos_valid", "dim": 1, "source": "derived"},
+      {"name": "joint_vel", "dim": 7, "source": "robot_state.joint_vel"},
+      {"name": "joint_vel_valid", "dim": 1, "source": "derived"}
+    ],
+    "node_type_encoding": "one_hot_in_metadata; concatenate before model input",
+    "numeric_normalization": "train_split_zscore_only",
+    "missing_numeric": "zero_value_plus_valid_mask"
+  },
+  "edge_policy": {
+    "topology": "complete_directed_over_nodes_with_valid_position",
+    "self_loops": false,
+    "distance_threshold_m": null,
+    "reason_for_no_threshold": "avoid an arbitrary relation cutoff before controlled ablation",
+    "features": [
+      {"name": "relative_position", "dim": 3, "definition": "target_position - source_position in world frame"},
+      {"name": "distance", "dim": 1, "definition": "euclidean norm of relative_position"},
+      {"name": "distance_valid", "dim": 1, "definition": "1 only when both endpoint positions are valid"}
+    ],
+    "predicate_policy": "capability_aware_audit_only_in_phase2_v1"
+  },
+  "predicate_policy": {
+    "available_bool": "keep value and valid=1",
+    "missing": "value=null and valid=0",
+    "error": "value=null, valid=0, preserve error in audit",
+    "never_coerce_unknown_to_false": true
+  },
+  "temporal_policy": {
+    "snapshot_order": "step",
+    "identity_alignment": "logical_id",
+    "future_leakage": "forbidden",
+    "terminal_or_success_fields": "not included in node or edge features"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "probe_version": "phase3-offline.taskheldout-matched.v1",
+  "models": [
+    "p0_flat_mlp",
+    "p1_node_no_message",
+    "p2_gnn_empty_edge",
+    "p3_gnn_geometry",
+    "p4_gnn_soft_attention"
+  ],
+  "seeds": [0, 1, 2],
+  "parameter_match": true,
+  "target_parameter_count": 70000,
+  "candidate_hidden_dims": [40, 48, 56, 64, 72, 80, 88, 96],
+  "hidden_dim": 64,
+  "batch_size": 64,
+  "epochs": 40,
+  "patience": 8,
+  "learning_rate": 0.001,
+  "current_loss_weight": 0.25,
+  "device": "auto",
+  "primary_metric": "test.changed_relation.macro_f1",
+  "secondary_metrics": [
+    "test.future_relation.macro_f1",
+    "inside_future_relation_f1",
+    "holding_future_relation_f1",
+    "per_relation_f1",
+    "no_action_delta",
+    "shuffled_action_delta",
+    "shuffled_edge_delta",
+    "parameter_count",
+    "seed_mean_std"
+  ],
+  "split": {
+    "unit": "task_family",
+    "validation_task_families": [
+      "libero_90:1",
+      "libero_spatial:8"
+    ],
+    "test_task_families": [
+      "libero_90:2",
+      "libero_goal:0",
+      "libero_object:0"
+    ],
+    "relation_critical_test_families": [
+      "libero_90:2",
+      "libero_object:0"
+    ]
+  },
+  "dataset_contract": {
+    "coordinate_frame": "robot_base",
+    "graph_site_policy": "include_all_sites",
+    "normalization_fit": "train_only",
+    "future_input_forbidden": true,
+    "target_relations": [
+      "left",
+      "right",
+      "front",
+      "behind",
+      "above",
+      "below",
+      "contact",
+      "on",
+      "inside",
+      "holding"
+    ]
+  },
+  "deferred_models": {
+    "p5_recurrent_history": "requires full past graph sequence in Phase 2R samples"
+  }
+}

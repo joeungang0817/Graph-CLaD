@@ -1,0 +1,5 @@
+# Install a project-specific PyTorch build appropriate for the target CUDA/CPU
+# environment, then install these model dependencies.
+torch
+einops
+timm

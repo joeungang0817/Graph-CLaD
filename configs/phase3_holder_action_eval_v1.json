@@ -1,0 +1,46 @@
+{
+  "protocol": "phase3B-R1-eval-v1",
+  "purpose": "Freeze sample IDs and evaluation views before B1/G1 architecture comparison",
+  "task_ids": [0, 1, 2],
+  "primary_tau": 6,
+  "source_roots": {
+    "natural": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_full_demo_v2_inputclean_stream1",
+    "target_aligned": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_holding_target_v2_inputclean_stream1",
+    "split_manifest": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase2d/data/phase2d_demo_split_manifest.json"
+  },
+  "relations": [
+    "left",
+    "right",
+    "front",
+    "behind",
+    "above",
+    "below",
+    "contact",
+    "on",
+    "holding"
+  ],
+  "training_sampling": {
+    "method": "category_aware_episode_round_robin_v2",
+    "cap_per_task": 600,
+    "category_quota": 120,
+    "categories": [
+      "holding_changed",
+      "future_holding_positive",
+      "hard_negative",
+      "background"
+    ]
+  },
+  "split_contract": {
+    "outer_test": "one held-out task family",
+    "train": "remaining two task families source-train episodes",
+    "validation": "remaining two task families source-validation episodes",
+    "natural_test": "held-out task source-test episodes without category balancing",
+    "holding_challenge_test": "target-aligned subset of held-out task source-test episodes",
+    "episode_overlap_forbidden": true,
+    "challenge_subset_of_natural_required": true,
+    "normalization_fit": "train_only",
+    "threshold_fit": "train_only",
+    "future_graph_input_forbidden": true
+  },
+  "output_root": "/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1"
+}

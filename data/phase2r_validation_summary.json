@@ -1,0 +1,107 @@
+{
+  "validation_version": "phase2r-validation.v2",
+  "status": "pass_pilot_final_with_scale_up_scope_limits",
+  "source": "Google Colab Graph-CLaD.ipynb",
+  "colab_report": "/content/Graph-CLaD-phase2r-v2-r3/data/phase2r_v2_validation_report.json",
+  "colab_plot": "/content/Graph-CLaD-phase2r-v2-r3/data/phase2r_v2_change_audit.png",
+  "audit": {
+    "sample_count": 76,
+    "episode_count": 4,
+    "tau": 6,
+    "invalid_samples": 0,
+    "duplicate_node_graphs": 0,
+    "edge_reverse_violations": 0,
+    "relation_inverse_violations": 0,
+    "feature_dim_violations": 0,
+    "action_length_violations": 0,
+    "temporal_alignment_violations": 0
+  },
+  "change_attribution": {
+    "directed_changed_count": 194,
+    "undirected_changed_pair_count": 17,
+    "robot_involved_directed_count": 0,
+    "nonrobot_directed_count": 194,
+    "robot_involved_share": 0.0,
+    "by_relation": {
+      "below": 86,
+      "above": 86,
+      "contact": 20,
+      "left": 1,
+      "right": 1
+    },
+    "by_node_type_pair": {
+      "object->fixture": 83,
+      "fixture->object": 83,
+      "object->object": 28
+    }
+  },
+  "gate_results": {
+    "episode_split_disjoint": true,
+    "temporal_alignment": true,
+    "node_alignment": true,
+    "directed_topology_reciprocal": true,
+    "inverse_relation_consistency": true,
+    "pilot_has_nonzero_changed_relations": true,
+    "semantic_label_contract": true,
+    "coordinate_frame_finalized": true
+  },
+  "warnings": [],
+  "visual_audit": {
+    "checked": true,
+    "observation": "before/after plot kept logical IDs, axis directions, and node layout visually consistent; no obvious robot-node-driven change was observed"
+  },
+  "semantic_frame_validation": {
+    "robot_base_body": "robot0_base",
+    "robot_base_position": [-0.66, 0.0, 0.912],
+    "robot_base_quaternion": [1.0, 0.0, 0.0, 0.0],
+    "position_max_range_across_init_states": [0.0, 0.0, 0.0],
+    "quaternion_max_range_across_init_states": [0.0, 0.0, 0.0, 0.0],
+    "robot_base_stable": true,
+    "contact_wrapper": "supported_boolean_for_all_5_test_pairs",
+    "ontop_wrapper": "works_for_object_object_but_not_site_pairs",
+    "contain_wrapper": "not_genericly_usable_for_tested_pairs",
+    "open_close_wrapper": "not_genericly_usable_for_tested_objects",
+    "decision": "adopt robot_base as primary frame; use contact and capability-aware handlers; keep unsupported predicates unknown"
+  },
+  "final_execution": {
+    "bundle": "phase2r_v2_bundle_r3.zip",
+    "dataset_version": "phase2r.v2-robot-base",
+    "coordinate_frame": "robot_base",
+    "source_capture_frame": "raw_world",
+    "robot_base_pose_present": {
+      "snapshots": 100,
+      "total": 100
+    },
+    "geometry_metadata_present": {
+      "snapshots": 100,
+      "total": 100
+    },
+    "dataset_audit": {
+      "episode_count": 4,
+      "sample_count": 76,
+      "tau": 6,
+      "changed_relation_count": 194,
+      "nonzero_action_count": 96
+    },
+    "semantic_valid_counts": {
+      "on": 1477,
+      "inside": 0,
+      "holding": 532,
+      "open": 0,
+      "close": 0
+    },
+    "semantic_handler_definitions": {
+      "on": "LIBERO check_ontop when boolean; support-surface AABB fallback otherwise",
+      "inside": "target-side check_contain when boolean; explicit containment-capable AABB fallback otherwise",
+      "holding": "robot contact plus abs gripper qpos <= 0.01",
+      "open_close": "node-level only; not duplicated across directed edges"
+    },
+    "scope_limit": "task0 does not expose a generic containment capability or pairwise open/close edge semantics; those remain unknown rather than false"
+  },
+  "next_required_work": [
+    "scale the same capture/handler contract to relation-critical LIBERO tasks",
+    "define task-specific containment capability metadata before using inside labels",
+    "keep open/close as node-state targets unless the model schema is explicitly extended",
+    "begin Phase 3 offline MLP/GNN probe on the validated task0 pilot and report task-coverage limits"
+  ]
+}

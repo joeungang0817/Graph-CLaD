@@ -1,0 +1,43 @@
+{
+  "capture_status": "live_graph_validation",
+  "graph_spec": "phase2.v1",
+  "source_suite": "libero_spatial",
+  "source_task_id": 0,
+  "source_init_state_id": 0,
+  "snapshot_count": 2,
+  "graph_count": 2,
+  "node_count_per_graph": 24,
+  "node_type_counts_per_graph": {
+    "robot": 1,
+    "object": 5,
+    "fixture": 2,
+    "site": 16
+  },
+  "node_feature_dim": 24,
+  "edge_policy": "complete_directed_without_self_loops",
+  "edge_count_per_graph": 552,
+  "missing_position_nodes_per_graph": [],
+  "predicate_audit_per_graph": {
+    "error": 55,
+    "available": 12,
+    "unsupported": 2
+  },
+  "representative_edge": {
+    "source": "robot0",
+    "target": "akita_black_bowl_1",
+    "edge_type": "spatial_directed",
+    "relative_position": [0.14733204468056743, 0.2172223834569913, -0.2056771209255328],
+    "distance": 0.3334597027178983,
+    "semantic_relation": {
+      "value": null,
+      "valid": 0,
+      "status": "not_in_phase2_v1"
+    }
+  },
+  "notes": [
+    "The full graph sequence was generated in Colab from the full Phase 1 capture.",
+    "body_id was retained as audit metadata and was not used as node identity.",
+    "Predicate errors were preserved as unknown and were not coerced to false.",
+    "This manifest is compact; the full graph JSON is reproducible with scripts/graph_extractor.py."
+  ]
+}

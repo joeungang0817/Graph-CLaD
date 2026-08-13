@@ -1,0 +1,90 @@
+{
+  "validation_version": "phase2r-scaleup.v1",
+  "status": "pass_scaleup_with_relation_critical_coverage",
+  "source": "Google Colab Graph-CLaD.ipynb",
+  "colab_root": "/content/Graph-CLaD-phase2r-scaleup-r3",
+  "bundle": "phase2r_scaleup_bundle_r3_structured.zip",
+  "protocol": {
+    "suites": ["libero_spatial", "libero_90", "libero_goal", "libero_object"],
+    "task_family_count": 15,
+    "episode_count": 30,
+    "init_states_per_task": 2,
+    "steps_per_episode": 24,
+    "snapshot_count": 750,
+    "tau": 6,
+    "seed": 0,
+    "action_probe": "bounded_deterministic_nonzero_probe",
+    "model_coordinate_frame": "robot_base",
+    "graph_site_policy": "include_all_sites"
+  },
+  "dataset_audit": {
+    "sample_count": 570,
+    "changed_relation_count": 8520,
+    "nonzero_action_count": 720,
+    "structural_validation": "pass"
+  },
+  "frame_and_geometry": {
+    "robot_base_pose_present": 750,
+    "robot_base_pose_expected": 750,
+    "geometry_present": 750,
+    "geometry_expected": 750,
+    "stable_per_task": true,
+    "position_range_per_task": [0.0, 0.0, 0.0],
+    "quaternion_range_per_task": [0.0, 0.0, 0.0, 0.0]
+  },
+  "semantic_valid_counts_dataset": {
+    "on": 37070,
+    "inside": 988,
+    "holding": 11704,
+    "open": 0,
+    "close": 0
+  },
+  "semantic_valid_counts_validator_both_graphs": {
+    "on": 75910,
+    "inside": 1976,
+    "holding": 23408,
+    "open_node": 6384,
+    "close_node": 6384
+  },
+  "relation_coverage_by_task": {
+    "libero_90:0": {"on": 9044, "holding": 1064},
+    "libero_90:1": {"on": 9022, "holding": 1064},
+    "libero_90:2": {"on": 9018, "inside": 912, "holding": 1064},
+    "libero_goal:0": {"on": 21916, "holding": 1596},
+    "libero_object:0": {"on": 10120, "inside": 1064, "holding": 1140},
+    "libero_spatial:0": {"on": 1726, "holding": 1748},
+    "libero_spatial:1": {"on": 1724, "holding": 1748},
+    "libero_spatial:2": {"on": 1726, "holding": 1748},
+    "libero_spatial:3": {"on": 1620, "holding": 1748},
+    "libero_spatial:4": {"on": 1618, "holding": 1748},
+    "libero_spatial:5": {"on": 1572, "holding": 1748},
+    "libero_spatial:6": {"on": 1688, "holding": 1748},
+    "libero_spatial:7": {"on": 1690, "holding": 1748},
+    "libero_spatial:8": {"on": 1736, "holding": 1748},
+    "libero_spatial:9": {"on": 1690, "holding": 1748}
+  },
+  "gate_results": {
+    "structural_validation": true,
+    "task_count_at_least_two": true,
+    "robot_base_pose_present_and_stable_per_task": true,
+    "geometry_metadata_present": true,
+    "semantic_coverage_exists": true
+  },
+  "changed_semantics": {
+    "on_changed_validator_count": 140,
+    "inside_changed_validator_count": 0,
+    "holding_changed_validator_count": 0,
+    "interpretation": "The bounded probe demonstrates coverage and temporal alignment; it is not a manipulation-success or dynamics claim."
+  },
+  "implementation_correction": {
+    "initial_issue": "The first r3 upload unpacked files at the ZIP root and reused the old scripts namespace, so task_semantics was absent.",
+    "correction": "The scripts path was restored, cached modules were removed, the collector path was verified, and relation-critical tasks were recollected.",
+    "verified_task2_metadata": "BDDL In(akita_black_bowl_1, wooden_cabinet_1_top_region) and a containment-capable MuJoCo site AABB were present in every snapshot."
+  },
+  "limitations": [
+    "open/close remain node-level predicates and are not pairwise edge labels.",
+    "inside labels are enabled only for explicit BDDL In targets; unknown is not false.",
+    "semantic transition changes were observed for on only under the bounded probe; more targeted successful trajectories are needed for learned dynamics claims.",
+    "libero_spatial captures were retained from the earlier frame-stable run; relation-critical suites were recollected with the corrected collector."
+  ]
+}

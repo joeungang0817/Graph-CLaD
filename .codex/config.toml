@@ -1,0 +1,8 @@
+# Project-local MCP configuration for the controlled CLaD experiments.
+# The Colab notebook must be open in Google Colab before using this server.
+
+[mcp_servers.colab]
+command = 'C:\Users\User\.cache\codex-runtimes\codex-primary-runtime.previous-7394bc8f-1c1b-46b3-8611-79af7468a6b9\dependencies\python\Scripts\uvx.exe'
+args = ['git+https://github.com/googlecolab/colab-mcp']
+startup_timeout_sec = 300
+tool_timeout_sec = 300

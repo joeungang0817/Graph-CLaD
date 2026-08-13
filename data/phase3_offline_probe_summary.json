@@ -1,0 +1,119 @@
+{
+  "probe_version": "phase3-offline.v1",
+  "status": "pass_probe_executed_with_scope_limits",
+  "source": "Google Colab Graph-CLaD.ipynb",
+  "colab_report": "/content/Graph-CLaD-phase2r-scaleup-r3/data/phase3_offline_probe_report.json",
+  "device": "cuda",
+  "dataset": {
+    "version": "phase2r.v2-robot-base",
+    "coordinate_frame": "robot_base",
+    "site_policy": "include_all_sites",
+    "samples": 570,
+    "train_samples": 532,
+    "validation_samples": 19,
+    "test_samples": 19,
+    "test_episode": "libero_spatial:task9:init1:seed0",
+    "normalization_fit": "train_samples_only",
+    "future_state_input_used": false
+  },
+  "models": {
+    "p0_flat_mlp": {
+      "parameters": 92244,
+      "future_macro_f1_mean": 0.7655,
+      "future_macro_f1_std": 0.0030,
+      "changed_macro_f1_mean": 0.2640,
+      "changed_macro_f1_std": 0.0330,
+      "changed_macro_f1_by_seed": [0.2667, 0.3030, 0.2222],
+      "changed_macro_f1_controls": {
+        "no_action": 0.2000,
+        "shuffled_action": 0.2889,
+        "shuffled_edge": 0.2640
+      }
+    },
+    "p1_node_no_message": {
+      "parameters": 43988,
+      "future_macro_f1_mean": 0.7735,
+      "future_macro_f1_std": 0.0007,
+      "changed_macro_f1_mean": 0.7873,
+      "changed_macro_f1_std": 0.0811,
+      "changed_macro_f1_by_seed": [0.6807, 0.8771, 0.8041],
+      "changed_macro_f1_controls": {
+        "no_action": 0.3581,
+        "shuffled_action": 0.4608,
+        "shuffled_edge": 0.5291
+      }
+    },
+    "p2_gnn_empty_edge": {
+      "parameters": 60692,
+      "future_macro_f1_mean": 0.7728,
+      "future_macro_f1_std": 0.0007,
+      "changed_macro_f1_mean": 0.8576,
+      "changed_macro_f1_std": 0.0496,
+      "changed_macro_f1_by_seed": [0.7963, 0.8586, 0.9179],
+      "changed_macro_f1_controls": {
+        "no_action": 0.4884,
+        "shuffled_action": 0.5912,
+        "shuffled_edge": 0.6551
+      }
+    },
+    "p3_gnn_geometry": {
+      "parameters": 78036,
+      "future_macro_f1_mean": 0.7716,
+      "future_macro_f1_std": 0.0012,
+      "changed_macro_f1_mean": 0.8506,
+      "changed_macro_f1_std": 0.0305,
+      "changed_macro_f1_by_seed": [0.8101, 0.8837, 0.8578],
+      "changed_macro_f1_controls": {
+        "no_action": 0.6656,
+        "shuffled_action": 0.7078,
+        "shuffled_edge": 0.3837
+      }
+    },
+    "p4_gnn_soft_attention": {
+      "parameters": 86677,
+      "future_macro_f1_mean": 0.7722,
+      "future_macro_f1_std": 0.0004,
+      "changed_macro_f1_mean": 0.7896,
+      "changed_macro_f1_std": 0.0699,
+      "changed_macro_f1_by_seed": [0.8837, 0.7163, 0.7687],
+      "changed_macro_f1_controls": {
+        "no_action": 0.6629,
+        "shuffled_action": 0.7122,
+        "shuffled_edge": 0.3777
+      }
+    }
+  },
+  "best_observed": {
+    "model": "p2_gnn_empty_edge",
+    "seed": 2,
+    "changed_macro_f1": 0.9179,
+    "future_macro_f1": 0.7735,
+    "changed_relation_support": {
+      "above": 140,
+      "below": 140,
+      "on": 6
+    }
+  },
+  "controls_and_gates": {
+    "all_15_model_seed_runs_completed": true,
+    "episode_disjoint_split_preserved": true,
+    "normalization_train_only": true,
+    "future_input_excluded": true,
+    "no_action_control_executed": true,
+    "shuffled_action_control_executed": true,
+    "shuffled_edge_control_executed": true
+  },
+  "interpretation": [
+    "P2/P3 substantially outperform P0 on changed-relation F1 in this controlled oracle probe.",
+    "P3/P4 show a strong shuffled-edge degradation, supporting that edge assignment is being used rather than ignored.",
+    "P3 geometry edges did not beat P2 empty-edge GNN on the current split, so geometry-edge superiority is not established.",
+    "The test split is one held-out libero_spatial task/init episode; inside and holding have no test support here. The result is therefore not yet a broad semantic-relations claim.",
+    "P0-P4 are not exactly parameter matched; parameter counts are reported and a stricter matched-capacity rerun is required before a final model-selection claim."
+  ],
+  "deferred": [
+    "Rebuild the split so relation-critical inside/holding tasks are represented in validation and test.",
+    "Run parameter-matched hidden widths and a task-family-held-out evaluation.",
+    "Add P5 history/recurrent model after storing past graph sequences.",
+    "Only then integrate the selected graph adapter into CLaD Phase 4."
+  ]
+}

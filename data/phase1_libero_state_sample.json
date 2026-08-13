@@ -1,0 +1,77 @@
+{
+  "capture_status": "schema_example_not_live_capture",
+  "source": "Phase 1 schema example; replace with scripts/inspect_libero_state.py output",
+  "suite": "libero_spatial",
+  "task_id": 0,
+  "task_name": "example_task_name",
+  "language": "put the red cube near the target",
+  "seed": 0,
+  "init_state_id": 0,
+  "simulator": {
+    "flat_state_dim": null,
+    "model_nbody": null,
+    "model_nsite": null,
+    "model_ngeom": null,
+    "model_njnt": null,
+    "action_dim": 7
+  },
+  "snapshots": [
+    {
+      "step": 0,
+      "observation_schema": {
+        "agentview_image": {"kind": "array", "shape": [128, 128, 3], "dtype": "uint8"},
+        "robot0_eef_pos": {"kind": "array", "shape": [3], "dtype": "float64"},
+        "robot0_eef_quat": {"kind": "array", "shape": [4], "dtype": "float64"},
+        "robot0_gripper_qpos": {"kind": "array", "shape": [2], "dtype": "float64"},
+        "robot0_eye_in_hand_image": {"kind": "array", "shape": [128, 128, 3], "dtype": "uint8"}
+      },
+      "robot_state": {
+        "eef_pos": [0.0, -0.1, 0.9],
+        "eef_quat": [1.0, 0.0, 0.0, 0.0],
+        "gripper_qpos": [0.04, 0.04],
+        "joint_pos": null,
+        "joint_vel": null,
+        "eef_vel_lin": null,
+        "eef_vel_ang": null,
+        "available_keys": ["robot0_eef_pos", "robot0_eef_quat", "robot0_gripper_qpos"],
+        "representation_status": "raw_observation_fields; not normalized"
+      },
+      "object_states": [
+        {
+          "logical_id": "red_cube",
+          "node_type": "object",
+          "is_object_of_interest": true,
+          "body_id": 12,
+          "pose": {
+            "position": [0.1, 0.0, 0.84],
+            "quaternion": [1.0, 0.0, 0.0, 0.0]
+          },
+          "quaternion_convention": "MuJoCo body_xquat raw ordering",
+          "joint_state": [],
+          "is_open": false,
+          "is_close": true
+        },
+        {
+          "logical_id": "target_zone",
+          "node_type": "fixture",
+          "is_object_of_interest": false,
+          "body_id": 8,
+          "pose": {
+            "position": [0.35, 0.0, 0.84],
+            "quaternion": [1.0, 0.0, 0.0, 0.0]
+          },
+          "quaternion_convention": "MuJoCo body_xquat raw ordering",
+          "joint_state": [],
+          "is_open": false,
+          "is_close": true
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "This is a schema example, not a live simulator capture.",
+    "logical_id is used for graph identity; body_id may change with task/model construction.",
+    "Quaternion ordering and coordinate frame must be verified from the live runtime before normalization.",
+    "Privileged simulator state is used only for the oracle-graph feasibility study."
+  ]
+}

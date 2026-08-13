@@ -1,0 +1,80 @@
+{
+  "status": "holding_positive_collection_passed_with_partial_task_coverage",
+  "date": "2026-08-06",
+  "source": "Google Colab Graph-CLaD.ipynb",
+  "colab_root": "/content/Graph-CLaD-phase2r-scaleup-r3",
+  "graph_schema": {
+    "robot_node_id": "robot0",
+    "robot_node_already_existed": true,
+    "contact_normalization": "gripper0_* -> robot0",
+    "holding_direction": "robot0 -> object"
+  },
+  "collection": {
+    "suite": "libero_spatial",
+    "task_ids": [0, 1, 2],
+    "init_state_ids": [0, 1],
+    "seed": 0,
+    "steps_per_episode": 64,
+    "controller": "OSC_POSE",
+    "action_mode": "holding_probe",
+    "holding_approach_steps": 32,
+    "holding_close_steps": 16,
+    "holding_height_offset": -0.02,
+    "holding_lift_height": 0.1
+  },
+  "labeling": {
+    "coordinate_frame": "robot_base",
+    "tau": 6,
+    "site_policy": "include_all_sites",
+    "gripper_closed_threshold": 0.025
+  },
+  "pilot": {
+    "episodes": 1,
+    "task_id": 0,
+    "holding_positive_labels": 10,
+    "holding_changed": 10,
+    "dataset": "/content/Graph-CLaD-phase2r-scaleup-r3/data/phase2r_holding_pilot_dataset_calibrated.json"
+  },
+  "scaleup": {
+    "episodes": 6,
+    "graph_samples": 354,
+    "changed_relation_count": 5170,
+    "nonzero_action_count": 384,
+    "holding_valid_records": 8142,
+    "holding_changed": 34,
+    "holding_positive_by_episode": {
+      "libero_spatial:task0:init0:seed0": 10,
+      "libero_spatial:task0:init1:seed0": 18,
+      "libero_spatial:task1:init0:seed0": 44,
+      "libero_spatial:task1:init1:seed0": 42
+    },
+    "robot_contact_snapshots_by_episode": {
+      "libero_spatial:task0:init0:seed0": 26,
+      "libero_spatial:task0:init1:seed0": 30,
+      "libero_spatial:task1:init0:seed0": 31,
+      "libero_spatial:task1:init1:seed0": 38,
+      "libero_spatial:task2:init0:seed0": 17,
+      "libero_spatial:task2:init1:seed0": 19
+    },
+    "dataset": "/content/Graph-CLaD-phase2r-scaleup-r3/data/phase2r_holding_spatial_dataset.json",
+    "capture": "/content/Graph-CLaD-phase2r-scaleup-r3/data/phase2r_holding_spatial_capture.json"
+  },
+  "task2_extended_probe": {
+    "task_id": 2,
+    "init_state_ids": [0, 1],
+    "steps_per_episode": 96,
+    "holding_close_steps": 32,
+    "episodes": 2,
+    "graph_samples": 182,
+    "holding_changed": 0,
+    "dataset": "/content/Graph-CLaD-phase2r-scaleup-r3/data/phase2r_holding_task2_extended_dataset.json",
+    "interpretation": "The longer close phase did not create holding transitions; task 2 needs task-specific EEF approach/grasp alignment calibration."
+  },
+  "interpretation": [
+    "The contact-to-robot mapping and calibrated closure threshold produce positive holding labels.",
+    "Task 0 and task 1 contain holding-positive transitions in this probe.",
+    "Task 2 contains robot-contact snapshots but no positive holding label, so task-family coverage is incomplete.",
+    "The existing Phase 3 matched evaluation must be rebuilt before Phase 4; its action-conditioning and shuffled-edge gates remain open."
+  ],
+  "next_step": "Recollect purposeful manipulation trajectories with positive holding states in the intended held-out families, then rerun the matched Phase 3 probe."
+}
