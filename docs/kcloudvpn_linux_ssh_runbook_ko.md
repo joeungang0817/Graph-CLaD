@@ -58,7 +58,7 @@ nvidia-smi
 
 ```bash
 export GRAPH_CLAD_PROJECT_ROOT="$HOME/Graph-CLaD"
-export GRAPH_CLAD_ARTIFACT_ROOT="/path/to/persistent/Graph-CLaD-artifacts"
+export GRAPH_CLAD_ARTIFACT_ROOT="$HOME/graphclad-artifacts"
 export GRAPH_CLAD_LIBERO_ROOT="/path/to/LIBERO"
 cd "$GRAPH_CLAD_PROJECT_ROOT"
 ```
@@ -79,9 +79,10 @@ $GRAPH_CLAD_ARTIFACT_ROOT/phase2d/data/phase2d_demo_split_manifest.json
 $GRAPH_CLAD_ARTIFACT_ROOT/phase3_holder_action_v1/corrected_protocol_v2/ai_assisted_full_cluster_audit_v1/review/ai_assisted_sensitivity_groups_v1.json
 ```
 
-`phase3B_R1_eval_manifest_v2.json`은 Colab에서 그대로 복사해도 되지만, 그 안에
-Colab 절대경로가 들어 있으므로 KCloudVPN에서 아래 portable manifest config로
-재생성하는 방법을 권장한다. 이때 원본 manifest는 비교용으로 별도 보존한다.
+`phase3B_R1_eval_manifest_v2.json`은 Colab에서 그대로 복사하면 source root가
+`/content/drive`를 가리키므로 서버 경로로 바꿔야 한다. 처음에는 아래 portable
+config로 재생성하는 방법을 준비했지만, 현재 builder는 압축 해제된 graph payload
+전체를 메모리에 유지하며 KCloudVPN에서 memory OOM으로 추정되는 `Killed`가 발생했다.
 
 ```bash
 mkdir -p "$GRAPH_CLAD_ARTIFACT_ROOT/phase3_holder_action_v1/corrected_protocol_v2"
@@ -90,8 +91,11 @@ python -m scripts.phase3.build_eval_manifest \
   --output "$GRAPH_CLAD_ARTIFACT_ROOT/phase3_holder_action_v1/corrected_protocol_v2/phase3B_R1_eval_manifest_v2.json"
 ```
 
-생성 결과의 `status`가 `pass`여야 하며, 가능하면 Colab manifest와 SHA256을 비교해
-입력 데이터가 동일한지 확인한다. 입력 복사 후 파일 수·크기·SHA256도 기록한다.
+따라서 streaming builder가 구현되기 전에는 이 명령을 큰 Phase2D 입력에 반복하지
+않는다. 현재 권장 방법은 기존 Colab `status=pass` manifest를 복사하고 원본을 별도
+보존한 뒤 `/content/drive/MyDrive/Graph-CLaD/artifacts` 문자열만
+`$GRAPH_CLAD_ARTIFACT_ROOT`로 바꾸는 것이다. 변환 후 `status=pass`, folds=3,
+source roots를 확인한다. 경로 변환으로 SHA256은 바뀌므로 원본과 변환본을 함께 보존한다.
 Colab의 `/content`는 임시 공간이며
 현재 실행 결과의 원본은 Google Drive에 있으므로, KCloudVPN에서 자동으로 보인다고
 가정하지 않는다.
@@ -103,7 +107,7 @@ Colab의 `/content`는 임시 공간이며
 | `phase2d_full_demo_v2_inputclean_stream1/` | 필수 | natural sample과 causal history 재구성 |
 | `phase2d_holding_target_v2_inputclean_stream1/` | 필수 | train/challenge용 target-aligned sample |
 | `phase2d_demo_split_manifest.json` | 필수 | episode split 고정 및 manifest 재생성 |
-| `phase3B_R1_eval_manifest_v2.json` | 선택(권장 보존) | Colab manifest와 SHA 비교; 서버에서는 portable config로 재생성 |
+| `phase3B_R1_eval_manifest_v2.json` | 필수 | Colab pass manifest의 source root를 서버 경로로 바꾼 portable copy 사용 |
 | `ai_assisted_sensitivity_groups_v1.json` | 실행에는 선택 | weak-label sensitivity 사후 분석 |
 | 기존 `checkpoints/`, `predictions/`, result JSON | 새 학습에는 불필요 | 기존 결과 비교·보고서·bootstrap 재분석 |
 | 기존 `code_snapshot/`, runtime manifest | 새 학습에는 불필요 | 과거 실행의 정확한 재현 및 감사 |
@@ -134,22 +138,24 @@ Weak-label sensitivity 파일은 사후 분석 시에만 별도로 확인한다.
 
 1. `configs/phase3_kcloudvpn_linux_pair_local_temporal_action_alignment_seed0_v1.json`로
    action-shuffled 3-fold alignment control을 실행한다.
-2. 입력·GPU·output이 정상임을 확인한 뒤
-   `configs/phase3_kcloudvpn_linux_pair_local_temporal_threefold_seed0_v1.json`로
-   H0/H1/H2/H3 3-fold seed-0 screen을 실행한다.
+2. 기존 H0/H1/H2/H3 three-fold seed-0 12-run은 Colab에서 이미 완료됐으므로 단순
+   환경 전환을 이유로 다시 실행하지 않는다. Alignment 완료 후 기존 aligned H3
+   result/prediction과 paired 비교한다.
 
-두 config 모두 기존 Colab 경로를 사용하지 않고
-`GRAPH_CLAD_ARTIFACT_ROOT` 아래의 새 output 디렉터리를 사용한다. 기존 Colab
-결과와 섞거나 같은 디렉터리에 재실행하지 않는다.
+KCloudVPN config는 기존 Colab 경로를 사용하지 않고 `GRAPH_CLAD_ARTIFACT_ROOT`
+아래의 새 output 디렉터리를 사용한다. 기존 Colab 결과와 섞거나 같은 디렉터리에
+재실행하지 않는다.
 
 ## 6. 중단에 강한 실행
 
 GPU 작업은 `tmux` 안에서 실행한다.
 
 ```bash
-tmux new -s graphclad-pair
+tmux new -s graphclad-align
 cd "$GRAPH_CLAD_PROJECT_ROOT"
 source .venv/bin/activate
+export GRAPH_CLAD_PROJECT_ROOT="$HOME/Graph-CLaD"
+export GRAPH_CLAD_ARTIFACT_ROOT="$HOME/graphclad-artifacts"
 python -u -m scripts.phase3.run_corrected_architecture_gate \
   --config configs/phase3_kcloudvpn_linux_pair_local_temporal_action_alignment_seed0_v1.json
 ```
@@ -157,10 +163,11 @@ python -u -m scripts.phase3.run_corrected_architecture_gate \
 실행 중에는 `Ctrl-b`를 누른 뒤 `d`로 detach한다. 다시 접속할 때는 다음을 쓴다.
 
 ```bash
-tmux attach -t graphclad-pair
+tmux attach -t graphclad-align
 ```
 
-현재 control이 끝난 후 factorial screen을 별도 세션에서 실행한다.
+Factorial screen은 portability 회귀를 별도 검증해야 한다는 연구적 이유가 생긴 경우에만
+새 output version으로 실행한다. 기존 12-run을 자동 후속 작업으로 반복하지 않는다.
 
 ```bash
 tmux new -s graphclad-factorial
@@ -186,8 +193,8 @@ predictions/
 code_snapshot/
 ```
 
-result JSON의 `status`가 `completed`이고, action alignment는 `runs: 3`, factorial은
-`runs: 12`인지 확인한다. `runtime_manifest.json`에서 GPU 이름, CUDA 여부,
+Result JSON의 `status`가 `completed`이고 action alignment는 `results` 배열 길이가 3,
+factorial은 12인지 확인한다. `runtime_manifest.json`에서 GPU 이름, CUDA 여부,
 config/manifest SHA256, causal history QA를 확인한다. `predictions/`는 이후
 hierarchical bootstrap과 calibration 분석에 필요한 per-sample artifact다.
 

@@ -3,7 +3,7 @@
 > 이 문서는 과거 probe 기록이다. 현재 official-demo holding summary는
 > `data/phase3_holding_target_v2_summary.json`,
 > `data/phase3_holding_target_balanced_v3_summary.json`이다. 현재 claim limit은
-> `docs/research_risk_review_20260807.md`와
+> `docs/literature_alignment_and_phase_reassessment.md`와
 > `docs/phase3_holder_object_action_graph_design.md`를 따른다.
 
 > 아래 수치는 scripted/bounded Phase 2R dataset의 diagnostic 결과이며 Phase 4 진입

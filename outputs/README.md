@@ -5,9 +5,8 @@
 `predictions/` 하위 폴더를 만든다. 각 하위 폴더의 내용은 Git 추적 대상에서 제외한다.
 
 official-demo 전체 데이터셋, 체크포인트, 표본별 예측, 전체 실험 결과는 영구 저장소에
-보존한다. 현재 Colab 영구 저장 경로는 다음과 같다.
+보존한다. 새 KCloudVPN 실행은 `/home/ubuntu/graphclad-artifacts`, 기존 Colab 실행은
+`/content/drive/MyDrive/Graph-CLaD/artifacts`에 보존한다.
 
-`/content/drive/MyDrive/Graph-CLaD/artifacts`
-
-Drive의 대용량 artifact를 이 저장소로 복사하지 않는다. 대신 config, manifest,
+영구 저장소의 대용량 artifact를 이 저장소로 복사하지 않는다. 대신 config, manifest,
 result 경로, checksum, code snapshot을 기록한다.

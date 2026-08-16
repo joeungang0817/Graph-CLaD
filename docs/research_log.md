@@ -271,8 +271,9 @@ Task-macro natural conditional PR-AUC:
   `/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1/corrected_protocol_v2/pair_local_temporal_action_alignment_seed0_v1`
 - Episode-disjoint matched action donor를 사용하며 aligned H3와 train-shuffled H3를
   same fold/seed로 비교한다.
-- 이 기록을 정리하던 시점에 Colab PID 12616이 실행 중이었다. 완료 결과를 확인하기
-  전에는 성능이나 gate 통과 여부를 기록하지 않는다.
+- Colab PID 12616으로 실행을 시작했지만 runtime이 종료되기 전에 중단되어,
+  aligned H3와 episode-disjoint matched train-shuffled H3의 결과 artifact는 생성되지
+  않았다. 따라서 이 control의 성능이나 gate 통과 여부는 아직 기록하지 않는다.
 
 ## 2026-08-13 — 저장소와 Colab source 비파괴 정리
 
@@ -282,8 +283,8 @@ Task-macro natural conditional PR-AUC:
 - `scripts/phase*/`를 source of truth로 유지하고 위험한 `src/` migration은 하지 않았다.
 - `scripts/research_paths.py`로 local/Colab artifact path를 공통화했다.
 - 대용량 dataset/checkpoint/prediction은 복사하지 않고 경로와 checksum만 문서화했다.
-- 임시 bundle/stage/cache는 삭제하지 않고 `docs/archive_candidates_20260813.md`에
-  보관 후보로만 분류했다.
+- 임시 bundle/stage/cache는 삭제하지 않고 보관 후보로 분류했고, 2026-08-16에
+  `archive/temporary_transfers_20260816/`로 보존 이동했다.
 
 ## 2026-08-13 — 공식 Phase 이름 교정과 문서 한국어화
 
@@ -352,3 +353,83 @@ GPU 이름, VRAM, CUDA, batch size는 각 launcher/result metadata에 기록한�
 - TITAN RTX로 전달받은 사양과 실제 장치가 다르므로, 실험 기록에는 실제
   `nvidia-smi` 결과인 RTX 3090을 사용한다. GPU 종류는 영구 연구 조건이 아니라
   runtime metadata로 보존한다.
+
+## 2026-08-16 — Phase2D 입력 이전과 corrected manifest 복구
+
+- KCloudVPN의 `/home/ubuntu/graphclad-artifacts/phase2d/data` 아래에 다음 입력을
+  복사하고 압축 해제했다.
+  - natural dataset: 836 MB.
+  - holding target-aligned dataset: 357 MB.
+  - demo split manifest: 76 KB.
+- `configs/phase3_kcloudvpn_linux_eval_manifest_v2.json`으로 manifest를 재생성하려 했으나
+  process가 `Killed`로 종료됐다. 현재 builder가 gzip JSONL에서 읽은 natural/target
+  graph payload 전체를 동시에 list에 보관하므로 CPU memory OOM으로 판단했다.
+- 같은 작업을 반복하지 않고 기존 Colab의 corrected `status=pass` manifest를 서버로
+  복사했다. Colab 원본은 별도 파일로 보존하고 source root만
+  `/home/ubuntu/graphclad-artifacts`로 바꾼 portable copy를 runner 입력으로 사용한다.
+- Portable manifest 검증은 `status=pass`, `folds=3`이다. Sample key, split, payload
+  hash, quota/leakage QA 결과는 변경하지 않았다. Manifest SHA는 경로 변환 때문에
+  Colab 원본과 다르므로 두 파일을 함께 보존한다.
+
+## 2026-08-16 — KCloudVPN action-alignment 재실행 준비
+
+- Config:
+  `configs/phase3_kcloudvpn_linux_pair_local_temporal_action_alignment_seed0_v1.json`.
+- Expected scope: H3 train-shuffled × 3 task folds × seed 0 = 3 runs.
+- Output:
+  `/home/ubuntu/graphclad-artifacts/phase3_holder_action_v1/corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1`.
+- `tmux` session 이름은 `graphclad-align`로 안내했다. 이후 사용자가 H3 action-alignment
+  실행을 시작했다고 확인했다. 현재 process의 실행/완료 상태와 artifact 무결성은 server
+  process와 output artifact로 다시 확인해야 하며 시작 명령을 반복하지 않는다.
+- 현재 runner는 shuffled H3만 학습한다. Aligned H3와의 paired 비교는 기존 Colab
+  three-fold result와 H3 per-sample prediction을 별도로 읽어야 한다.
+
+## 2026-08-16 — 제출용 전체 CLaD 연결 방향
+
+- Phase 3 gate 이후 no-future-action foresight bridge와 CLaD Stage 1 통합을 먼저 수행한다.
+- Stage 2는 원 논문 설명에 가까운 canonical DDPM Diffusion Policy로 통제 구현한다.
+  Stage 1은 freeze하고 current observation과 predicted foresight를 modality별 FiLM으로
+  conditioning하며 action horizon `tau=6`, epsilon-prediction loss를 우선 사용한다.
+- Policy-only, semantic CLaD foresight, 선택 pair-local/graph foresight를 같은 policy
+  capacity와 training/rollout budget으로 비교한다.
+- 공식 Stage 2 code와 LIBERO-LONG 전체 protocol이 없으므로 결과는
+  CLaD-compatible controlled reimplementation으로 표현한다. 논문의 94.7%와 직접
+  비교하거나 공식 재현이라고 주장하지 않는다.
+- RTX 3090과 제출 일정에서는 one-task smoke와 reduced budget을 먼저 실행하고,
+  정상 동작과 비교 가능성을 확인한 뒤 최적 후보만 확대한다.
+
+## 2026-08-16 — 문서와 임시 전송 파일 정리
+
+- `docs/CURRENT_STATUS.md`를 현재 실행 상태의 단일 진입점으로 추가했다.
+- `docs/README.md`에서 설계·결과·운영·legacy 문서를 목적별로 분류했다.
+- `docs/NEXT_SESSION_PROMPT.md`에 KCloud 경로, gate, claim limit, Stage 2 결정을 포함한
+  새 세션용 인계 프롬프트를 저장했다.
+- `docs/RESEARCH_WORKFLOW_FOR_BEGINNERS.md`에 연구 질문, 데이터 생성, Phase 0–8,
+  metric, control, 통계와 최종 CLaD 연결을 신규 연구자 관점에서 설명했다.
+- `docs/CODEBASE_GUIDE_FOR_BEGINNERS.md`에 폴더, 주요 Python 파일, 입출력, data schema,
+  model/runner/analysis 흐름과 향후 Stage 1/2 ownership을 상세히 기록했다.
+- 활성 source/config/notebook은 이동하지 않았다. 루트의 `.tmp_*` Colab transfer
+  bundle과 stage만 삭제 없이 `archive/temporary_transfers_20260816/`로 이동해 보존한다.
+
+## 2026-08-16 — 통합 연구계획서 v4 작성
+
+- 초기 `Graph_CLaD_Stage2_최종목표_연구실행계획서.pdf`, 수정 roadmap v3, Phase 3
+  corrected GNN 결과, pair-local H0–H3 결과와 제출용 Stage 2 결정을 통합했다.
+- 새 canonical 계획서는
+  `docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`다.
+- 연구 목표를 GNN 우월성 입증으로 고정하지 않고 semantic, pair-local temporal,
+  object–relation graph representation의 same-data/same-capacity 비교로 명확히 했다.
+- Action-alignment, human weak-label audit, no-future-action Phase 3C, Stage 1 adapter,
+  canonical DDPM Stage 2, paired rollout의 단계별 통과·중단 기준을 추가했다.
+- v3 roadmap은 삭제하거나 덮어쓰지 않고 이전 Phase 개정 근거로 보존한다.
+- 후속 v4.1에서는 Phase 0–2D 기반 검증, legacy 45-run 탐색, task-0 topology/action
+  smoke, 36-run reduced cross-fold, corrected hierarchical bootstrap, pair-local H0–H3,
+  weak-label audit 준비 결과를 protocol별로 분리해 계획서 본문에 추가했다.
+- v4.2에서는 연구기록과 `unknowns.md`를 다시 대조해 metric display path, same-episode
+  legacy shuffle, validation threshold, 통계 독립 단위, late/global G1 action 명명 교정과
+  authoritative artifact 위치를 추가했다. Stage 2의 미공개 network/noise/rollout 설정은
+  baseline smoke 전 versioned config로 고정할 미확정 항목으로 명시했다.
+- `docs/NEXT_SESSION_PROMPT.md`를 v4.2 기준으로 다시 작성했다. 새 세션은 local git diff를
+  보존하고 KCloud action-alignment 상태를 artifact로 재확인하며, running/completed run을
+  중단하거나 반복하지 않는다. Paired 분석에 Colab aligned H3 prediction이 별도로
+  필요하다는 점과 제출 직전 최소 실행 순서도 인계한다.

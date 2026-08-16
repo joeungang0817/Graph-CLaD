@@ -1,8 +1,13 @@
 # Graph-CLaD 수정 연구 로드맵 v3
 
-기준일: 2026-08-13  
-현재 공식 단계: **Phase 3B-R1 — corrected architecture/action gate**  
+기준일: 2026-08-16
+현재 공식 단계: **Phase 3B — H3 action-alignment control**
 원 영문 혼합본: `archive/pre_korean_translation_20260813.zip`
+
+> 문서 상태: v4 통합 계획서 작성 전까지 사용한 공식 roadmap이다. 2026-08-16 이후의
+> 연구 질문, gate, Stage 1/2 실행 기준은
+> `docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`를 canonical로 사용한다.
+> 이 문서는 Phase 개정 근거와 이전 판단을 보존한다.
 
 ## 1. 개정 핵심
 
@@ -277,30 +282,43 @@ task 간 paired improvement다.
 
 ## 10. Phase 5–8
 
-- Phase 5: baseline CLaD Stage 2 policy 연결.
-- Phase 6: 선택된 Graph-CLaD representation을 Stage 2에 연결.
-- Phase 7: 동일 rollout/evaluation budget으로 최종 비교.
+- Phase 5: baseline CLaD Stage 2 policy 연결. Stage 1은 freeze하고 current observation과
+  predicted foresight를 modality별 FiLM으로 결합한 canonical DDPM Diffusion Policy를
+  사용한다. 기본 action chunk horizon은 `tau=6`, objective는 epsilon prediction이다.
+- Phase 6: 선택된 pair-local/Graph-CLaD representation을 동일한 Stage 2 policy 용량,
+  optimizer, action horizon, training budget으로 연결한다.
+- Phase 7: policy-only, semantic foresight, 선택 pair-local/graph foresight를 동일
+  rollout/evaluation budget으로 비교한다.
 - Phase 8: statistical report, ablation, claim-limit, reproducibility package 작성.
 
 Phase 4 통합 전에는 위 단계로 진입하지 않는다.
 
+저장소에는 공식 Stage 2 source와 rollout pipeline이 없으므로 Phase 5–7은 논문 설명을
+따른 CLaD-compatible controlled reimplementation으로 보고한다. 현재 task/data protocol은
+LIBERO-LONG 공식 10-task protocol과 다르므로 논문의 94.7%와 직접 비교하지 않는다.
+제출 일정에서는 one-task smoke와 reduced budget 비교를 먼저 확보한 뒤 확대한다.
+
 ## 11. 현재 바로 다음 작업
 
-1. 실행 중인 H3 action-alignment control 완료 상태와 artifact 무결성을 확인한다.
+1. KCloudVPN의 H3 action-alignment control 시작·완료 상태와 artifact 무결성을 확인한다.
 2. Aligned vs train-shuffled를 same fold/seed로 비교한다.
 3. Natural PR-AUC 최소 2 task, release, hard-negative gate를 적용한다.
 4. 90-item human weak-label review를 완료한다.
 5. 통과 시에만 H3/H1/H3-shuffled seeds 1/2 확대를 검토한다.
-6. 그 뒤 Phase 3C를 설계한다. Phase 4/5 notebook을 미리 만들지 않는다.
+6. 그 뒤 Phase 3C를 설계하고, 통과 시 Phase 4 Stage 1과 Phase 5 canonical DDPM
+   Diffusion Policy를 차례로 구현한다. Gate 결과를 보기 전에 대규모 학습하지 않는다.
 
 ## 12. 실행 시 참조 우선순위
 
-1. `docs/research_log.md`: 최신 실행과 결정.
-2. 이 roadmap v3: 공식 단계와 gate.
-3. `docs/phase3_corrected_protocol_v2.md`: corrected evaluation 계약.
-4. `docs/01-plan/features/phase3_pair_local_temporal_encoder.plan.md`: 현재 architecture gate.
-5. `docs/phase3_weak_label_audit_v2.md`: human label QA.
-6. `RESEARCH_GUIDE.md`: source, folder, path, 실행 방법.
+1. `docs/CURRENT_STATUS.md`: 현재 server/runtime/output과 즉시 할 일.
+2. `docs/research_log.md`: 최신 실행과 결정.
+3. `docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`: 현재 공식 연구계획과
+   gate.
+4. 이 roadmap v3: v4 이전 단계 개정 근거.
+5. `docs/phase3_corrected_protocol_v2.md`: corrected evaluation 계약.
+6. `docs/01-plan/features/phase3_pair_local_temporal_encoder.plan.md`: 현재 architecture gate.
+7. `docs/phase3_weak_label_audit_v2.md`: human label QA.
+8. `RESEARCH_GUIDE.md`: source, folder, path, 실행 방법.
 
 ## 13. 현재 주장할 수 없는 것
 

@@ -13,24 +13,29 @@ weak-label QA가 끝나기 전에는 representation 우월성이나 인과적 ac
 
 ## 처음 시작하기
 
-1. [RESEARCH_GUIDE.md](RESEARCH_GUIDE.md)에서 연구 상태와 데이터·실험 경로를 읽는다.
-2. [notebooks/README.md](notebooks/README.md)의 공식 Phase 0→1A→2A→2R→2D→3A→3B 순서대로 노트북을 연다.
-3. `python -m scripts.research_paths`로 로컬/Colab 경로를 확인한다.
-4. 가벼운 계약 검사는 `python -m unittest tests.test_research_paths tests.test_notebook_structure`로 실행한다. 전체 test discovery는 PyTorch와 `pytest`를 포함한 실험 의존성이 필요하다.
-5. 학습 전에는 config, manifest, output root, code snapshot 경로가 새 버전인지 확인한다.
+1. [현재 상태와 실행 인계](docs/CURRENT_STATUS.md)에서 지금 실행할 작업을 확인한다.
+2. [통합 연구계획서 v4](docs/01-plan/features/graph-clad-integrated-research-v4.plan.md)에서
+   연구 질문, 비교 조건, gate와 최종 완료 기준을 확인한다.
+3. 처음 접한다면 [연구 입문서](docs/RESEARCH_WORKFLOW_FOR_BEGINNERS.md)와
+   [코드 입문서](docs/CODEBASE_GUIDE_FOR_BEGINNERS.md)를 순서대로 읽는다.
+4. [문서 색인](docs/README.md)에서 목적에 맞는 설계·결과 문서를 찾는다.
+5. [RESEARCH_GUIDE.md](RESEARCH_GUIDE.md)에서 전체 데이터·코드·실행 구조를 읽는다.
+6. [notebooks/README.md](notebooks/README.md)의 공식 Phase 순서대로 노트북을 연다.
+7. `python -m scripts.research_paths`로 환경 경로를 확인하고, 학습 전에는 config,
+   manifest, output root, code snapshot이 새 version인지 확인한다.
 
-KCloudVPN Linux에서 실행할 때는 [SSH 실행 안내서](docs/kcloudvpn_linux_ssh_runbook_ko.md)를
-먼저 읽는다. 접속 주소는 `ubuntu@172.10.5.118`이며, 서버의 영구 디스크 경로는
-`GRAPH_CLAD_ARTIFACT_ROOT` 환경 변수로 지정한다.
+현재 학습 기본 환경은 KCloudVPN Linux의 RTX 3090 서버다. 실행할 때는
+[SSH 실행 안내서](docs/kcloudvpn_linux_ssh_runbook_ko.md)를 따른다. 서버 artifact
+root는 `/home/ubuntu/graphclad-artifacts`이며 환경 변수
+`GRAPH_CLAD_ARTIFACT_ROOT`로 지정한다.
 
 핵심 구현의 source of truth는 `scripts/phase*/`다. 루트 `scripts/*.py` 중 일부는
 과거 명령을 보존하는 compatibility wrapper이며 새 코드를 추가하지 않는다. Colab
 노트북에는 재사용 가능한 구현을 복사하지 않고 저장소 모듈을 import한다.
 
-대용량 데이터·체크포인트·per-sample prediction은 Git에 넣지 않는다. 현재 persistent
-artifact root는 다음과 같다.
-
-`/content/drive/MyDrive/Graph-CLaD/artifacts`
+대용량 데이터·체크포인트·per-sample prediction은 Git에 넣지 않는다. 현재 새 실행은
+KCloudVPN의 `/home/ubuntu/graphclad-artifacts`, 기존 Colab 결과는
+`/content/drive/MyDrive/Graph-CLaD/artifacts`에 version별로 보존한다.
 
 세부 실행법, 폴더 역할, legacy 대응표, 검증 범위는
 [RESEARCH_GUIDE.md](RESEARCH_GUIDE.md)에 정리되어 있다.

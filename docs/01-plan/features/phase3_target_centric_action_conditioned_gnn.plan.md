@@ -3,7 +3,8 @@
 작성일: 2026-08-11  
 상태: 실행 전 승인 기준 계획  
 적용 범위: official LIBERO demonstration 기반 oracle relational forward dynamics  
-선행 문서: `docs/research_risk_review_20260807.md`, `docs/phase3_holder_object_action_graph_design.md`
+선행 문서: `docs/literature_alignment_and_phase_reassessment.md`,
+`docs/phase3_holder_object_action_graph_design.md`
 
 ## 1. 최종 결정
 

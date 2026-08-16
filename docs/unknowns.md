@@ -73,8 +73,18 @@ evaluation design으로 이동했다.
 - Target-centric holder-object와 action-conditioned temporal edge가 target-object-only,
   flat baseline보다 나은지 여부.
 
-현재 위험은 `docs/research_risk_review_20260807.md`와
+현재 위험은 `docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`,
+`docs/revised_research_roadmap_v3.md`, `docs/CURRENT_STATUS.md`,
 `docs/phase3_holder_object_action_graph_design.md`에서 추적한다.
+
+## 2026-08-16 Stage 2 구현 결정과 남은 불확실성
+
+공식 Stage 2 source는 여전히 없지만 제출용 통제 비교의 구현 방향은 정했다. Stage 1을
+freeze하고 current observation과 predicted foresight를 modality별 FiLM으로 결합한
+canonical DDPM Diffusion Policy를 사용하며 action horizon `tau=6`, epsilon-prediction
+objective를 우선 적용한다. 이 선택은 공식 코드 확인이 아니라 논문 설명에 따른
+CLaD-compatible 재구현 가정이다. Network 세부 폭/깊이, noise schedule, inference step,
+rollout wrapper, checkpoint 선택은 아직 config로 확정해야 한다.
 
 ## 통제 연구 원칙
 

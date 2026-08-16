@@ -1,5 +1,9 @@
 # Colab MCP 다음 세션 연결 메모
 
+> 상태: legacy. 현재 학습 환경은 KCloudVPN Linux로 이전했다. 새 세션은
+> `docs/NEXT_SESSION_PROMPT.md`와 `docs/CURRENT_STATUS.md`를 사용한다. 이 파일은 기존
+> Colab/Drive artifact에 접근해야 할 때만 참고한다.
+
 이 문서는 Codex가 브라우저에 열린 Google Colab notebook의 런타임을 제어하고,
 Google Drive의 연구 artifact를 읽고 쓰기 위한 다음 세션용 연결 기록이다.
 

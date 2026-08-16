@@ -1,6 +1,6 @@
 # Graph-CLaD 연구 폴더 설명서
 
-Last updated: 2026-08-13
+Last updated: 2026-08-16
 
 ## 1. 연구 목적과 핵심 아이디어
 
@@ -22,19 +22,25 @@ view이며 독립 generalization test가 아니다.
 
 ## 2. 현재 진행 상태
 
+연구 질문, 모델 비교, 단계별 통과·중단 기준의 canonical 문서는
+`docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`다. v3 roadmap은 새
+계획서 이전의 개정 근거로 보존한다.
+
 - Phase 0–2D: 완료.
 - Legacy Phase 3 controlled experiment: 45 runs 완료.
 - Phase3B-R1 reduced cross-fold gate: 36/36 runs 완료.
 - Corrected protocol v2: 구현 및 three-fold seed-0 gate 완료.
 - Late/global-action G1: B1 pair MLP를 일관되게 이기지 못해 3-seed 확대 중단.
 - Pair-local H0–H3: three-fold seed-0 12/12 runs 완료.
-- H3 train-action-shuffled alignment control: 2026-08-13 Colab에서 별도 3-run으로
-  시작했으며 이 문서 정리 시점에는 실행 중이었다. 결과 폴더를 덮어쓰지 않는다.
+- H3 train-action-shuffled alignment control: 기존 Colab 실행은 runtime 종료 전에
+  중단됐다. KCloudVPN manifest 준비를 완료했고 새 version의 3-run 실행 명령을
+  전달했다. 실제 시작·완료 여부는 `docs/CURRENT_STATUS.md`의 경로에서 확인한다.
 - Weak-label audit: 90-item trajectory evidence package 준비 완료. Human decision은
   아직 완료되지 않았으므로 weak label을 ground truth로 표현하지 않는다.
-- Phase 4 representation comparison: 아직 시작하지 않음.
+- Phase 3C no-future-action representation/foresight bridge: 아직 시작하지 않음.
+- Phase 4 Graph-CLaD Stage 1 통합: 아직 시작하지 않음.
 
-최근 pair-local 결과는
+실행 중인 작업과 다음 명령은 `docs/CURRENT_STATUS.md`를 먼저 본다. 최근 pair-local 결과는
 `docs/phase3_pair_local_temporal_threefold_seed0_result.md`를 본다. 연구 판단의
 시간순 기록은 `docs/research_log.md`가 기준이다.
 
@@ -50,7 +56,9 @@ Phase 0  supplied CLaD baseline 무결성 검사
   -> Phase 3 corrected protocol: natural validation, frozen threshold, calibration
   -> Pair-local causal history/action H0–H3 factorial
   -> action-alignment + weak-label audit gate
-  -> Phase 4 frozen representation comparison (아직 gated)
+  -> Phase 3C frozen representation/foresight bridge (아직 gated)
+  -> Phase 4 Graph-CLaD Stage 1 통합
+  -> Phase 5–7 canonical DDPM Stage 2와 rollout 비교
 ```
 
 ## 4. 폴더 구조와 역할
@@ -90,7 +98,7 @@ CLI compatibility를 제공하고, 파일 이동은 과거 Colab command와 code
 | `scripts/phase2d/build_demo_dataset.py` | official HDF5, BDDL, split manifest | state replay와 multi-horizon graph pair 생성 | per-demo shard와 merged gzip JSONL |
 | `scripts/phase2d/temporal_holding.py` | 과거 contact/gripper/trajectory | heuristic holding state machine | weak holding relation/evidence |
 | `scripts/phase2d/build_holding_target_dataset.py` | natural Phase2D dataset | onset/release/hard-negative target view 생성 | target-aligned dataset + manifest |
-| `scripts/phase3/build_eval_manifest.py` | natural/target roots + split | task-local quota, leakage, payload hash QA | corrected eval manifest |
+| `scripts/phase3/build_eval_manifest.py` | natural/target roots + split | task-local quota, leakage, payload hash QA; 현재 eager loader는 큰 입력에서 OOM 가능 | corrected eval manifest |
 | `scripts/phase3/offline_probe.py` | graph records + config | B1/G1/S0/pair-local 모델 학습·평가 | checkpoint, nested metrics, prediction rows |
 | `scripts/phase3/pair_local_temporal.py` | episode graph frames at `<= t` | causal pair history feature 구성 | history vector + validity mask + QA |
 | `scripts/phase3/run_corrected_architecture_gate.py` | corrected config + manifest | natural-validation checkpoint/threshold protocol | result JSON, checkpoints, gzip predictions, snapshot |
@@ -164,31 +172,32 @@ result는 Drive에 snapshot/version과 함께 남긴다. Drive mount는 노트�
 ### KCloudVPN Linux SSH 실행
 
 앞으로의 학습 실행 기본 환경은 KCloudVPN Linux 서버
-`ubuntu@172.10.5.118`로 전환한다. SSH 접속, 가상환경, 입력 artifact 전송,
-manifest 재생성, `tmux` 실행은
+`ubuntu@172.10.5.118`다. SSH 접속, 가상환경, 입력 artifact 전송,
+manifest 준비, `tmux` 실행은
 [docs/kcloudvpn_linux_ssh_runbook_ko.md](docs/kcloudvpn_linux_ssh_runbook_ko.md)를
 따른다. 서버에서는 다음 환경 변수를 설정한다.
 
 ```bash
 export GRAPH_CLAD_PROJECT_ROOT="$HOME/Graph-CLaD"
-export GRAPH_CLAD_ARTIFACT_ROOT="/path/to/persistent/Graph-CLaD-artifacts"
+export GRAPH_CLAD_ARTIFACT_ROOT="$HOME/graphclad-artifacts"
 export GRAPH_CLAD_LIBERO_ROOT="/path/to/LIBERO"
 ```
 
 KCloudVPN용 config는 `configs/phase3_kcloudvpn_linux_*.json`이다. Colab의
 `/content/drive` 경로를 재사용하지 않고, `GRAPH_CLAD_ARTIFACT_ROOT` 아래에
-manifest·자연/target-aligned dataset·split manifest를 둔다. 현재 Colab의 T4는
-일시적인 runtime 상태이며 KCloudVPN GPU를 고정 제약으로 가정하지 않는다.
-실제 GPU와 VRAM은 매 실행의 `runtime_manifest.json`에 기록한다.
+manifest·자연/target-aligned dataset·split manifest를 둔다. 서버 manifest builder는
+큰 압축 payload를 eager loading하다 OOM으로 종료됐으므로, 현재 실행은 기존 Colab
+`status=pass` manifest의 source root만 서버 경로로 바꾼 portable copy를 사용한다.
+원본과 변환본은 함께 보존한다.
 
 ### GPU 확인
 
-현재 연결된 runtime에서는 NVIDIA T4(대개 16GB VRAM)를 사용하고 있다. 이는 현재
-runtime의 일시적인 상태이며, 이후 runtime에서 GPU가 바뀔 수 있으므로 고정된 연구
-제약으로 해석하지 않는다. 기존 corrected pair-local config의 batch size 64는 현재
-모델 규모에서 우선 유지한다. OOM이 발생할 때만 새 config version에서 batch size를
-32로 낮추며, batch size를 바꾼 실행은 기존 A100/64 결과와 동일 protocol 결과로 합치지
-않는다.
+KCloudVPN에서 확인한 실제 장치는 NVIDIA GeForce RTX 3090 24GB이고 driver는
+`595.71.05`, PyTorch는 `2.13.0+cu130`이다. 이 값도 runtime metadata이며 매 실행에서
+다시 확인한다. 기존 corrected pair-local config의 batch size 64는 우선 유지한다.
+학습 OOM이 발생할 때만 새 config version에서 batch size를 낮추고 기존 결과와 동일
+protocol 평균에 합치지 않는다. Manifest 생성 OOM은 GPU batch 문제가 아니라 CPU
+메모리의 eager data loading 문제다.
 
 Phase 00 preflight에서 매 runtime마다 실제 GPU 이름, VRAM, CUDA 사용 가능 여부를
 기록한다. Mixed precision, gradient accumulation, worker 수 변경은 재현성에 영향을
@@ -223,7 +232,8 @@ python -m scripts.phase3.analyze_corrected_predictions \
 
 현재 별도 deployment inference pipeline은 없다. “Inference”는 held-out graph pair에
 대한 `evaluate_model`과 per-sample prediction artifact를 뜻한다. Representation
-freeze/linear probe는 Phase 4에서 같은-capacity protocol로 추가해야 한다.
+freeze/linear probe는 Phase 3C에서 같은-capacity protocol로 추가하고, 통과한
+representation만 Phase 4 Stage 1에 통합한다.
 
 ## 10. 설정값과 artifact 위치
 
@@ -261,14 +271,19 @@ runtime manifest, code snapshot을 함께 가져야 한다.
 - H3 action-alignment 결과와 90-item human weak-label review가 아직 gate다.
 - `inside`는 valid label support가 없어 deferred다.
 - 동일 task의 seeds는 test episode를 공유하므로 독립 표본이 아니다.
-- Phase 4 semantic/pair-local/graph representation 비교는 미구현이다.
+- Phase 3C semantic/pair-local/graph representation bridge와 Phase 4 Stage 1 통합은
+  미구현이다.
+- 공식 Stage 2 코드와 rollout pipeline은 제공되지 않았다. 이후 정책은 논문 설명에
+  맞춘 canonical DDPM Diffusion Policy로 통제 재구현하며 공식 재현이라고 부르지 않는다.
+- 현재 manifest builder는 큰 Phase2D 입력에서 memory-safe하지 않다. 이미 검증된
+  portable manifest를 사용하고 streaming 개선은 별도 version으로 구현한다.
 - LIBERO, robosuite, MuJoCo, HDF5 replay는 로컬 기본 환경에서 검증되지 않을 수 있다.
 - `requirements-phase0.txt`는 baseline 최소 의존성만 담는다. Phase 2 runtime은
   LIBERO/robosuite/MuJoCo/h5py, 분석은 numpy/matplotlib, 모델은 PyTorch가 필요하다.
 
 ## 13. 이동·변경·보관 상태
 
-이번 정리는 기존 source, config, notebook, artifact를 이동하거나 삭제하지 않았다.
+활성 source, config, notebook, artifact는 이동하거나 삭제하지 않았다.
 추가된 경로 유틸리티와 phase 노트북이 새 canonical entry point다. Colab에서 실행한
 action-alignment config의 exact semantic content를 로컬 config에 반영했다.
 
@@ -279,9 +294,9 @@ action-alignment config의 exact semantic content를 로컬 config에 반영했�
 | Colab live action-alignment config | `configs/phase3_pair_local_temporal_action_alignment_seed0_v1.json` | semantic/byte-content 일치, 로컬 끝 newline만 추가 |
 | Colab Drive artifact | `/content/drive/MyDrive/Graph-CLaD/artifacts` | 이동·복사 없이 persistent source로 문서화 |
 | 로컬 개발 산출물 | `outputs/{checkpoints,logs,figures,metrics,predictions}` | 설명 추가; 실제 하위 폴더는 요청 시 생성 |
-| `.tmp_pair_local_sync_*`와 bundle/stage | `docs/archive_candidates_20260813.md` | 현재 위치 유지, 보관 후보만 분류 |
+| `.tmp_pair_local_sync_*`와 bundle/stage | `archive/temporary_transfers_20260816/` | 삭제 없이 archive로 보존 이동 |
 
-보관 후보와 근거는 `docs/archive_candidates_20260813.md`, 전체 조사와 Colab hash
-비교는 `docs/repository_audit_20260813.md`를 본다. 한국어화 범위와 영문 기술 용어 유지
-원칙은 `docs/korean_translation_status_20260813.md`에 기록했다. 번역 전 Markdown 원문은
-`archive/pre_korean_translation_20260813.zip`에 보존했다.
+Archive 분류는 `archive/README.md`, 전체 조사와 Colab hash 비교는
+`docs/repository_audit_20260813.md`를 본다. 번역 전 Markdown 원문은
+`archive/pre_korean_translation_20260813.zip`에 보존했다. 현재 문서 탐색은
+`docs/README.md`, 세션 인계는 `docs/CURRENT_STATUS.md`를 기준으로 한다.

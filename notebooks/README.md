@@ -1,8 +1,10 @@
 # 공식 연구 단계별 노트북
 
-이 폴더의 번호는 단순 실행 순번이 아니라 `docs/revised_research_roadmap_v3.md`의
-공식 연구 단계를 그대로 따른다. 재사용 구현은 `scripts/phase*/`에 두고 노트북은
-경로 확인, 모듈 호출, 산출물 검사만 담당한다.
+이 폴더의 번호는 단순 실행 순번이 아니라
+`docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`의 공식 연구 단계를
+따른다. `docs/revised_research_roadmap_v3.md`는 v4 이전 단계 개정의 근거로 보존한다.
+재사용 구현은 `scripts/phase*/`에 두고 노트북은 경로 확인, 모듈 호출, 산출물 검사만
+담당한다.
 
 ## 권장 실행 순서
 
@@ -18,7 +20,8 @@
 | 7 | Phase 3B | `phase_3b_corrected_architecture_gate.ipynb` | G1 및 pair-local architecture gate 학습 |
 | 8 | Phase 3B | `phase_3b_evaluation_and_controls.ipynb` | 통계, action control, weak-label 판정 |
 
-현재 진행 단계는 Phase 3B action-alignment control이다. Phase 3C는 아직 실행
+현재 진행 단계와 서버 output은 `../docs/CURRENT_STATUS.md`를 먼저 확인한다. 공식
+진행 단계는 Phase 3B action-alignment control이다. Phase 3C는 아직 실행
 노트북으로 만들지 않았고, Phase 4 Stage 1 및 Phase 5~8도 gate 통과 전까지 차단한다.
 
 장시간 또는 상태를 변경하는 셀은 기본적으로 `RUN_* = False`다. 하나의 플래그를

@@ -17,5 +17,5 @@ outputs/metrics/
 *.log
 
 # One-off Colab transfer bundles and extracted staging copies. Existing files
-# are deliberately retained; see docs/archive_candidates_20260813.md.
+# are deliberately retained under archive; see archive/README.md.
 .tmp_*

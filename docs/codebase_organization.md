@@ -66,9 +66,10 @@ config의 절대 경로는 바꾸지 않고, 새 실행만 환경 변수 또는 
    `graph_target` 입력에서는 제거한다.
 6. 전체 생성은 demo별 원자적 shard와 resume를 사용하고, 최종 merge 및 QA가 끝난
    결과만 release로 취급한다.
-7. Colab의 최근 target-aligned 생성·sampling·analysis 셀은
-   `docs/colab_code_migration_20260807.md`의 대응표에 따라 모듈로 이관했다. 중복 QA와
-   일회성 debug 셀은 source-of-truth로 승격하지 않았다.
+7. Colab의 최근 target-aligned 생성·sampling·analysis 셀은 phase별 `scripts/phase*/`
+   모듈로 이관했다. 당시 조사 근거는 `repository_audit_20260813.md`와
+   `research_log.md`에 보존하며 중복 QA와 일회성 debug 셀은 source-of-truth로
+   승격하지 않았다.
 8. balanced-v3의 category sampler는 재현용 `category_aware_v1`로 동결하고, 수정
    sampler는 `category_aware_episode_round_robin_v2`로 별도 버전 관리한다.
 
