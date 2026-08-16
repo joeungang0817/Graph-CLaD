@@ -12,6 +12,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
@@ -33,6 +34,18 @@ DEFAULT_RELATIONS = (
     "on",
     "holding",
 )
+
+
+def _expand_config_environment(value: Any) -> Any:
+    """Expand ${VAR} references for portable Linux/SSH configs."""
+
+    if isinstance(value, str):
+        return os.path.expandvars(value)
+    if isinstance(value, list):
+        return [_expand_config_environment(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _expand_config_environment(item) for key, item in value.items()}
+    return value
 
 
 def _task_family(task_id: int) -> str:
@@ -556,7 +569,9 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    config = json.loads(args.config.read_text(encoding="utf-8"))
+    config = _expand_config_environment(
+        json.loads(args.config.read_text(encoding="utf-8"))
+    )
     result = build_manifest(config)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

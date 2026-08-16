@@ -1,4 +1,4 @@
-"""Environment-neutral paths for local and Colab Graph-CLaD workflows.
+"""Environment-neutral paths for local, Linux SSH, and Colab workflows.
 
 Historical experiment configs intentionally keep their frozen absolute Drive
 paths.  New notebooks and utilities should use this module for discovery and
@@ -71,8 +71,9 @@ def resolve_research_paths(
     """Resolve project, artifact, dataset, and simulator roots.
 
     Priority is explicit argument, environment variable, then an
-    environment-specific default.  Local artifacts default to ``outputs/``;
-    Colab artifacts default to persistent Google Drive.
+    environment-specific default.  Local and Linux-SSH artifacts default to
+    ``outputs/`` unless ``GRAPH_CLAD_ARTIFACT_ROOT`` is set; Colab artifacts
+    default to persistent Google Drive.
     """
 
     env = os.environ if environ is None else environ

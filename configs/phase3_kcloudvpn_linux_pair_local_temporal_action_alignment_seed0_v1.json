@@ -1,0 +1,65 @@
+{
+  "protocol": "phase3-pair-local-temporal-action-alignment-seed0-v1",
+  "manifest": "${GRAPH_CLAD_ARTIFACT_ROOT}/phase3_holder_action_v1/corrected_protocol_v2/phase3B_R1_eval_manifest_v2.json",
+  "folds": ["test_task0", "test_task1", "test_task2"],
+  "seeds": [0],
+  "models": [
+    {"comparison_id": "H3-train-shuffled", "model_id": "h3_pair_local_history_action_film", "training_action_mode": "episode_disjoint_matched"}
+  ],
+  "preprocessing": {
+    "input_contract": "pair_local_causal_history_v1",
+    "natural_root": "${GRAPH_CLAD_ARTIFACT_ROOT}/phase2d/data/phase2d_full_demo_v2_inputclean_stream1",
+    "lookback_steps": 3,
+    "time_range": "[max(0,t-3),t]",
+    "history_source": "same-episode graph frame index reconstructed from natural Phase2D serialization",
+    "future_frame_input": false,
+    "holding_relation_or_evidence_input": false,
+    "pair_context": "independent directed robot-object pair; no object-object message passing"
+  },
+  "training": {
+    "epochs": 10,
+    "patience": 3,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "current_head_contract": "action_free_pair",
+    "current_loss_weight": 0.25,
+    "checkpoint_criterion": "holding_event_pr_auc",
+    "checkpoint_validation_view": "natural_validation"
+  },
+  "parameter_matching": {
+    "enabled": true,
+    "target": "H3 hidden_dim=48 trainable parameter count including the common action-free current head",
+    "reference_model_id": "h3_pair_local_history_action_film",
+    "reference_hidden_dim": 48,
+    "candidate_hidden_dims": [48],
+    "maximum_relative_difference": 0.05
+  },
+  "evaluation": {
+    "primary_metric": "holding.conditional_oracle_current_change_event.pr_auc",
+    "secondary_metrics": ["holding.conditional_oracle_current_change_event.f1", "holding.end_to_end_change_event.pr_auc", "holding.end_to_end_change_event.f1", "holding.onset.f1", "holding.release.f1", "holding.hard_negative.false_positive_rate", "holding.conditional_oracle_current_change_event.brier_score", "holding.conditional_oracle_current_change_event.ece"],
+    "threshold_source": "natural_validation_correct_input_only",
+    "frozen_threshold_applies_to": ["natural_test", "challenge_stress_view", "all_controls"],
+    "challenge_interpretation": "stress analysis only; not an independent generalization test",
+    "control_modes": ["correct", "global_shuffled_action", "no_history", "global_shuffled_history"],
+    "weak_label_sensitivity_groups": "${GRAPH_CLAD_ARTIFACT_ROOT}/phase3_holder_action_v1/corrected_protocol_v2/ai_assisted_full_cluster_audit_v1/review/ai_assisted_sensitivity_groups_v1.json",
+    "weak_label_sensitivity_policy": "post-hoc internal-consistency subsets only; never modify labels or select checkpoints",
+    "training_action_shuffle": "episode-disjoint matched donor within task fold",
+    "comparison_source": "phase3_kcloudvpn_linux_pair_local_temporal_threefold_seed0_v1.json"
+  },
+  "artifacts": {
+    "output_root": "${GRAPH_CLAD_ARTIFACT_ROOT}/phase3_holder_action_v1/corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1",
+    "result": "phase3_pair_local_temporal_action_alignment_seed0_v1.json",
+    "checkpoints": "checkpoints",
+    "predictions": "predictions",
+    "code_snapshot": "code_snapshot",
+    "runtime_manifest": "runtime_manifest.json"
+  },
+  "runtime": {
+    "environment": "kcloudvpn_linux_ssh",
+    "gpu_policy": "detect_and_record",
+    "require_cuda": true,
+    "require_persistent_drive_output": false,
+    "require_persistent_output": true,
+    "persistent_output_roots": ["${GRAPH_CLAD_ARTIFACT_ROOT}"]
+  }
+}

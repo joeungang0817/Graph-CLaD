@@ -13,6 +13,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -86,6 +87,55 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     temporary.replace(path)
+
+
+def _expand_config_environment(value: Any) -> Any:
+    """Expand ${VAR} references in a config without changing non-string values."""
+
+    if isinstance(value, str):
+        return os.path.expandvars(value)
+    if isinstance(value, list):
+        return [_expand_config_environment(item) for item in value]
+    if isinstance(value, dict):
+        return {
+            key: _expand_config_environment(item)
+            for key, item in value.items()
+        }
+    return value
+
+
+def _validate_persistent_output_root(
+    output_root: Path,
+    runtime_config: Mapping[str, Any],
+) -> None:
+    """Reject output paths outside an explicitly declared persistent root.
+
+    Colab's historical ``require_persistent_drive_output`` check remains
+    unchanged for legacy configs.  New Linux/SSH configs can instead declare
+    ``require_persistent_output`` and one or more
+    ``persistent_output_roots`` after environment expansion.
+    """
+
+    if not runtime_config.get("require_persistent_output", False):
+        return
+    configured_roots = runtime_config.get("persistent_output_roots", [])
+    if not isinstance(configured_roots, Sequence) or isinstance(
+        configured_roots, (str, bytes)
+    ):
+        raise ValueError("persistent_output_roots must be a list of paths")
+    if not configured_roots:
+        raise ValueError(
+            "require_persistent_output is enabled but no persistent_output_roots were configured"
+        )
+    resolved_output = output_root.expanduser().resolve()
+    roots = [Path(str(value)).expanduser().resolve() for value in configured_roots]
+    if not any(
+        resolved_output == root or root in resolved_output.parents for root in roots
+    ):
+        raise ValueError(
+            "output root is outside declared persistent storage roots: "
+            f"{resolved_output} not under {[str(root) for root in roots]}"
+        )
 
 
 def _metric(evaluation: Mapping[str, Any], name: str) -> float | None:
@@ -308,7 +358,9 @@ def run_gate(
 ) -> dict[str, Any]:
     import torch
 
-    config = json.loads(config_path.read_text(encoding="utf-8"))
+    config = _expand_config_environment(
+        json.loads(config_path.read_text(encoding="utf-8"))
+    )
     supported_protocols = {
         "phase3B-R1-corrected-smoke-v2",
         "phase3B-R1-corrected-threefold-seed0-v2",
@@ -328,9 +380,12 @@ def run_gate(
         and not str(output_root).startswith("/content/drive/")
     ):
         raise ValueError(f"output root is not persistent Drive storage: {output_root}")
+    _validate_persistent_output_root(output_root, runtime_config)
     if not manifest_path.exists():
         raise FileNotFoundError(manifest_path)
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest = _expand_config_environment(
+        json.loads(manifest_path.read_text(encoding="utf-8"))
+    )
     folds = [str(value) for value in config.get("folds", ["test_task1"])]
     seeds = [int(value) for value in config.get("seeds", [0])]
     _validate_manifest(manifest, folds)

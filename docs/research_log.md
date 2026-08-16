@@ -318,3 +318,37 @@ Task-macro natural conditional PR-AUC:
 
 현재까지 graph의 일반적 우월성, causal action 효과, 최종 Graph-CLaD representation의
 우월성은 입증되지 않았다.
+
+## 2026-08-14 — 현재 runtime의 T4 상태 기록
+
+현재 연결된 Colab runtime에서만 NVIDIA T4를 사용할 수 있다. 이는 영구적인 GPU 제약이
+아니며 다음 runtime에서는 실제 GPU를 다시 확인해야 한다. 현재 pair-local/G1 model의
+config batch size 64는 우선 유지한다. T4에서 OOM이 실제로 발생할 때만 새 config version에서
+batch 32를 사용하며, 이 protocol 변경을 A100/기존 결과와 동일 run으로 합치지 않는다.
+GPU 이름, VRAM, CUDA, batch size는 각 launcher/result metadata에 기록한다.
+
+## 2026-08-15 — KCloudVPN Linux 실행 전환 준비
+
+- 이후 학습 실행 환경을 Colab에서 KCloudVPN Linux SSH 서버
+  `ubuntu@172.10.5.118`로 전환하기 위한 경로·config·runbook을 추가했다.
+- 기존 Colab process, Drive artifact, checkpoint, prediction은 중단·삭제·덮어쓰지
+  않는다. KCloudVPN output은 `GRAPH_CLAD_ARTIFACT_ROOT` 아래 별도 version으로
+  저장한다.
+- `${GRAPH_CLAD_ARTIFACT_ROOT}` 확장을 지원하는 KCloudVPN용 pair-local
+  three-fold와 action-alignment config를 추가했다. `require_persistent_output`와
+  `persistent_output_roots`로 서버 영구 디스크 밖의 output을 거부한다.
+- Colab manifest의 `/content/drive` 절대경로 문제를 피하기 위해
+  `configs/phase3_kcloudvpn_linux_eval_manifest_v2.json`으로 서버에서 manifest를
+  재생성하도록 했다. 자연 dataset, target-aligned dataset, demo split manifest가
+  실행 필수 입력이다.
+- KCloudVPN의 GPU 종류는 아직 확인되지 않았으므로 T4를 영구 제약으로 기록하지
+  않는다. 실제 GPU/VRAM/CUDA 여부는 매 실행의 runtime manifest에 기록한다.
+
+## 2026-08-16 — KCloudVPN GPU driver 확인
+
+- KCloudVPN VM의 PCI passthrough에서 NVIDIA GeForce RTX 3090 24GB가 확인됐다.
+- NVIDIA driver `595.71.05`와 CUDA compatibility version `13.2`가 `nvidia-smi`에서
+  정상 표시됐고, 확인 시점에는 GPU 사용 프로세스가 없었다.
+- TITAN RTX로 전달받은 사양과 실제 장치가 다르므로, 실험 기록에는 실제
+  `nvidia-smi` 결과인 RTX 3090을 사용한다. GPU 종류는 영구 연구 조건이 아니라
+  runtime metadata로 보존한다.

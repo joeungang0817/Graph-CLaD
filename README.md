@@ -19,6 +19,10 @@ weak-label QA가 끝나기 전에는 representation 우월성이나 인과적 ac
 4. 가벼운 계약 검사는 `python -m unittest tests.test_research_paths tests.test_notebook_structure`로 실행한다. 전체 test discovery는 PyTorch와 `pytest`를 포함한 실험 의존성이 필요하다.
 5. 학습 전에는 config, manifest, output root, code snapshot 경로가 새 버전인지 확인한다.
 
+KCloudVPN Linux에서 실행할 때는 [SSH 실행 안내서](docs/kcloudvpn_linux_ssh_runbook_ko.md)를
+먼저 읽는다. 접속 주소는 `ubuntu@172.10.5.118`이며, 서버의 영구 디스크 경로는
+`GRAPH_CLAD_ARTIFACT_ROOT` 환경 변수로 지정한다.
+
 핵심 구현의 source of truth는 `scripts/phase*/`다. 루트 `scripts/*.py` 중 일부는
 과거 명령을 보존하는 compatibility wrapper이며 새 코드를 추가하지 않는다. Colab
 노트북에는 재사용 가능한 구현을 복사하지 않고 저장소 모듈을 import한다.

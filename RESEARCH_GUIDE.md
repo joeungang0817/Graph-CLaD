@@ -161,6 +161,39 @@ Colab `/content`는 임시다. source, config, manifest, checkpoint, prediction,
 result는 Drive에 snapshot/version과 함께 남긴다. Drive mount는 노트북의 명시적
 환경 셀에서만 수행한다.
 
+### KCloudVPN Linux SSH 실행
+
+앞으로의 학습 실행 기본 환경은 KCloudVPN Linux 서버
+`ubuntu@172.10.5.118`로 전환한다. SSH 접속, 가상환경, 입력 artifact 전송,
+manifest 재생성, `tmux` 실행은
+[docs/kcloudvpn_linux_ssh_runbook_ko.md](docs/kcloudvpn_linux_ssh_runbook_ko.md)를
+따른다. 서버에서는 다음 환경 변수를 설정한다.
+
+```bash
+export GRAPH_CLAD_PROJECT_ROOT="$HOME/Graph-CLaD"
+export GRAPH_CLAD_ARTIFACT_ROOT="/path/to/persistent/Graph-CLaD-artifacts"
+export GRAPH_CLAD_LIBERO_ROOT="/path/to/LIBERO"
+```
+
+KCloudVPN용 config는 `configs/phase3_kcloudvpn_linux_*.json`이다. Colab의
+`/content/drive` 경로를 재사용하지 않고, `GRAPH_CLAD_ARTIFACT_ROOT` 아래에
+manifest·자연/target-aligned dataset·split manifest를 둔다. 현재 Colab의 T4는
+일시적인 runtime 상태이며 KCloudVPN GPU를 고정 제약으로 가정하지 않는다.
+실제 GPU와 VRAM은 매 실행의 `runtime_manifest.json`에 기록한다.
+
+### GPU 확인
+
+현재 연결된 runtime에서는 NVIDIA T4(대개 16GB VRAM)를 사용하고 있다. 이는 현재
+runtime의 일시적인 상태이며, 이후 runtime에서 GPU가 바뀔 수 있으므로 고정된 연구
+제약으로 해석하지 않는다. 기존 corrected pair-local config의 batch size 64는 현재
+모델 규모에서 우선 유지한다. OOM이 발생할 때만 새 config version에서 batch size를
+32로 낮추며, batch size를 바꾼 실행은 기존 A100/64 결과와 동일 protocol 결과로 합치지
+않는다.
+
+Phase 00 preflight에서 매 runtime마다 실제 GPU 이름, VRAM, CUDA 사용 가능 여부를
+기록한다. Mixed precision, gradient accumulation, worker 수 변경은 재현성에 영향을
+주므로 corrected model 비교에서는 모든 조건에 동일하게 적용하고 config/result에 남긴다.
+
 ## 9. 학습, 평가, 추론
 
 가벼운 테스트:
@@ -198,6 +231,10 @@ freeze/linear probe는 Phase 4에서 같은-capacity protocol로 추가해야 �
 - current corrected protocol: `configs/phase3_holder_action_eval_v2_corrected.json`.
 - pair-local smoke/three-fold/alignment:
   `configs/phase3_pair_local_temporal_*_v1.json`.
+- KCloudVPN Linux 실행용 portable config:
+  `configs/phase3_kcloudvpn_linux_eval_manifest_v2.json`,
+  `configs/phase3_kcloudvpn_linux_pair_local_temporal_action_alignment_seed0_v1.json`,
+  `configs/phase3_kcloudvpn_linux_pair_local_temporal_threefold_seed0_v1.json`.
 - local small outputs: `outputs/{checkpoints,logs,figures,metrics}`; contents Git 제외.
 - Colab full artifacts:
   `/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1`.
