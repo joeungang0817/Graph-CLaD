@@ -28,13 +28,15 @@
     ],
     "decisionnce": {
       "model_id": "DecisionNCE-P",
-      "python_module": "decisionnce",
+      "python_module": "DecisionNCE",
       "repository_commit": "FILL_WITH_EXACT_GIT_COMMIT",
-      "checkpoint": "/absolute/path/to/decisionnce/checkpoint.pt",
-      "checkpoint_argument": "checkpoint",
-      "preprocess": "model",
+      "checkpoint": "$HOME/.cache/DecisionNCE/DecisionNCE-P",
+      "checkpoint_argument": null,
+      "preprocess": "rgb_01",
       "device": "cuda",
-      "load_kwargs": {}
+      "load_kwargs": {
+        "device": "cuda"
+      }
     }
   }
 }

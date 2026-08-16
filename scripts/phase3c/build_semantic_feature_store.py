@@ -33,6 +33,7 @@ from .io import load_json_config, write_json
 
 FEATURE_STORE_SCHEMA = "phase3c-semantic-feature-store.v2"
 DEFAULT_MODEL_ID = "DecisionNCE-P"
+DEFAULT_DECISIONNCE_MODULE = "DecisionNCE"
 
 
 def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -264,7 +265,7 @@ class DecisionNCEEncoder:
     @classmethod
     def load(cls, config: Mapping[str, Any]) -> "DecisionNCEEncoder":
         model_id = str(config.get("model_id", DEFAULT_MODEL_ID))
-        module_name = str(config.get("python_module", "decisionnce"))
+        module_name = str(config.get("python_module", DEFAULT_DECISIONNCE_MODULE))
         try:
             module = importlib.import_module(module_name)
         except ImportError as exc:  # pragma: no cover - SSH-only path
@@ -279,10 +280,17 @@ class DecisionNCEEncoder:
         checkpoint = config.get("checkpoint")
         kwargs = dict(config.get("load_kwargs", {}) or {})
         if checkpoint:
-            checkpoint_argument = str(config.get("checkpoint_argument", "checkpoint"))
-            if not checkpoint_argument.isidentifier():
-                raise ValueError("decisionnce.checkpoint_argument must be a Python identifier")
-            kwargs[checkpoint_argument] = str(_expand_path(str(checkpoint)))
+            # The official `DecisionNCE.load(name, device=...)` downloads and
+            # reads its fixed cache path itself.  Other compatible loaders may
+            # accept an explicit checkpoint keyword.  JSON `null` selects the
+            # official no-checkpoint-argument contract while the path is still
+            # required and hashed below for provenance.
+            checkpoint_argument_value = config.get("checkpoint_argument", "checkpoint")
+            if checkpoint_argument_value is not None:
+                checkpoint_argument = str(checkpoint_argument_value)
+                if not checkpoint_argument.isidentifier():
+                    raise ValueError("decisionnce.checkpoint_argument must be null or a Python identifier")
+                kwargs[checkpoint_argument] = str(_expand_path(str(checkpoint)))
         if hasattr(loader, "load"):
             loaded = loader.load(model_id, **kwargs)
         elif callable(loader):
@@ -617,10 +625,16 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
         "source": {"joined_manifest": str(joined_path), "joined_manifest_sha256": sha256_file(joined_path)},
         "decisionnce": {
             "model_id": str(decision_config.get("model_id", DEFAULT_MODEL_ID)),
-            "python_module": str(decision_config.get("python_module", "decisionnce")),
+            "python_module": str(
+                decision_config.get("python_module", DEFAULT_DECISIONNCE_MODULE)
+            ),
             "repository_commit": repository_commit,
             "checkpoint": str(decision_config.get("checkpoint")) if decision_config.get("checkpoint") else None,
-            "checkpoint_argument": str(decision_config.get("checkpoint_argument", "checkpoint")),
+            "checkpoint_argument": (
+                str(decision_config.get("checkpoint_argument", "checkpoint"))
+                if decision_config.get("checkpoint_argument", "checkpoint") is not None
+                else None
+            ),
             "checkpoint_sha256": model_checkpoint_sha,
             "feature_dim": encoder.feature_dim,
             "preprocess": str(decision_config.get("preprocess", "model")),

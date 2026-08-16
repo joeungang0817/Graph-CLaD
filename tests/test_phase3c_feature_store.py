@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 import numpy as np
 
@@ -85,6 +86,40 @@ class Phase3CFeatureStoreTest(unittest.TestCase):
         self.assertEqual(features.shape, (2, 4))
         self.assertEqual(encoder.encode_texts(["task"])[0].shape, (4,))
         self.assertEqual(encoder.feature_dim, 4)
+
+    def test_official_loader_keeps_checkpoint_for_provenance_only(self):
+        try:
+            import torch  # noqa: F401
+        except ImportError:
+            self.skipTest("torch is not installed in the local CPU environment")
+
+        calls = []
+
+        class FakeOfficialModule:
+            @staticmethod
+            def load(model_id, **kwargs):
+                calls.append((model_id, kwargs))
+                return _FakeDecisionNCE()
+
+        with patch(
+            "scripts.phase3c.build_semantic_feature_store.importlib.import_module",
+            return_value=FakeOfficialModule,
+        ) as import_module:
+            encoder = DecisionNCEEncoder.load(
+                {
+                    "model_id": "DecisionNCE-P",
+                    "python_module": "DecisionNCE",
+                    "checkpoint": "/cache/DecisionNCE-P",
+                    "checkpoint_argument": None,
+                    "preprocess": "rgb_01",
+                    "device": "cpu",
+                    "load_kwargs": {"device": "cpu"},
+                }
+            )
+
+        import_module.assert_called_once_with("DecisionNCE")
+        self.assertEqual(calls, [("DecisionNCE-P", {"device": "cpu"})])
+        self.assertEqual(encoder.model_id, "DecisionNCE-P")
 
 
 if __name__ == "__main__":

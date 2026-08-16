@@ -867,3 +867,101 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   package compilation and `git diff --check` passed. The earlier SSH 23/23 Gate
   0 result predates these corrections, so the updated 30-test suite must be
   rerun on SSH before the real join is retried.
+
+## 2026-08-17 SSH Gate 0 rerun after Phase 3C audit
+
+- After pulling the audited Phase 3C implementation, the updated SSH test suite
+  passed **30/30** tests, including all PyTorch-dependent dataset, collation,
+  structured-model, semantic-adapter, and parameter-matching regressions.
+- The post-audit Gate 0 is therefore **passed**. This supersedes the earlier
+  23/23 result, which covered the pre-audit tensor and trainer implementation.
+- No real joined-manifest success is claimed yet. The next action is to rerun
+  the interrupted real-data join and confirm that mixed `tau=1/3/6` samples are
+  filtered to `tau=6`, with a positive joined count and a nonzero
+  `ignored_other_tau_samples` count in QA.
+
+## 2026-08-17 Phase 3C join command-path correction
+
+- The first retry of the real join stopped before reading data because the
+  previously suggested `configs/phase3c_kcloudvpn_data_smoke_v1.json` is not a
+  committed file in the repository. This was a command/config-path error, not
+  a data or implementation failure.
+- The repository provides `configs/phase3c_contract_v1.json` for the tau,
+  relation, and causal-input contract only. On SSH, the three Phase 2D task
+  shards and the joined-manifest output/QA paths must be supplied explicitly
+  with repeated `--input`, `--output`, and `--qa-output` arguments.
+
+## 2026-08-17 Phase 3C horizon-control decision
+
+- Phase 2D contains samples with `tau=1/3/6`, and a future architecture could
+  support multiple horizons. The current Phase 3C primary screen intentionally
+  fixes `tau=6` so every C3 model and the original CLaD control solve the same
+  six-step prediction problem with the same `[6, 7]` action window.
+- Mixing horizons in the primary screen would change action-window length,
+  target displacement, relation-change prevalence, class balance, and task
+  difficulty at the same time as graph architecture. That would make a graph
+  improvement impossible to attribute cleanly to graph structure.
+- A multi-horizon extension is therefore reserved as a follow-up robustness
+  experiment. It requires an explicit horizon field or embedding, padding/mask
+  rules (or separate manifests), horizon-aware normalization and metrics, and
+  re-running the leakage/parameter-matching tests. The current `tau=6` join is
+  the controlled architecture-comparison benchmark, not a claim that other
+  horizons are unusable.
+
+## 2026-08-17 Phase 3C real joined-manifest QA passed
+
+- The corrected SSH join completed with `status=pass` and wrote
+  `/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz`.
+- The three Phase 2D task shards contained 51,471 samples. The builder selected
+  16,757 `tau=6` left candidates and emitted 15,857 joined samples. The 900
+  boundary drops are expected at episode/temporal boundaries; there were zero
+  missing right samples, duplicate left keys, invalid samples, or graph-hash
+  mismatches.
+- 34,714 `tau=1/3` samples were explicitly ignored, confirming the primary
+  `tau=6` horizon control. No future action field was emitted (`0`).
+- Relation support is eligible without test leakage for `left`, `right`,
+  `front`, `behind`, `above`, `below`, and `contact`. `on` has zero positives
+  in train/validation/test and is therefore excluded from the eligible loss and
+  model-selection relation set for this artifact.
+
+## 2026-08-17 Phase 3C semantic-store dependency discovery
+
+- The first SSH discovery attempt did not locate the raw task HDF5 files,
+  LIBERO BDDL path, DecisionNCE import, or a DecisionNCE checkpoint from the
+  current shell. The shell prompt did not show the project virtual environment
+  as active, so Python-package absence must first be rechecked after activating
+  `/home/ubuntu/Graph-CLaD/.venv`.
+- Raw HDF5 and model-checkpoint discovery is independent of virtual-environment
+  activation. If the filesystem searches remain empty, the server currently
+  contains only the derived Phase 2D graph artifacts, not the original state
+  replay inputs required to render semantic frames. Semantic-store extraction
+  is blocked until those immutable inputs and their provenance are restored;
+  graph JSON artifacts cannot substitute for the missing simulator states.
+- Follow-up SSH checks confirmed `ModuleNotFoundError: No module named
+  'libero'`, no raw HDF5 files under `/home/ubuntu`, and no locally discoverable
+  DecisionNCE installation/checkpoint. `requirements-phase3c.txt` intentionally
+  excludes LIBERO and DecisionNCE, so the earlier 30/30 Gate 0 established code
+  contracts only; it did not establish real semantic-extraction readiness.
+- The semantic-store gate is therefore blocked on external runtime assets:
+  official task HDF5 demonstrations, a pinned LIBERO installation/BDDL root,
+  and a pinned DecisionNCE repository/model artifact. The successful joined
+  manifest remains valid and does not need to be rebuilt.
+- SSH network access to both official repositories was verified. The observed
+  remote HEADs were LIBERO `8f1084e3132a39270c3a13ebe37270a43ece2a01`
+  and DecisionNCE `ebdc585c5e6833ec3a2ba77f801b15c74d7a28f8`.
+  These are discovery values only; they must be checked out explicitly and
+  recorded with downloaded dataset/model hashes before semantic extraction.
+- Direct inspection of the pinned official DecisionNCE source exposed a real
+  integration mismatch in the pre-run example: the import module is
+  `DecisionNCE`, `load(name, device=...)` downloads to
+  `~/.cache/DecisionNCE/<model-id>` and accepts no checkpoint keyword, and the
+  returned encoder performs its own tensor transform instead of exposing a
+  separate `preprocess` callable.
+- The Phase 3C wrapper and example config were corrected to use the official
+  module, keep the auto-downloaded checkpoint path for SHA provenance without
+  passing it to the loader (`checkpoint_argument=null`), pass `device=cuda`,
+  and provide normalized RGB `[0,1]` tensors (`preprocess=rgb_01`). A loader
+  regression test was added. The dependency-light suite now collects 31 tests:
+  17 passed and 14 torch-dependent tests skipped locally; compilation and
+  `git diff --check` passed. The new loader test must run in SSH PyTorch after
+  the correction is pulled.

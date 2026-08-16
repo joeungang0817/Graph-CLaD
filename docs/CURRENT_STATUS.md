@@ -224,7 +224,28 @@ join selects only `tau=6`. A subsequent full pre-run audit also corrected the
 8-D node schema, per-snapshot edge dimensions, NumPy-to-torch collation,
 incoming message aggregation, bounded streaming/shard caches, train-only
 support and motion scaling, validation-fixed thresholds, parameter matching,
-provenance hashes, and safe resume. Local dependency-light verification passes,
-but the revised 30-test suite has not yet been rerun in the SSH PyTorch
-environment; therefore the old 23/23 Gate 0 must not be treated as sufficient
-for the revised code.
+provenance hashes, and safe resume. Local dependency-light verification passes.
+The revised 30-test suite subsequently passed 30/30 in the SSH PyTorch
+environment. The post-audit Gate 0 is passed; the next unverified gate is the
+corrected real-data joined-manifest run over mixed `tau=1/3/6` Phase 2D input.
+
+The first retry used a non-committed SSH-specific config filename and therefore
+failed before reading data. Use `configs/phase3c_contract_v1.json` plus explicit
+Phase 2D input and output paths for the real join; this is a command-path issue,
+not a Phase 3C implementation failure.
+
+The corrected real join subsequently passed on SSH. It emitted 15,857 joined
+`tau=6` samples from 51,471 source samples, ignored 34,714 other-horizon rows,
+and reported zero boundary-invalid joins, missing-right samples, hash
+mismatches, invalid samples, and future-action fields. The `on` relation has
+zero positive support and is excluded from eligible relation training for this
+artifact. The next gate is semantic feature-store extraction.
+
+Semantic extraction dependency discovery found that the SSH host initially had
+no LIBERO package, raw HDF5 demonstrations, or DecisionNCE installation/cache.
+Official repository access works and the observed remote commits are LIBERO
+`8f1084e3132a39270c3a13ebe37270a43ece2a01` and DecisionNCE
+`ebdc585c5e6833ec3a2ba77f801b15c74d7a28f8`. The DecisionNCE wrapper/example
+was corrected to its official auto-download loader contract; this revised
+31-test code still requires pull and the SSH torch-dependent rerun before real
+semantic extraction.
