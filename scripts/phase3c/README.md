@@ -39,6 +39,10 @@ Run a one-episode extraction first and inspect `qa/camera_inventory.json`.
 The resulting immutable store is the input to the base CLaD and six-model
 screen; this step does not train a model.
 
+The semantic-store config must include the exact DecisionNCE repository commit,
+checkpoint, and the action/state smoke's frozen state-restore tolerance. A
+completed store also hashes every shard and refuses provenance-free extraction.
+
 ## Milestone 3: controlled CLaD
 
 `models/semantic_clad.py` wraps the original `baseline_code.LatentDynamics`
@@ -68,3 +72,8 @@ python -m scripts.phase3c.run_core \
 `test_task0`, so training records exclude that task and evaluation records are
 restricted to it. Core prediction artifacts contain only past-conditioned
 inputs and evaluation labels; future action is never forwarded to a model.
+Training uses a bounded-memory seeded shuffle rather than loading the joined
+artifact into RAM. Relation eligibility and positive weights use train plus
+validation support only, validation fixes F1 thresholds, and held-out test does
+not optimize thresholds. The screen automatically parameter-matches every
+adapter to the configured RelMPNN reference within the declared tolerance.

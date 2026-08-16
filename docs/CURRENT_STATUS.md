@@ -216,3 +216,15 @@ semantic control, masked losses/metrics, base/core trainers, fold runners, and
 paired analyzer. This does not supersede the SSH gates: torch/LIBERO/DecisionNCE
 imports, real camera inventory, H=1024 smoke, parameter/runtime checks, and
 actual training artifacts are still unverified until you run them on SSH.
+
+## 2026-08-17 Phase 3C audit correction status
+
+The first real join exposed mixed Phase 2D horizons (`tau=1/3/6`). The corrected
+join selects only `tau=6`. A subsequent full pre-run audit also corrected the
+8-D node schema, per-snapshot edge dimensions, NumPy-to-torch collation,
+incoming message aggregation, bounded streaming/shard caches, train-only
+support and motion scaling, validation-fixed thresholds, parameter matching,
+provenance hashes, and safe resume. Local dependency-light verification passes,
+but the revised 30-test suite has not yet been rerun in the SSH PyTorch
+environment; therefore the old 23/23 Gate 0 must not be treated as sufficient
+for the revised code.

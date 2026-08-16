@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.phase3c.validate_action_timing import max_abs_state_error
+from scripts.phase3c.validate_action_timing import action_timing_status, max_abs_state_error
 
 
 class Phase3CActionTimingTest(unittest.TestCase):
@@ -14,6 +14,11 @@ class Phase3CActionTimingTest(unittest.TestCase):
     def test_nonfinite_state_fails(self):
         with self.assertRaisesRegex(ValueError, "NaN or Inf"):
             max_abs_state_error([float("nan")], [0.0])
+
+    def test_configured_tolerance_is_a_hard_gate(self):
+        rows = [{"within_tolerance": True}, {"within_tolerance": False}]
+        self.assertEqual(action_timing_status(rows, [], 1e-5), "fail")
+        self.assertEqual(action_timing_status(rows, [], None), "pass")
 
 
 if __name__ == "__main__":

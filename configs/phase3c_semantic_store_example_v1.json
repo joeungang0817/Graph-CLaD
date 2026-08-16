@@ -10,6 +10,8 @@
     ],
     "libero_suite": "libero_spatial",
     "camera_size": 224,
+    "encode_batch_size": 64,
+    "state_restore_tolerance": "FILL_WITH_FROZEN_TRAIN_VALIDATION_TOLERANCE",
     "cameras": [
       {
         "name": "external",
@@ -27,8 +29,11 @@
     "decisionnce": {
       "model_id": "DecisionNCE-P",
       "python_module": "decisionnce",
+      "repository_commit": "FILL_WITH_EXACT_GIT_COMMIT",
       "checkpoint": "/absolute/path/to/decisionnce/checkpoint.pt",
+      "checkpoint_argument": "checkpoint",
       "preprocess": "model",
+      "device": "cuda",
       "load_kwargs": {}
     }
   }

@@ -48,7 +48,9 @@ def relation_motion_loss(
     *,
     relation_weight: float = 1.0,
     motion_weight: float = 0.1,
+    motion_scale: float = 1.0,
     pos_weight: torch.Tensor | None = None,
+    relation_eligibility: torch.Tensor | None = None,
 ) -> dict[str, torch.Tensor | int]:
     relation_logits = predictions.get("relation_logits")
     scene_motion = predictions.get("scene_motion")
@@ -59,8 +61,15 @@ def relation_motion_loss(
     target_motion = getattr(batch, "target_scene_motion", batch["target_scene_motion"] if isinstance(batch, Mapping) else None)
     if target_relation is None or relation_mask is None or target_motion is None:
         raise KeyError("batch is missing Phase 3C relation/motion targets")
+    if relation_eligibility is not None:
+        relation_eligibility = relation_eligibility.bool()
+        if relation_eligibility.ndim != 1 or relation_eligibility.shape[0] != relation_mask.shape[-1]:
+            raise ValueError("relation_eligibility must contain one value per relation")
+        relation_mask = relation_mask.bool() & relation_eligibility.unsqueeze(0)
     relation_loss, valid_count = masked_bce_with_logits(relation_logits, target_relation, relation_mask, pos_weight=pos_weight)
-    motion_loss = smooth_l1_motion(scene_motion, target_motion)
+    if not float(motion_scale) > 0.0:
+        raise ValueError("motion_scale must be positive")
+    motion_loss = smooth_l1_motion(scene_motion, target_motion / float(motion_scale))
     total = float(relation_weight) * relation_loss + float(motion_weight) * motion_loss
     return {
         "loss": total,

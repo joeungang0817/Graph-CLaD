@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from scripts.phase3c.metrics import evaluate_motion, evaluate_relation_predictions
+from scripts.phase3c.metrics import evaluate_motion, evaluate_relation_predictions, no_change_fpr
 
 
 class Phase3CMetricsTest(unittest.TestCase):
@@ -26,6 +26,17 @@ class Phase3CMetricsTest(unittest.TestCase):
         result = evaluate_motion([1.0, 3.0], [0.0, 1.0])
         self.assertAlmostEqual(result["mae"], 1.5)
         self.assertAlmostEqual(result["rmse"], np.sqrt(2.5))
+
+    def test_fixed_thresholds_are_not_reoptimized_on_test(self):
+        result = evaluate_relation_predictions(
+            [[0.0], [0.2], [0.4], [0.6]],
+            [[0], [0], [1], [1]],
+            [[1], [1], [1], [1]],
+            fixed_thresholds=[0.9],
+        )
+        self.assertEqual(result["threshold_source"], "validation_fixed")
+        self.assertEqual(result["per_relation"]["left"]["threshold"], 0.9)
+        self.assertEqual(no_change_fpr([[0.0], [2.0]], [[0], [0]], [[1], [1]], [0.5])["mean"], 1.0)
 
 
 if __name__ == "__main__":

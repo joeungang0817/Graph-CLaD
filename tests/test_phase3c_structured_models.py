@@ -17,8 +17,12 @@ class Phase3CStructuredModelTest(unittest.TestCase):
         torch = self.torch
         from scripts.phase3c.models.structured import GraphBatch, StructuredBatch
 
-        node = torch.randn(2, 5, 24)
         mask = torch.tensor([[1, 1, 1, 1, 0], [1, 1, 1, 0, 0]], dtype=torch.bool)
+        node = torch.zeros(2, 5, 8)
+        node[..., 4:7] = torch.randn(2, 5, 3)
+        node[..., 7] = mask.float()
+        node[:, 0, 0] = 1.0
+        node[:, 1:, 1] = mask[:, 1:].float()
         edge_mask = mask[:, :, None] & mask[:, None, :]
         # Remove self loops, matching the graph extractor contract.
         diagonal = torch.eye(5, dtype=torch.bool).unsqueeze(0)
@@ -26,8 +30,8 @@ class Phase3CStructuredModelTest(unittest.TestCase):
         def graph():
             return GraphBatch(
                 node_features=node.clone(), node_mask=mask.clone(),
-                edge_geometry=torch.randn(2, 5, 5, 5), edge_contact=torch.randn(2, 5, 5, 4),
-                edge_relations=torch.randn(2, 5, 5, 28), edge_mask=edge_mask.clone(),
+                edge_geometry=torch.randn(2, 5, 5, 5), edge_contact=torch.randn(2, 5, 5, 2),
+                edge_relations=torch.randn(2, 5, 5, 14), edge_mask=edge_mask.clone(),
             )
         return StructuredBatch(graph_prev=graph(), graph_current=graph(), past_action=torch.randn(2, 6, 7))
 
@@ -80,6 +84,48 @@ class Phase3CStructuredModelTest(unittest.TestCase):
             changed.append(GraphBatch(graph.node_features, graph.node_mask, graph.edge_geometry, graph.edge_contact, torch.randn_like(graph.edge_relations), graph.edge_mask))
         second = model(StructuredBatch(changed[0], changed[1], batch.past_action))
         self.assertTrue(torch.allclose(first, second, atol=1e-6, rtol=1e-6))
+
+    def test_scene_model_keeps_valid_isolated_nodes(self):
+        if self.torch is None:
+            self.skipTest("torch is not installed in the local CPU environment")
+        from scripts.phase3c.models.structured import build_structured_model
+
+        batch = self._batch()
+        batch.graph_prev.edge_mask.zero_()
+        batch.graph_current.edge_mask.zero_()
+        model = build_structured_model("C3-SceneSet-PastAct", hidden_dim=16, output_dim=32)
+        _, _, _, _, prepared_mask = model._prepare(batch)
+        self.assertTrue(self.torch.equal(prepared_mask, batch.graph_prev.node_mask & batch.graph_current.node_mask))
+
+    def test_six_adapters_can_match_relmpnn_budget(self):
+        if self.torch is None:
+            self.skipTest("torch is not installed in the local CPU environment")
+        from scripts.phase3c.models.adapters import Phase3CAdapter, SemanticPastActEncoder
+        from scripts.phase3c.models.structured import build_structured_model
+        from scripts.phase3c.parameter_match import select_width, trainable_parameter_count
+
+        names = (
+            "C3-Sem-PastAct", "C3-SceneSet-PastAct", "C3-Pair-PastAct",
+            "C3-GeomMPNN-PastAct", "C3-RelPool-PastAct", "C3-RelMPNN-PastAct",
+        )
+
+        def adapter(name, width):
+            structured = (
+                SemanticPastActEncoder(256, hidden_dim=width)
+                if name == "C3-Sem-PastAct"
+                else build_structured_model(name, hidden_dim=width, output_dim=256)
+            )
+            return Phase3CAdapter(structured, semantic_dim=2048, structured_dim=256)
+
+        target = trainable_parameter_count(adapter("C3-RelMPNN-PastAct", 128))
+        for name in names:
+            report = select_width(
+                lambda width, model_name=name: adapter(model_name, width),
+                range(64, 385, 8),
+                target,
+                tolerance=0.05,
+            )
+            self.assertTrue(report["within_tolerance"], (name, report))
 
 
 if __name__ == "__main__":

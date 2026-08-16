@@ -133,6 +133,34 @@ class Phase3CJoinContractTest(unittest.TestCase):
         self.assertEqual(first["target"]["relation_valid"]["on"], 1)
         assert_causal_input(first)
 
+    def test_join_selects_tau_six_from_mixed_horizon_source(self):
+        graph0 = _graph(0, on=False)
+        graph6 = _graph(6, on=False)
+        graph12 = _graph(12, on=True)
+        tau6 = [
+            _sample(0, graph0, graph6, action_offset=10.0),
+            _sample(6, graph6, graph12, action_offset=20.0),
+        ]
+        mixed = []
+        for sample in tau6:
+            for horizon in (1, 3):
+                other = copy.deepcopy(sample)
+                other["tau"] = horizon
+                other["target_step"] = other["start_step"] + horizon
+                other["action_window"] = other["action_window"][:horizon]
+                mixed.append(other)
+            mixed.append(sample)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "mixed.jsonl.gz"
+            output = root / "joined.jsonl.gz"
+            qa = root / "qa.json"
+            _write_demo(source, mixed)
+            report = build_joined_manifest([source], output, qa, tau=6)
+        self.assertEqual(report["status"], "pass")
+        self.assertEqual(report["counters"]["ignored_other_tau_samples"], 4)
+        self.assertEqual(report["counters"]["joined_samples"], 1)
+
     def test_future_action_poison_does_not_change_model_input_view(self):
         graph0 = _graph(0, on=False)
         graph6 = _graph(6, on=False)

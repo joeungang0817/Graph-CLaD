@@ -801,3 +801,69 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
 - Tightened semantic-store extraction to enforce one global camera frame shape
   and batch both configured views through DecisionNCE. No fallback camera or
   orientation is introduced.
+## 2026-08-17 — SSH Gate 0 Phase 3C test result
+
+- After pulling the implementation to SSH and activating the project
+  environment, all 23 `test_phase3c_*.py` tests passed in 1.608 seconds.
+- Unlike the local desktop runtime, SSH executed the PyTorch-dependent CLaD,
+  dataset, and structured-model tests successfully. This confirms the basic
+  tensor shapes, EMA/wrapper behavior, graph permutation guards, masked metric
+  behavior, and causal future-action poison test at the unit-test level.
+- Gate 0 is therefore **passed**. This is not yet evidence that the real HDF5,
+  camera, DecisionNCE, or full training pipeline works; the next gate is the
+  joined-manifest and action-timing data smoke.
+
+## 2026-08-17 Phase 3C pre-run full code audit and correction
+
+- The first real joined-manifest attempt failed with `expected tau=6, got 1`.
+  The canonical Phase 2D artifact intentionally interleaves horizons 1, 3, and
+  6. The joiner now filters the requested horizon, counts the ignored 1/3-step
+  samples, and has a mixed-horizon regression test. No successful real join is
+  claimed until the corrected command is rerun on SSH.
+- Corrected the graph tensor contract. Each `GraphBatch` now stores one
+  snapshot (`contact=2`, seven non-contact relations `=14`) and the model forms
+  prev/current/delta once. The old code duplicated contact and left half of the
+  relation tensor zero. Node input now matches the written protocol:
+  type-one-hot 4 + position 3 + validity 1 = 8 dimensions. The Phase 2D
+  24-dimensional vector is used only to audit the forbidden task slot. Robot
+  joints/gripper remain in the common proprio branch and are not duplicated in
+  the graph branch.
+- Fixed executable-path defects: NumPy semantic arrays are converted before
+  `torch.stack`, target proprio no longer tensorizes the future graph, isolated
+  nodes are retained, MPNN messages aggregate incoming rather than outgoing
+  edges, invalid proprio/motion/edge endpoints fail, and semantic shard file
+  handles use a bounded LRU cache.
+- Replaced whole-manifest RAM loading and deterministic repeated ordering with
+  a bounded-memory seeded shuffle. Validation/test evaluation also streams.
+  Runtime manifests now bind config, joined-manifest, semantic-store, and base
+  checkpoint hashes; completed matching runs can resume safely.
+- Fixed evaluation leakage and planned loss behavior: relation eligibility and
+  capped positive weights use train/validation support only; F1 thresholds are
+  selected on non-held-out validation and frozen for held-out test; motion is
+  trained with a train-only RMS scale and reported back in meters. Hierarchical
+  bootstrap now resamples paired samples within sampled tasks.
+- Core training now evaluates non-held-out validation at a frozen interval,
+  restores the best validation PR-AUC state, and applies the configured
+  patience/minimum-update early-stop rule before evaluating held-out test once.
+- Restored the planned action-only semantic adapter, residual gated fusion, and
+  automatic ±5% trainable-parameter matching against RelMPNN width 128. The
+  previous zero branch and concatenation head did not implement the written
+  six-model comparison.
+- Froze the full-screen optimizer at AdamW `lr=3e-4`, `weight_decay=1e-4` and
+  made shuffle, loss weights, support thresholds, validation split, and
+  parameter-matching reference explicit in the example configs rather than
+  relying on hidden defaults.
+- Semantic extraction now requires the DecisionNCE repository commit,
+  checkpoint SHA, and frozen simulator restore tolerance; it caches HDF5 hashes,
+  validates both views/language, and hashes each feature shard. Semantic-store,
+  base/core checkpoint, runtime, and screen schemas were bumped to v2 so no
+  pre-audit artifact can be silently reused.
+- A richer node schema (orientation, size/AABB, fixture unary state) is reserved
+  for a later `RichNode` ablation after availability QA. It is not mixed into
+  the six-model core because that would confound graph-structure gain with
+  additional state features.
+- Local verification after correction: 30 Phase 3C tests collected; 17 passed
+  and 13 PyTorch-dependent tests were skipped in the desktop runtime. Full
+  package compilation and `git diff --check` passed. The earlier SSH 23/23 Gate
+  0 result predates these corrections, so the updated 30-test suite must be
+  rerun on SSH before the real join is retried.

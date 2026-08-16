@@ -64,9 +64,18 @@ def hierarchical_bootstrap_difference(
     replicates: int = 2000,
     seed: int = 0,
 ) -> dict[str, Any]:
+    if int(replicates) <= 0:
+        raise ValueError("replicates must be positive")
+    if len({str(row["sample_id"]) for row in candidate}) != len(candidate):
+        raise ValueError("candidate predictions contain duplicate sample_id values")
+    if len({str(row["sample_id"]) for row in baseline}) != len(baseline):
+        raise ValueError("baseline predictions contain duplicate sample_id values")
     left = {str(row["sample_id"]): row for row in candidate}
     right = {str(row["sample_id"]): row for row in baseline}
     common_ids = sorted(set(left) & set(right))
+    for sample_id in common_ids:
+        if str(left[sample_id].get("task_id")) != str(right[sample_id].get("task_id")):
+            raise ValueError(f"paired prediction task mismatch for sample_id={sample_id}")
     aligned_left = [left[key] for key in common_ids]
     aligned_right = [right[key] for key in common_ids]
     tasks = sorted(set(str(row.get("task_id")) for row in aligned_left))
@@ -81,8 +90,23 @@ def hierarchical_bootstrap_difference(
         left_task_scores: list[float] = []
         right_task_scores: list[float] = []
         for task in sampled_tasks:
-            left_score = score_rows(rows_left[str(task)])["relation"].get(metric)
-            right_score = score_rows(rows_right[str(task)])["relation"].get(metric)
+            task_key = str(task)
+            task_left = rows_left[task_key]
+            task_right_by_id = {
+                str(row["sample_id"]): row for row in rows_right[task_key]
+            }
+            paired = [
+                (row, task_right_by_id[str(row["sample_id"])])
+                for row in task_left
+                if str(row["sample_id"]) in task_right_by_id
+            ]
+            if not paired:
+                continue
+            sampled_indices = rng.integers(0, len(paired), size=len(paired))
+            sampled_left = [paired[int(index)][0] for index in sampled_indices]
+            sampled_right = [paired[int(index)][1] for index in sampled_indices]
+            left_score = score_rows(sampled_left)["relation"].get(metric)
+            right_score = score_rows(sampled_right)["relation"].get(metric)
             if left_score is not None and right_score is not None:
                 left_task_scores.append(float(left_score))
                 right_task_scores.append(float(right_score))

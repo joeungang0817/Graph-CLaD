@@ -8,16 +8,38 @@ import torch
 import torch.nn as nn
 
 
-class ZeroStructuredEncoder(nn.Module):
-    """No-graph control used by C3-Sem-PastAct with the common head."""
+class SemanticPastActEncoder(nn.Module):
+    """Action-only adapter used by the no-graph C3-Sem-PastAct control."""
 
-    def __init__(self, output_dim: int = 256):
+    def __init__(self, output_dim: int = 256, hidden_dim: int = 128, action_dim: int = 42):
         super().__init__()
         self.output_dim = int(output_dim)
+        self.action_dim = int(action_dim)
+        self.encoder = nn.Sequential(
+            nn.Linear(self.action_dim, int(hidden_dim)),
+            nn.LayerNorm(int(hidden_dim)),
+            nn.GELU(),
+            nn.Linear(int(hidden_dim), int(hidden_dim)),
+            nn.GELU(),
+            nn.Linear(int(hidden_dim), self.output_dim),
+            nn.GELU(),
+        )
 
     def forward(self, batch: Any) -> torch.Tensor:
         action = batch["past_action"] if isinstance(batch, dict) else batch.past_action
-        return action.new_zeros((action.shape[0], self.output_dim), dtype=torch.float32)
+        action = action.float()
+        if action.ndim == 3:
+            action = action.flatten(start_dim=1)
+        if action.ndim != 2 or action.shape[1] != self.action_dim:
+            raise ValueError(f"past_action must be [B,{self.action_dim}] for semantic adapter")
+        if not torch.isfinite(action).all():
+            raise ValueError("past_action contains non-finite values")
+        return self.encoder(action)
+
+
+# Backward-compatible import name for pre-run configs; behavior is now the
+# planned action-only semantic adapter rather than a constant zero vector.
+ZeroStructuredEncoder = SemanticPastActEncoder
 
 
 class CommonRelationHead(nn.Module):
@@ -27,9 +49,9 @@ class CommonRelationHead(nn.Module):
         super().__init__()
         self.semantic_projector = nn.Sequential(nn.Linear(semantic_dim, latent_dim), nn.LayerNorm(latent_dim), nn.GELU())
         self.structured_projector = nn.Sequential(nn.Linear(structured_dim, latent_dim), nn.LayerNorm(latent_dim), nn.GELU())
-        self.fusion = nn.Sequential(
-            nn.Linear(latent_dim * 2, latent_dim), nn.LayerNorm(latent_dim), nn.GELU(), nn.Dropout(0.1)
-        )
+        self.adapter_gate = nn.Parameter(torch.zeros(1))
+        self.fusion_norm = nn.LayerNorm(latent_dim)
+        self.dropout = nn.Dropout(0.1)
         self.relation_head = nn.Linear(latent_dim, relation_dim)
         self.motion_head = nn.Linear(latent_dim, 1)
 
@@ -44,7 +66,9 @@ class CommonRelationHead(nn.Module):
             raise ValueError("semantic and structured batch dimensions differ")
         if not torch.isfinite(semantic).all() or not torch.isfinite(structured).all():
             raise ValueError("fusion inputs contain non-finite values")
-        latent = self.fusion(torch.cat([self.semantic_projector(semantic), self.structured_projector(structured)], dim=-1))
+        base = self.semantic_projector(semantic)
+        adapter = self.structured_projector(structured)
+        latent = self.dropout(self.fusion_norm(base + torch.sigmoid(self.adapter_gate) * adapter))
         return {"latent": latent, "relation_logits": self.relation_head(latent), "scene_motion": self.motion_head(latent)}
 
 

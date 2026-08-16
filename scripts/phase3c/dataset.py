@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Mapping, Sequence
+import math
+from collections import OrderedDict
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,17 +13,19 @@ from typing import Any
 import numpy as np
 import torch
 
-from .contracts import ACTION_DIM, PRIMARY_RELATIONS, parse_action_window
+from .contracts import PRIMARY_RELATIONS, parse_action_window
 from .io import iter_json_objects
 from .models.structured import GraphBatch
 
 
 NODE_TYPE_RANK = {"robot": 0, "object": 1, "fixture": 2, "site": 3}
+NODE_TYPES = tuple(NODE_TYPE_RANK)
+NODE_FEATURE_DIM = 8  # type one-hot(4) + position(3) + position-valid(1)
 PROPRIO_DIM = 16  # robot joint position(7) + velocity(7) + gripper qpos(2)
 GEOMETRY_DIM = 5  # relative xyz, distance, distance-valid
-CONTACT_DIM = 4  # value/valid for each of the two snapshots
-RELATION_EDGE_DIM = 28  # seven non-contact relations x (value/valid) x two snapshots
-NODE_CONTINUOUS_INDICES = (0, 1, 2, 5, 6, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22)
+CONTACT_DIM = 2  # value/valid for one snapshot; temporal deltas are built by the model
+RELATION_EDGE_DIM = 14  # seven non-contact relations x (value/valid) for one snapshot
+NODE_CONTINUOUS_INDICES = (4, 5, 6)
 
 
 @dataclass(frozen=True)
@@ -54,16 +58,42 @@ class NormalizationStats:
     edge_geometry_std: tuple[float, ...] = (1.0, 1.0, 1.0, 1.0, 1.0)
     continuous_node_indices: tuple[int, ...] = NODE_CONTINUOUS_INDICES
 
+    def __post_init__(self) -> None:
+        expected = (
+            ("node_mean", self.node_mean, NODE_FEATURE_DIM),
+            ("node_std", self.node_std, NODE_FEATURE_DIM),
+            ("proprio_mean", self.proprio_mean, PROPRIO_DIM),
+            ("proprio_std", self.proprio_std, PROPRIO_DIM),
+            ("edge_geometry_mean", self.edge_geometry_mean, GEOMETRY_DIM),
+            ("edge_geometry_std", self.edge_geometry_std, GEOMETRY_DIM),
+        )
+        for name, values, dimension in expected:
+            if len(values) != dimension or not all(math.isfinite(float(item)) for item in values):
+                raise ValueError(f"{name} must contain {dimension} finite values")
+        if any(float(item) <= 0.0 for item in self.node_std + self.proprio_std + self.edge_geometry_std):
+            raise ValueError("normalization standard deviations must be positive")
+        if tuple(self.continuous_node_indices) != NODE_CONTINUOUS_INDICES:
+            raise ValueError("normalization continuous node indices do not match Phase 3C schema")
+
     def apply_graph(self, graph: GraphBatch) -> GraphBatch:
         values = graph.node_features.clone()
         mean = torch.tensor(self.node_mean, dtype=values.dtype, device=values.device)
         std = torch.tensor(self.node_std, dtype=values.dtype, device=values.device)
         indices = torch.tensor(self.continuous_node_indices, dtype=torch.long, device=values.device)
-        values[..., indices] = (values[..., indices] - mean[indices]) / std[indices]
+        normalized_node = (values[..., indices] - mean[indices]) / std[indices]
+        position_valid = values[..., 7:8] > 0.5
+        values[..., indices] = torch.where(
+            position_valid, normalized_node, torch.zeros_like(normalized_node)
+        )
         geometry = graph.edge_geometry.clone()
         geometry_mean = torch.tensor(self.edge_geometry_mean, dtype=geometry.dtype, device=geometry.device)
         geometry_std = torch.tensor(self.edge_geometry_std, dtype=geometry.dtype, device=geometry.device)
-        geometry[..., :4] = (geometry[..., :4] - geometry_mean[:4]) / geometry_std[:4]
+        normalized_geometry = (geometry[..., :4] - geometry_mean[:4]) / geometry_std[:4]
+        geometry[..., :4] = torch.where(
+            geometry[..., 4:5] > 0.5,
+            normalized_geometry,
+            torch.zeros_like(normalized_geometry),
+        )
         return GraphBatch(values, graph.node_mask, geometry, graph.edge_contact, graph.edge_relations, graph.edge_mask)
 
     def apply_proprio(self, value: torch.Tensor) -> torch.Tensor:
@@ -93,17 +123,20 @@ class NormalizationStats:
 class SemanticFeatureStore:
     """Read-only index over the per-demo `.npz` shards produced by Milestone 2."""
 
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, *, max_open_shards: int = 32):
         self.root = Path(root)
         with (self.root / "manifest.json").open("r", encoding="utf-8") as handle:
             manifest = json.load(handle)
-        if manifest.get("schema") != "phase3c-semantic-feature-store.v1":
+        if manifest.get("schema") != "phase3c-semantic-feature-store.v2":
             raise ValueError("unsupported semantic feature-store schema")
         self.manifest = manifest
         self.index = manifest.get("index", {})
         if not isinstance(self.index, Mapping):
             raise ValueError("semantic feature-store index must be an object")
-        self._shards: dict[str, Any] = {}
+        if int(max_open_shards) <= 0:
+            raise ValueError("max_open_shards must be positive")
+        self.max_open_shards = int(max_open_shards)
+        self._shards: OrderedDict[str, Any] = OrderedDict()
 
     @property
     def feature_dim(self) -> int:
@@ -116,6 +149,10 @@ class SemanticFeatureStore:
         return value
 
     def _shard(self, name: str) -> Any:
+        if name in self._shards:
+            value = self._shards.pop(name)
+            self._shards[name] = value
+            return value
         if name not in self._shards:
             shard = (self.root / name).resolve()
             if self.root.resolve() not in shard.parents:
@@ -123,12 +160,37 @@ class SemanticFeatureStore:
             if not shard.exists():
                 raise FileNotFoundError(shard)
             self._shards[name] = np.load(shard, allow_pickle=False)
+            while len(self._shards) > self.max_open_shards:
+                _, old = self._shards.popitem(last=False)
+                old.close()
         return self._shards[name]
 
+    def close(self) -> None:
+        for shard in self._shards.values():
+            shard.close()
+        self._shards.clear()
+
+    def __enter__(self) -> "SemanticFeatureStore":
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:  # pragma: no cover - defensive interpreter cleanup
+        shards = getattr(self, "_shards", None)
+        if shards is not None:
+            self.close()
+
     def image(self, task_id: int, demo_key: str, step: int, view: int) -> np.ndarray:
+        if int(view) not in (0, 1):
+            raise ValueError(f"semantic view must be 0 or 1, got {view}")
         key = f"{int(task_id)}/{demo_key}/{int(step)}/view{int(view)}"
         entry = self._entry(key)
-        array = np.asarray(self._shard(str(entry["shard"]))[f"view{int(view)}"][int(entry["row"])], dtype=np.float32)
+        values = self._shard(str(entry["shard"]))[f"view{int(view)}"]
+        row = int(entry["row"])
+        if row < 0 or row >= int(values.shape[0]):
+            raise IndexError(f"semantic feature row is out of range at {key}: {row}")
+        array = np.asarray(values[row], dtype=np.float32)
         if array.ndim != 1 or array.shape[0] != self.feature_dim or not np.isfinite(array).all():
             raise ValueError(f"invalid semantic feature shape/value at {key}")
         return array
@@ -147,7 +209,10 @@ def _node_map(graph: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
     for node in graph.get("nodes", []):
         if not isinstance(node, Mapping) or "node_id" not in node:
             raise ValueError("graph contains an invalid node")
-        result[str(node["node_id"])] = node
+        node_id = str(node["node_id"])
+        if node_id in result:
+            raise ValueError(f"duplicate graph node_id: {node_id}")
+        result[node_id] = node
     return result
 
 
@@ -156,7 +221,10 @@ def _edge_map(graph: Mapping[str, Any]) -> dict[tuple[str, str], Mapping[str, An
     for edge in graph.get("edges", []):
         if not isinstance(edge, Mapping) or "source" not in edge or "target" not in edge:
             raise ValueError("graph contains an invalid edge")
-        result[(str(edge["source"]), str(edge["target"]))] = edge
+        key = (str(edge["source"]), str(edge["target"]))
+        if key in result:
+            raise ValueError(f"duplicate graph edge: {key[0]}->{key[1]}")
+        result[key] = edge
     return result
 
 
@@ -164,68 +232,115 @@ def _node_order(*graphs: Mapping[str, Any]) -> list[str]:
     nodes: dict[str, str] = {}
     for graph in graphs:
         for node in _node_map(graph).values():
-            nodes[str(node["node_id"])] = str(node.get("node_type", "unknown"))
+            node_id = str(node["node_id"])
+            node_type = str(node.get("node_type", "unknown"))
+            if node_id in nodes and nodes[node_id] != node_type:
+                raise ValueError(
+                    f"node type changed across snapshots: {node_id} {nodes[node_id]}->{node_type}"
+                )
+            nodes[node_id] = node_type
     return sorted(nodes, key=lambda node_id: (NODE_TYPE_RANK.get(nodes[node_id], 99), node_id))
 
 
-def _node_vector(node: Mapping[str, Any], feature_dim: int = 24) -> list[float]:
+def _node_vector(node: Mapping[str, Any], source_feature_dim: int = 24) -> list[float]:
+    """Build the Phase 3C node schema while auditing the Phase 2D source."""
+
     vector = node.get("feature_vector")
     if hasattr(vector, "tolist"):
         vector = vector.tolist()
-    if not isinstance(vector, Sequence) or isinstance(vector, (str, bytes)) or len(vector) != feature_dim:
-        raise ValueError(f"node {node.get('node_id')} has no {feature_dim}-dimensional feature_vector")
-    values = [float(item) for item in vector]
+    if not isinstance(vector, Sequence) or isinstance(vector, (str, bytes)) or len(vector) != source_feature_dim:
+        raise ValueError(f"node {node.get('node_id')} has no {source_feature_dim}-dimensional feature_vector")
+    source_values = [float(item) for item in vector]
+    if not all(math.isfinite(item) for item in source_values):
+        raise ValueError(f"node {node.get('node_id')} feature_vector contains NaN or Inf")
     # This is the Phase 2D input-clean invariant, not a task label.
-    if abs(values[4]) > 1e-8:
+    if abs(source_values[4]) > 1e-8:
         raise ValueError(f"task-derived node feature slot is non-zero for {node.get('node_id')}")
-    return values
+    node_type = str(node.get("node_type"))
+    if node_type not in NODE_TYPE_RANK:
+        raise ValueError(f"unsupported node type for {node.get('node_id')}: {node_type}")
+    features = node.get("features")
+    if not isinstance(features, Mapping):
+        raise ValueError(f"node {node.get('node_id')} has no grouped features")
+    position_valid = features.get("position_valid") == 1
+    raw_position = features.get("position")
+    if not isinstance(raw_position, Sequence) or isinstance(raw_position, (str, bytes)) or len(raw_position) != 3:
+        if position_valid:
+            raise ValueError(f"node {node.get('node_id')} has invalid position")
+        position = [0.0, 0.0, 0.0]
+    else:
+        position = [float(item) for item in raw_position]
+    if not all(math.isfinite(item) for item in position):
+        raise ValueError(f"node {node.get('node_id')} position contains NaN or Inf")
+    if not position_valid:
+        position = [0.0, 0.0, 0.0]
+    one_hot = [float(node_type == candidate) for candidate in NODE_TYPES]
+    return one_hot + position + [float(position_valid)]
 
 
 def _proprio(graph: Mapping[str, Any]) -> list[float]:
-    robot = next((node for node in _node_map(graph).values() if str(node.get("node_type")) == "robot"), None)
-    if robot is None:
-        raise ValueError("graph has no robot node")
+    robots = [node for node in _node_map(graph).values() if str(node.get("node_type")) == "robot"]
+    if len(robots) != 1:
+        raise ValueError(f"graph must have exactly one robot node, got {len(robots)}")
+    robot = robots[0]
     features = robot.get("features")
     if not isinstance(features, Mapping):
         raise ValueError("robot node has no grouped features")
     def vector(name: str, dimension: int) -> list[float]:
+        if features.get(f"{name}_valid") != 1:
+            raise ValueError(f"robot feature {name} is not valid")
         value = features.get(name)
         if not isinstance(value, Sequence) or isinstance(value, (str, bytes)) or len(value) != dimension:
             raise ValueError(f"robot feature {name} must be length {dimension}")
-        return [float(item) for item in value]
+        result = [float(item) for item in value]
+        if not all(math.isfinite(item) for item in result):
+            raise ValueError(f"robot feature {name} contains NaN or Inf")
+        return result
     return vector("joint_pos", 7) + vector("joint_vel", 7) + vector("gripper_qpos", 2)
 
 
-def fit_normalization(records: Sequence[Mapping[str, Any]]) -> NormalizationStats:
+def fit_normalization(records: Iterable[Mapping[str, Any]]) -> NormalizationStats:
     """Fit statistics on train records only; validation/test are never read."""
 
-    node_values: list[list[float]] = []
-    proprio_values: list[list[float]] = []
-    geometry_values: list[list[float]] = []
+    class Moments:
+        def __init__(self, dimension: int):
+            self.count = 0
+            self.mean = np.zeros(dimension, dtype=np.float64)
+            self.m2 = np.zeros(dimension, dtype=np.float64)
+
+        def add(self, value: Sequence[float]) -> None:
+            row = np.asarray(value, dtype=np.float64)
+            if row.shape != self.mean.shape or not np.isfinite(row).all():
+                raise ValueError(f"normalization row must be finite shape {self.mean.shape}")
+            self.count += 1
+            delta = row - self.mean
+            self.mean += delta / self.count
+            self.m2 += delta * (row - self.mean)
+
+        def finish(self) -> tuple[np.ndarray, np.ndarray]:
+            if self.count == 0:
+                raise ValueError("cannot fit normalization on empty values")
+            std = np.sqrt(self.m2 / self.count)
+            std[std < 1e-8] = 1.0
+            return self.mean, std
+
+    node_values = Moments(NODE_FEATURE_DIM)
+    proprio_values = Moments(PROPRIO_DIM)
+    geometry_values = Moments(GEOMETRY_DIM)
     for record in records:
         for graph in (record["graph_prev"], record["graph_t"]):
-            node_values.extend(_node_vector(node) for node in _node_map(graph).values())
-            proprio_values.append(_proprio(graph))
+            for node in _node_map(graph).values():
+                node_values.add(_node_vector(node))
+            proprio_values.add(_proprio(graph))
             for edge in _edge_map(graph).values():
                 features = edge.get("features") or {}
                 relative = features.get("relative_position", [0.0, 0.0, 0.0])
                 if isinstance(relative, Sequence) and len(relative) == 3:
-                    geometry_values.append([float(relative[0]), float(relative[1]), float(relative[2]), float(features.get("distance", 0.0) or 0.0), float(bool(features.get("distance_valid", 0)))])
-    if not node_values or not proprio_values:
-        raise ValueError("cannot fit normalization on empty graph records")
-    node = np.asarray(node_values, dtype=np.float64)
-    proprio = np.asarray(proprio_values, dtype=np.float64)
-    node_mean = node.mean(axis=0)
-    node_std = node.std(axis=0)
-    proprio_mean = proprio.mean(axis=0)
-    proprio_std = proprio.std(axis=0)
-    node_std[node_std < 1e-8] = 1.0
-    proprio_std[proprio_std < 1e-8] = 1.0
-    if geometry_values:
-        geometry = np.asarray(geometry_values, dtype=np.float64)
-        geometry_mean = geometry.mean(axis=0)
-        geometry_std = geometry.std(axis=0)
-        geometry_std[geometry_std < 1e-8] = 1.0
+                    geometry_values.add([float(relative[0]), float(relative[1]), float(relative[2]), float(features.get("distance", 0.0) or 0.0), float(bool(features.get("distance_valid", 0)))])
+    node_mean, node_std = node_values.finish()
+    proprio_mean, proprio_std = proprio_values.finish()
+    if geometry_values.count:
+        geometry_mean, geometry_std = geometry_values.finish()
     else:
         geometry_mean = np.zeros(5, dtype=np.float64)
         geometry_std = np.ones(5, dtype=np.float64)
@@ -258,9 +373,18 @@ def graph_tensors(
         max_nodes = len(order)
     if len(order) > int(max_nodes):
         raise ValueError(f"graph node count {len(order)} exceeds max_nodes={max_nodes}")
-    node_dim = 24
+    node_dim = NODE_FEATURE_DIM
     prev_nodes = _node_map(previous)
     curr_nodes = _node_map(current)
+    for graph_name, nodes, edges in (
+        ("previous", prev_nodes, _edge_map(previous)),
+        ("current", curr_nodes, _edge_map(current)),
+    ):
+        for source, target in edges:
+            if source not in nodes or target not in nodes:
+                raise ValueError(
+                    f"{graph_name} edge {source}->{target} references a missing node"
+                )
     prev_node = np.zeros((max_nodes, node_dim), dtype=np.float32)
     curr_node = np.zeros((max_nodes, node_dim), dtype=np.float32)
     prev_mask = np.zeros(max_nodes, dtype=bool)
@@ -274,7 +398,7 @@ def graph_tensors(
             curr_mask[index] = True
     prev_geometry = np.zeros((max_nodes, max_nodes, GEOMETRY_DIM), dtype=np.float32)
     curr_geometry = np.zeros_like(prev_geometry)
-    prev_contact = np.zeros((max_nodes, max_nodes, 4), dtype=np.float32)
+    prev_contact = np.zeros((max_nodes, max_nodes, CONTACT_DIM), dtype=np.float32)
     curr_contact = np.zeros_like(prev_contact)
     prev_rel = np.zeros((max_nodes, max_nodes, RELATION_EDGE_DIM), dtype=np.float32)
     curr_rel = np.zeros_like(prev_rel)
@@ -287,9 +411,9 @@ def graph_tensors(
         for j, target in enumerate(order):
             if source == target:
                 continue
-            for graph_edges, geometry, contact, relations, mask, offset in (
-                (prev_edges, prev_geometry, prev_contact, prev_rel, prev_edge_mask, 0),
-                (curr_edges, curr_geometry, curr_contact, curr_rel, curr_edge_mask, 0),
+            for graph_edges, geometry, contact, relations, mask in (
+                (prev_edges, prev_geometry, prev_contact, prev_rel, prev_edge_mask),
+                (curr_edges, curr_geometry, curr_contact, curr_rel, curr_edge_mask),
             ):
                 edge = graph_edges.get((source, target))
                 if edge is None:
@@ -303,7 +427,6 @@ def graph_tensors(
                 geometry[i, j, 4] = float(bool(features.get("distance_valid", 0)))
                 contact_value, contact_valid = _relation_record(edge, "contact")
                 contact[i, j, :2] = [contact_value, contact_valid]
-                contact[i, j, 2:] = [contact_value, contact_valid]
                 for relation_index, relation in enumerate(relation_names):
                     value, valid = _relation_record(edge, relation)
                     relations[i, j, relation_index * 2 : relation_index * 2 + 2] = [value, valid]
@@ -338,6 +461,8 @@ def collate_phase3c(
 ) -> Phase3CBatch:
     if not records:
         raise ValueError("cannot collate an empty Phase 3C batch")
+    if max_nodes is not None and int(max_nodes) <= 0:
+        raise ValueError("max_nodes must be positive")
     if max_nodes is None:
         max_nodes = max(
             len(_node_order(record["graph_prev"], record["graph_t"]))
@@ -361,25 +486,39 @@ def collate_phase3c(
         task_id = int(record["task_id"])
         demo_key = str(record["demo_key"])
         prev_step, current_step, target_step = (int(record[name]) for name in ("prev_step", "current_step", "target_step"))
+        tau = int(record.get("tau", 6))
+        if tau != 6:
+            raise ValueError(f"Phase 3C tensor contract requires tau=6, got {tau}")
+        if current_step - prev_step != tau or target_step - current_step != tau:
+            raise ValueError(
+                f"non-uniform temporal steps for sample={record.get('sample_id')}: "
+                f"{prev_step}->{current_step}->{target_step}, tau={tau}"
+            )
         prev_graph, current_graph, prev_p, current_p = graph_tensors(record["graph_prev"], record["graph_t"], max_nodes=max_nodes)
-        _, _, _, target_p_values = graph_tensors(record["graph_t"], record["target"]["graph"], max_nodes=max_nodes)
+        target_p_values = _proprio(record["target"]["graph"])
         previous_graphs.append(prev_graph)
         current_graphs.append(current_graph)
         p_history.append(torch.tensor([prev_p, current_p], dtype=torch.float32))
         target_p.append(torch.tensor(target_p_values, dtype=torch.float32))
         # Keep the two view embeddings separate: view0/view1, never a repeated
         # copy of one camera.
+        def image_tensor(step: int, view: int) -> torch.Tensor:
+            return torch.from_numpy(store.image(task_id, demo_key, step, view))
+
         v_history.append(torch.stack(
-            [torch.stack([store.image(task_id, demo_key, prev_step, 0), store.image(task_id, demo_key, prev_step, 1)]),
-             torch.stack([store.image(task_id, demo_key, current_step, 0), store.image(task_id, demo_key, current_step, 1)])]
+            [torch.stack([image_tensor(prev_step, 0), image_tensor(prev_step, 1)]),
+             torch.stack([image_tensor(current_step, 0), image_tensor(current_step, 1)])]
         ))
-        target_v.append(torch.stack([store.image(task_id, demo_key, target_step, 0), store.image(task_id, demo_key, target_step, 1)]))
-        actions.append(torch.tensor(parse_action_window(record["past_action_window"]), dtype=torch.float32))
+        target_v.append(torch.stack([image_tensor(target_step, 0), image_tensor(target_step, 1)]))
+        actions.append(torch.tensor(parse_action_window(record["past_action_window"], tau=tau), dtype=torch.float32))
         languages.append(torch.tensor(store.language(task_id, demo_key), dtype=torch.float32))
         label, valid = _target_relation(record)
         labels.append(label)
         masks.append(valid)
-        motion.append(float(record["target"].get("scene_max_displacement_m", 0.0)))
+        motion_value = float(record["target"]["scene_max_displacement_m"])
+        if not math.isfinite(motion_value) or motion_value < 0.0:
+            raise ValueError("scene_max_displacement_m must be finite and non-negative")
+        motion.append(motion_value)
         sample_ids.append(str(record["sample_id"]))
         task_ids.append(task_id)
         episode_ids.append(str(record["episode_id"]))
@@ -399,8 +538,8 @@ def collate_phase3c(
         sample_ids=tuple(sample_ids), task_ids=torch.tensor(task_ids, dtype=torch.long), episode_ids=tuple(episode_ids),
         v_history=torch.stack(v_history), p_history=p_history_batch, past_action=torch.stack(actions),
         language=torch.stack(languages), graph_prev=graph_prev_batch, graph_current=graph_current_batch,
-        target_v=torch.stack(target_v), target_p=target_p_batch, target_relation_change=torch.tensor(labels),
-        target_relation_mask=torch.tensor(masks), target_scene_motion=torch.tensor(motion, dtype=torch.float32).unsqueeze(-1),
+        target_v=torch.stack(target_v), target_p=target_p_batch, target_relation_change=torch.tensor(labels, dtype=torch.float32),
+        target_relation_mask=torch.tensor(masks, dtype=torch.float32), target_scene_motion=torch.tensor(motion, dtype=torch.float32).unsqueeze(-1),
     )
     if device is not None:
         def move_graph(graph: GraphBatch) -> GraphBatch:
@@ -415,6 +554,8 @@ def collate_phase3c(
 
 
 def iter_joined_batches(path: Path, batch_size: int) -> Iterable[list[dict[str, Any]]]:
+    if int(batch_size) <= 0:
+        raise ValueError("batch_size must be positive")
     pending: list[dict[str, Any]] = []
     for record in iter_json_objects(path):
         pending.append(dict(record))
@@ -423,3 +564,68 @@ def iter_joined_batches(path: Path, batch_size: int) -> Iterable[list[dict[str, 
             pending = []
     if pending:
         yield pending
+
+
+def iter_filtered_records(
+    path: Path,
+    *,
+    split: str | None = None,
+    exclude_task_id: int | None = None,
+    include_task_id: int | None = None,
+) -> Iterator[dict[str, Any]]:
+    """Stream a split/task view without materializing the joined artifact."""
+
+    if exclude_task_id is not None and include_task_id is not None:
+        raise ValueError("exclude_task_id and include_task_id are mutually exclusive")
+    for raw in iter_json_objects(path):
+        if split is not None and str(raw.get("split")) != str(split):
+            continue
+        task_id = int(raw.get("task_id", -1))
+        if exclude_task_id is not None and task_id == int(exclude_task_id):
+            continue
+        if include_task_id is not None and task_id != int(include_task_id):
+            continue
+        yield dict(raw)
+
+
+def iter_shuffled_batches(
+    path: Path,
+    *,
+    batch_size: int,
+    seed: int,
+    split: str | None = None,
+    exclude_task_id: int | None = None,
+    shuffle_buffer: int = 2048,
+) -> Iterator[list[dict[str, Any]]]:
+    """Yield deterministic bounded-memory shuffled batches for repeated epochs."""
+
+    import random
+
+    if int(batch_size) <= 0 or int(shuffle_buffer) < int(batch_size):
+        raise ValueError("shuffle_buffer must be at least batch_size, and both must be positive")
+    rng = random.Random(int(seed))
+    pending_batch: list[dict[str, Any]] = []
+    while True:
+        buffer: list[dict[str, Any]] = []
+        seen = 0
+        for record in iter_filtered_records(
+            path, split=split, exclude_task_id=exclude_task_id
+        ):
+            seen += 1
+            if len(buffer) < int(shuffle_buffer):
+                buffer.append(record)
+                continue
+            index = rng.randrange(len(buffer))
+            pending_batch.append(buffer[index])
+            buffer[index] = record
+            if len(pending_batch) == int(batch_size):
+                yield pending_batch
+                pending_batch = []
+        if seen == 0:
+            raise ValueError(f"joined manifest has no matching records for split={split}")
+        rng.shuffle(buffer)
+        for record in buffer:
+            pending_batch.append(record)
+            if len(pending_batch) == int(batch_size):
+                yield pending_batch
+                pending_batch = []

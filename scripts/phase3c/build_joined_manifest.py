@@ -9,17 +9,14 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
 from .contracts import (
-    ACTION_DIM,
     PHASE3C_SCHEMA_VERSION,
     PRIMARY_RELATIONS,
     TAU,
-    JoinCounters,
     assert_causal_input,
     canonical_sha256,
     parse_action_window,
@@ -150,12 +147,20 @@ def build_joined_manifest(
         raise ValueError("tau must be positive")
     if not relations:
         raise ValueError("at least one relation is required")
+    if len(set(relations)) != len(relations):
+        raise ValueError("relations must not contain duplicates")
+    if max_output_records is not None and int(max_output_records) <= 0:
+        raise ValueError("max_output_records must be positive when configured")
     paths = tuple(Path(path) for path in input_paths)
     if not paths:
         raise ValueError("at least one Phase 2D input path is required")
     for path in paths:
         if not path.exists():
             raise FileNotFoundError(path)
+        if path.resolve() in {output_path.resolve(), qa_path.resolve()}:
+            raise ValueError("Phase 2D input path must differ from output paths")
+    if output_path.resolve() == qa_path.resolve():
+        raise ValueError("output_path and qa_path must differ")
 
     counters = {
         "source_records": 0,
@@ -167,6 +172,7 @@ def build_joined_manifest(
         "hash_mismatches": 0,
         "duplicate_left_keys": 0,
         "invalid_samples": 0,
+        "ignored_other_tau_samples": 0,
         "emitted_future_action_fields": 0,
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -177,13 +183,22 @@ def build_joined_manifest(
     try:
         with atomic_jsonl(output_path) as output:
             for path in paths:
-                for source_record in _iter_source_records(path, tau=tau, counters=counters):
+                for source_record in _iter_source_records(path):
                     counters["source_records"] += 1
                     samples = source_record
                     by_start: dict[int, Mapping[str, Any]] = {}
                     for sample in samples:
                         counters["source_samples"] += 1
                         try:
+                            sample_tau = _int_field(sample, "tau")
+                            if sample_tau != tau:
+                                # Phase 2D's merged artifact intentionally
+                                # contains horizons 1, 3, and 6 in one file.
+                                # Phase 3C selects the requested horizon and
+                                # must not treat the other valid horizons as
+                                # malformed input.
+                                counters["ignored_other_tau_samples"] += 1
+                                continue
                             _validate_phase2d_sample(sample, tau=tau)
                             start = _int_field(sample, "start_step")
                             if start in by_start:
@@ -260,24 +275,28 @@ def build_joined_manifest(
     return report
 
 
-def _iter_source_records(
-    path: Path, *, tau: int, counters: dict[str, int]
-) -> Iterable[list[dict[str, Any]]]:
+def _iter_source_records(path: Path) -> Iterable[list[dict[str, Any]]]:
     """Yield one demo's samples at a time from the canonical Phase 2D format."""
 
-    pending: dict[tuple[str, int, str, str], list[dict[str, Any]]] = defaultdict(list)
+    pending_key: tuple[str, int, str, str] | None = None
+    pending_rows: list[dict[str, Any]] = []
+    completed_keys: set[tuple[str, int, str, str]] = set()
     for sample in iter_phase2d_samples((path,)):
         # `iter_phase2d_samples` flattens nested records.  The canonical file
-        # is ordered by demo, so flush when the episode changes.  The pending
-        # map also makes bare sample JSONL fixtures work in tests.
+        # is ordered by demo, so flush when the episode changes.  Reject a
+        # non-contiguous repeated episode rather than silently buffering the
+        # whole source file.
         key = _episode_key(sample)
-        if pending and key not in pending:
-            for rows in pending.values():
-                yield rows
-            pending.clear()
-        pending[key].append(sample)
-    for rows in pending.values():
-        yield rows
+        if pending_key is not None and key != pending_key:
+            yield pending_rows
+            completed_keys.add(pending_key)
+            pending_rows = []
+        if key in completed_keys:
+            raise ValueError(f"episode records are non-contiguous in source: {key}")
+        pending_key = key
+        pending_rows.append(sample)
+    if pending_rows:
+        yield pending_rows
 
 
 def _parse_args() -> argparse.Namespace:

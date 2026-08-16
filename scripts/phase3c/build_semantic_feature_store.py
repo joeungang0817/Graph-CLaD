@@ -18,6 +18,7 @@ import hashlib
 import importlib
 import json
 import os
+import re
 import tempfile
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
@@ -26,11 +27,11 @@ from typing import Any
 
 import numpy as np
 
-from .contracts import PHASE3C_SCHEMA_VERSION
+from .contracts import PHASE3C_SCHEMA_VERSION, assert_causal_input
 from .io import load_json_config, write_json
 
 
-FEATURE_STORE_SCHEMA = "phase3c-semantic-feature-store.v1"
+FEATURE_STORE_SCHEMA = "phase3c-semantic-feature-store.v2"
 DEFAULT_MODEL_ID = "DecisionNCE-P"
 
 
@@ -231,11 +232,29 @@ def _to_torch_batch(frames: Sequence[np.ndarray], *, preprocess: str):
 class DecisionNCEEncoder:
     """Small compatibility wrapper around the official DecisionNCE loader."""
 
-    def __init__(self, model: Any, *, model_id: str, preprocess: str = "model"):
+    def __init__(
+        self,
+        model: Any,
+        *,
+        model_id: str,
+        preprocess: str = "model",
+        device: str | None = None,
+        preprocess_fn: Any = None,
+    ):
+        import torch
+
         self.model = model
         self.model_id = str(model_id)
         self.preprocess = str(preprocess)
+        self.device = torch.device(
+            device or ("cuda" if torch.cuda.is_available() else "cpu")
+        )
+        if self.device.type == "cuda" and not torch.cuda.is_available():
+            raise RuntimeError("DecisionNCE config requested CUDA but CUDA is unavailable")
+        self.model_preprocess = preprocess_fn or getattr(model, "preprocess", None)
         self._feature_dim: int | None = None
+        if hasattr(model, "to"):
+            model.to(self.device)
         if hasattr(model, "eval"):
             model.eval()
         if hasattr(model, "parameters"):
@@ -260,30 +279,50 @@ class DecisionNCEEncoder:
         checkpoint = config.get("checkpoint")
         kwargs = dict(config.get("load_kwargs", {}) or {})
         if checkpoint:
-            kwargs.setdefault("checkpoint", str(_expand_path(str(checkpoint))))
+            checkpoint_argument = str(config.get("checkpoint_argument", "checkpoint"))
+            if not checkpoint_argument.isidentifier():
+                raise ValueError("decisionnce.checkpoint_argument must be a Python identifier")
+            kwargs[checkpoint_argument] = str(_expand_path(str(checkpoint)))
         if hasattr(loader, "load"):
-            model = loader.load(model_id, **kwargs)
+            loaded = loader.load(model_id, **kwargs)
         elif callable(loader):
-            model = loader(model_id, **kwargs)
+            loaded = loader(model_id, **kwargs)
         else:
             raise RuntimeError("configured DecisionNCE loader is not callable")
-        return cls(model, model_id=model_id, preprocess=str(config.get("preprocess", "model")))
+        preprocess_fn = None
+        model = loaded
+        if isinstance(loaded, (tuple, list)):
+            if not loaded:
+                raise RuntimeError("DecisionNCE loader returned an empty sequence")
+            model = loaded[0]
+            preprocess_fn = next((item for item in loaded[1:] if callable(item)), None)
+        return cls(
+            model,
+            model_id=model_id,
+            preprocess=str(config.get("preprocess", "model")),
+            device=str(config.get("device")) if config.get("device") else None,
+            preprocess_fn=preprocess_fn,
+        )
 
     def _preprocess_images(self, frames: Sequence[np.ndarray]):
-        model_preprocess = getattr(self.model, "preprocess", None)
+        model_preprocess = self.model_preprocess
         if callable(model_preprocess) and self.preprocess == "model":
             try:
-                processed = [model_preprocess(frame) for frame in frames]
                 import torch
+                from PIL import Image
 
+                processed = [
+                    model_preprocess(Image.fromarray(normalize_camera_image(frame)))
+                    for frame in frames
+                ]
                 if all(torch.is_tensor(item) for item in processed):
-                    return torch.stack(processed, dim=0)
+                    return torch.stack(processed, dim=0).to(self.device)
             except Exception as exc:
                 raise RuntimeError("DecisionNCE model preprocessing failed") from exc
             raise RuntimeError("DecisionNCE preprocess must return torch tensors")
         if self.preprocess == "model":
             raise RuntimeError("DecisionNCE model exposes no preprocess; set an explicit preprocess mode")
-        return _to_torch_batch(frames, preprocess=self.preprocess)
+        return _to_torch_batch(frames, preprocess=self.preprocess).to(self.device)
 
     @staticmethod
     def _as_feature_tensor(value: Any):
@@ -406,7 +445,12 @@ def _atomic_npz(path: Path, arrays: Mapping[str, Any]) -> None:
 def _iter_joined(path: Path) -> Iterable[dict[str, Any]]:
     from .io import iter_json_objects
 
-    yield from (dict(item) for item in iter_json_objects(path))
+    for index, item in enumerate(iter_json_objects(path)):
+        record = dict(item)
+        if record.get("schema") != PHASE3C_SCHEMA_VERSION:
+            raise ValueError(f"joined record {index} has unsupported schema")
+        assert_causal_input(record)
+        yield record
 
 
 def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
@@ -419,10 +463,29 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(camera_specs, Sequence) or isinstance(camera_specs, (str, bytes)):
         raise ValueError("semantic_feature_store.cameras must contain exactly two entries")
     required = required_frame_keys(_iter_joined(joined_path))
+    if not required:
+        raise ValueError("joined manifest contains no frame keys")
     bddl_roots = [_expand_path(str(value)) for value in store.get("bddl_roots", [])]
     if not bddl_roots:
         raise ValueError("semantic_feature_store.bddl_roots must not be empty")
+    if store.get("state_restore_tolerance") is None:
+        raise ValueError(
+            "semantic_feature_store.state_restore_tolerance must be frozen before extraction"
+        )
+    try:
+        restore_tolerance = float(store["state_restore_tolerance"])
+    except (TypeError, ValueError) as exc:
+        raise ValueError("state_restore_tolerance must be a numeric frozen value") from exc
+    if not np.isfinite(restore_tolerance) or restore_tolerance < 0.0:
+        raise ValueError("state_restore_tolerance must be finite and non-negative")
     decision_config = dict(store.get("decisionnce", {}) or {})
+    repository_commit = str(decision_config.get("repository_commit", "")).strip()
+    if not re.fullmatch(r"[0-9a-fA-F]{7,64}", repository_commit):
+        raise ValueError(
+            "decisionnce.repository_commit must be an exact hexadecimal commit id"
+        )
+    if not decision_config.get("checkpoint"):
+        raise ValueError("decisionnce.checkpoint is required for completed provenance")
     encoder = DecisionNCEEncoder.load(decision_config)
     model_checkpoint_sha = _checkpoint_sha(decision_config.get("checkpoint"))
 
@@ -433,15 +496,19 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
         raise RuntimeError("semantic extraction requires h5py and LIBERO") from exc
 
     by_task_language: dict[int, str] = {}
+    by_task_language_embedding: dict[int, np.ndarray] = {}
     hdf5_sha: dict[str, str] = {}
+    bddl_by_task: dict[str, str] = {}
     index: dict[str, Any] = {}
     camera_inventory_records: dict[str, Any] = {}
     expected_camera_shape: tuple[int, int, int] | None = None
     completed = 0
+    shard_sha256: dict[str, str] = {}
     for (task_id, demo_key), steps in sorted(required.items()):
         hdf5_path = _resolve_hdf5(store, task_id)
         by_task_language.setdefault(task_id, _resolve_language(store, task_id))
-        hdf5_sha[str(hdf5_path)] = sha256_file(hdf5_path)
+        if str(hdf5_path) not in hdf5_sha:
+            hdf5_sha[str(hdf5_path)] = sha256_file(hdf5_path)
         environment, bddl_path = make_environment(
             hdf5_path,
             bddl_roots,
@@ -449,6 +516,10 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
             render=True,
         )
         try:
+            resolved_bddl = str(Path(bddl_path).resolve())
+            previous_bddl = bddl_by_task.setdefault(str(task_id), resolved_bddl)
+            if previous_bddl != resolved_bddl:
+                raise ValueError(f"BDDL path changed within task {task_id}")
             with h5py.File(hdf5_path, "r") as handle:
                 group = _hdf5_demo_group(handle, demo_key)
                 states = group["states"]
@@ -456,12 +527,17 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
                 invalid_steps = sorted(step for step in steps if step < 0 or step >= max_step)
                 if invalid_steps:
                     raise IndexError(f"{demo_key} requested steps outside [0,{max_step}): {invalid_steps}")
-                view_frames = [[], []]
+                frame_batch: list[np.ndarray] = []
                 restore_errors: list[float] = []
                 for step in sorted(steps):
                     observation = _restore_observation(environment, states[step])
                     frames, inventory = configured_camera_frames(observation, camera_specs)
                     frame_shape = tuple(int(value) for value in frames[0].shape)
+                    camera_size = int(store.get("camera_size", 224))
+                    if frame_shape != (camera_size, camera_size, 3):
+                        raise ValueError(
+                            f"camera frame must be {(camera_size, camera_size, 3)}, got {frame_shape}"
+                        )
                     if expected_camera_shape is None:
                         expected_camera_shape = frame_shape
                     elif frame_shape != expected_camera_shape:
@@ -470,12 +546,31 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
                         )
                     if not camera_inventory_records:
                         camera_inventory_records = inventory
-                    encoded = encoder.encode_images(frames)
-                    view_frames[0].append(encoded[0])
-                    view_frames[1].append(encoded[1])
+                    elif camera_inventory_records.get("selected") != inventory.get("selected"):
+                        raise ValueError("selected camera metadata changed during extraction")
+                    frame_batch.extend(frames)
                     error = _state_error(environment, states[step])
                     restore_errors.append(float(error) if error is not None else float("nan"))
-                language = encoder.encode_texts([by_task_language[task_id]])[0]
+                encode_batch_size = int(store.get("encode_batch_size", 64))
+                if encode_batch_size <= 0:
+                    raise ValueError("encode_batch_size must be positive")
+                encoded_frames = np.concatenate(
+                    [
+                        encoder.encode_images(
+                            frame_batch[start : start + encode_batch_size]
+                        )
+                        for start in range(0, len(frame_batch), encode_batch_size)
+                    ],
+                    axis=0,
+                )
+                view_frames = [encoded_frames[0::2], encoded_frames[1::2]]
+                if len(view_frames[0]) != len(steps) or len(view_frames[1]) != len(steps):
+                    raise ValueError("DecisionNCE camera batching changed frame/view order")
+                if task_id not in by_task_language_embedding:
+                    by_task_language_embedding[task_id] = encoder.encode_texts(
+                        [by_task_language[task_id]]
+                    )[0]
+                language = by_task_language_embedding[task_id]
         finally:
             close = getattr(environment, "close", None)
             if callable(close):
@@ -490,11 +585,24 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
             "language": np.asarray(language, dtype=np.float32),
             "state_restore_max_abs": np.asarray(restore_errors, dtype=np.float64),
         }
-        if arrays["view0"].ndim != 2 or arrays["view0"].shape[0] != len(step_array):
+        if (
+            arrays["view0"].ndim != 2
+            or arrays["view0"].shape[0] != len(step_array)
+            or arrays["view1"].shape != arrays["view0"].shape
+            or arrays["language"].shape != (arrays["view0"].shape[1],)
+            or not np.isfinite(arrays["view0"]).all()
+            or not np.isfinite(arrays["view1"]).all()
+            or not np.isfinite(arrays["language"]).all()
+        ):
             raise ValueError(f"invalid DecisionNCE shard shape for task={task_id} demo={demo_key}")
         if not np.isfinite(arrays["state_restore_max_abs"]).all():
             raise RuntimeError(f"simulator restore error was unavailable for task={task_id} demo={demo_key}")
+        if float(arrays["state_restore_max_abs"].max(initial=0.0)) > restore_tolerance:
+            raise RuntimeError(
+                f"simulator restore error exceeded frozen tolerance for task={task_id} demo={demo_key}"
+            )
         _atomic_npz(shard_path, arrays)
+        shard_sha256[str(relative)] = sha256_file(shard_path)
         key_prefix = f"{task_id}/{demo_key}/"
         for row, step in enumerate(step_array.tolist()):
             index[f"{key_prefix}{step}/view0"] = {"shard": str(relative), "row": row, "view": 0}
@@ -510,15 +618,21 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
         "decisionnce": {
             "model_id": str(decision_config.get("model_id", DEFAULT_MODEL_ID)),
             "python_module": str(decision_config.get("python_module", "decisionnce")),
+            "repository_commit": repository_commit,
             "checkpoint": str(decision_config.get("checkpoint")) if decision_config.get("checkpoint") else None,
+            "checkpoint_argument": str(decision_config.get("checkpoint_argument", "checkpoint")),
             "checkpoint_sha256": model_checkpoint_sha,
             "feature_dim": encoder.feature_dim,
             "preprocess": str(decision_config.get("preprocess", "model")),
+            "device": str(encoder.device),
         },
         "camera": {"size": int(store.get("camera_size", 224)), "specs": [dict(item) for item in camera_specs], "inventory": camera_inventory_records},
         "task_languages": {str(key): value for key, value in sorted(by_task_language.items())},
         "hdf5_sha256": hdf5_sha,
+        "bddl_by_task": bddl_by_task,
+        "state_restore_tolerance": restore_tolerance,
         "index": index,
+        "shard_sha256": shard_sha256,
         "shards": completed,
     }
     write_json(output_root / "manifest.json", manifest)

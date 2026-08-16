@@ -16,8 +16,8 @@ import torch.nn as nn
 
 
 GEOMETRY_EDGE_DIM = 5
-CONTACT_EDGE_DIM = 4
-RELATION_EDGE_DIM = 28
+CONTACT_EDGE_DIM = 2
+RELATION_EDGE_DIM = 14
 RELATION_NAMES = ("left", "right", "front", "behind", "above", "below", "on")
 
 
@@ -91,6 +91,20 @@ def _validate_graph(graph: GraphBatch, *, node_dim: int, geometry_dim: int, cont
         raise ValueError("edge_relations shape does not match graph contract")
     if edge_mask.shape != expected:
         raise ValueError("edge_mask shape does not match graph contract")
+    type_values = node[..., :4]
+    valid_type_sums = type_values.sum(dim=-1)[mask]
+    if valid_type_sums.numel() and not torch.allclose(
+        valid_type_sums, torch.ones_like(valid_type_sums), atol=1e-6, rtol=0.0
+    ):
+        raise ValueError("valid nodes must have exactly one active node-type channel")
+    if ((type_values < -1e-6) | (type_values > 1.0 + 1e-6)).any():
+        raise ValueError("node-type channels must be binary")
+    valid_endpoints = mask[:, :, None] & mask[:, None, :]
+    if torch.logical_and(edge_mask, ~valid_endpoints).any():
+        raise ValueError("edge_mask references a padded or invalid node")
+    diagonal = torch.eye(nodes, dtype=torch.bool, device=edge_mask.device).unsqueeze(0)
+    if torch.logical_and(edge_mask, diagonal).any():
+        raise ValueError("Phase 3C graph contract does not permit self edges")
 
 
 def _action(action: torch.Tensor, *, action_dim: int = 42) -> torch.Tensor:
@@ -132,7 +146,7 @@ class _StructuredBase(nn.Module):
     def __init__(
         self,
         *,
-        node_feature_dim: int = 24,
+        node_feature_dim: int = 8,
         geometry_dim: int = GEOMETRY_EDGE_DIM,
         contact_dim: int = CONTACT_EDGE_DIM,
         relation_dim: int = RELATION_EDGE_DIM,
@@ -172,8 +186,7 @@ class _StructuredBase(nn.Module):
         )
         node_hidden = self.node_encoder(temporal)
         node_hidden = self.action_film(node_hidden, action)
-        edge_mask = previous.edge_mask.bool() & current.edge_mask.bool()
-        return previous, current, action, node_hidden, node_mask & edge_mask.any(dim=-1)
+        return previous, current, action, node_hidden, node_mask
 
     def _edge_temporal(self, previous: GraphBatch, current: GraphBatch, *, include_relations: bool) -> tuple[torch.Tensor, torch.Tensor]:
         parts = []
@@ -205,7 +218,14 @@ class PairPastAct(_StructuredBase):
         self.pair_pool = MaskedAttentionPool(self.hidden_dim)
 
     def forward(self, batch: Any) -> torch.Tensor:
-        _, _, _, node_hidden, node_mask = self._prepare(batch)
+        previous, current, _, node_hidden, node_mask = self._prepare(batch)
+        robot_flags = (
+            previous.node_features[..., 0] > 0.5
+        ) & (
+            current.node_features[..., 0] > 0.5
+        ) & node_mask
+        if not torch.all(robot_flags.sum(dim=1) == 1) or not torch.all(robot_flags[:, 0]):
+            raise ValueError("PairPastAct requires exactly one robot at node index 0")
         robot = node_hidden[:, :1]
         candidates = node_hidden[:, 1:]
         pair = torch.cat([robot.expand_as(candidates), candidates, candidates - robot], dim=-1)
@@ -254,7 +274,10 @@ class _EdgeModel(_StructuredBase):
             for message_layer, update_layer in zip(self.message_layers, self.node_update_layers):
                 messages = message_layer(tokens)
                 weights = edge_mask.to(messages.dtype).unsqueeze(-1)
-                aggregated = (messages * weights).sum(dim=2) / weights.sum(dim=2).clamp_min(1.0)
+                # Edge axes are [source, target].  Update each target from
+                # incoming source messages rather than aggregating outgoing
+                # edges back into the source node.
+                aggregated = (messages * weights).sum(dim=1) / weights.sum(dim=1).clamp_min(1.0)
                 hidden = hidden + update_layer(torch.cat([hidden, aggregated], dim=-1))
                 hidden = hidden.masked_fill(~node_mask.unsqueeze(-1), 0.0)
                 # Recompute edge tokens so each layer has the same raw edge

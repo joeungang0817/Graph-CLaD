@@ -15,8 +15,15 @@ from typing import Any
 import numpy as np
 import torch
 
-from .dataset import SemanticFeatureStore, collate_phase3c, fit_normalization
-from .io import iter_json_objects, load_json_config, write_json
+from .dataset import (
+    SemanticFeatureStore,
+    collate_phase3c,
+    fit_normalization,
+    iter_filtered_records,
+    iter_shuffled_batches,
+)
+from .contracts import canonical_sha256
+from .io import load_json_config, write_json
 from .models.semantic_clad import ControlledCLaD
 
 
@@ -53,18 +60,6 @@ def _seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def _records(path: Path, split: str, *, held_out_task_id: int | None = None) -> list[dict[str, Any]]:
-    records = []
-    for item in iter_json_objects(path):
-        if str(item.get("split")) == str(split) and (
-            held_out_task_id is None or int(item.get("task_id", -1)) != held_out_task_id
-        ):
-            records.append(dict(item))
-    if not records:
-        raise ValueError(f"joined manifest has no records for split={split}")
-    return records
-
-
 def _atomic_torch_save(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
@@ -83,11 +78,13 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     store_root = _path(_get(config, "semantic_store"))
     output_root = _path(_get(config, "output_root"))
     split = str(_get(config, "split", "train"))
+    fold = str(_get(config, "fold", "unspecified"))
     held_out_raw = _get(config, "held_out_task_id")
     held_out_task_id = int(held_out_raw) if held_out_raw is not None else None
     seed = int(_get(config, "seed", 0))
     updates = int(_get(config, "updates", 25_000))
     batch_size = int(_get(config, "batch_size", 128))
+    shuffle_buffer = int(_get(config, "shuffle_buffer", max(2048, batch_size * 8)))
     hidden_dim = int(_get(config, "hidden_dim", 1024))
     vl_dim = int(_get(config, "vl_dim", hidden_dim))
     max_nodes = _get(config, "max_nodes")
@@ -100,10 +97,27 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         raise RuntimeError("config requested CUDA but CUDA is unavailable")
     if updates <= 0 or batch_size <= 0:
         raise ValueError("updates and batch_size must be positive")
+    if shuffle_buffer < batch_size:
+        raise ValueError("shuffle_buffer must be at least batch_size")
+    if hidden_dim <= 0 or vl_dim <= 0 or (max_nodes is not None and max_nodes <= 0):
+        raise ValueError("hidden_dim, vl_dim, and max_nodes must be positive")
+    if learning_rate <= 0.0 or weight_decay < 0.0 or recon_weight < 0.0:
+        raise ValueError("optimizer values must be non-negative and learning_rate positive")
     _seed(seed)
-    records = _records(joined_path, split, held_out_task_id=held_out_task_id)
-    normalization = fit_normalization(records)
+    if not joined_path.exists():
+        raise FileNotFoundError(joined_path)
+    joined_sha256 = _sha256_file(joined_path)
+    normalization = fit_normalization(
+        iter_filtered_records(
+            joined_path, split=split, exclude_task_id=held_out_task_id
+        )
+    )
     store = SemanticFeatureStore(store_root)
+    store_source_sha = str(
+        (store.manifest.get("source") or {}).get("joined_manifest_sha256", "")
+    )
+    if store_source_sha != joined_sha256:
+        raise ValueError("semantic store was not built from the configured joined manifest")
     if store.feature_dim != vl_dim:
         raise ValueError(f"semantic store feature_dim={store.feature_dim} does not match vl_dim={vl_dim}")
     model = ControlledCLaD(proprio_dim=16, vl_dim=vl_dim, hidden_dim=hidden_dim, action_dim=42).to(device)
@@ -111,9 +125,16 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     model.train()
     start = time.time()
     losses: list[float] = []
+    training_batches = iter_shuffled_batches(
+        joined_path,
+        batch_size=batch_size,
+        seed=seed,
+        split=split,
+        exclude_task_id=held_out_task_id,
+        shuffle_buffer=shuffle_buffer,
+    )
     for update in range(1, updates + 1):
-        indices = [(update - 1) * batch_size + offset for offset in range(batch_size)]
-        batch_records = [records[index % len(records)] for index in indices]
+        batch_records = next(training_batches)
         batch = collate_phase3c(batch_records, store, max_nodes=max_nodes, normalization=normalization, device=device)
         optimizer.zero_grad(set_to_none=True)
         loss_dict = model.training_loss(batch)
@@ -127,35 +148,43 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         losses.append(float(total.detach().cpu()))
     checkpoint = output_root / "checkpoints" / "last.pt"
     payload = {
-        "schema": "phase3c-base-clad-checkpoint.v1",
+        "schema": "phase3c-base-clad-checkpoint.v2",
         "model_state": model.state_dict(),
         "optimizer_state": optimizer.state_dict(),
         "update": updates,
         "seed": seed,
+        "fold": fold,
         "vl_dim": vl_dim,
         "hidden_dim": hidden_dim,
         "action_dim": 42,
         "proprio_dim": 16,
-        "source_joined_manifest_sha256": _sha256_file(joined_path),
+        "source_joined_manifest_sha256": joined_sha256,
+        "semantic_store_manifest_sha256": _sha256_file(store_root / "manifest.json"),
         "normalization": normalization.to_dict(),
     }
     _atomic_torch_save(checkpoint, payload)
     runtime = {
-        "schema": "phase3c-base-clad-run.v1",
+        "schema": "phase3c-base-clad-run.v2",
         "status": "completed",
+        "config_sha256": canonical_sha256(config),
         "split": split,
+        "fold": fold,
         "seed": seed,
         "updates": updates,
         "batch_size": batch_size,
+        "shuffle_buffer": shuffle_buffer,
         "device": str(device),
         "elapsed_seconds": time.time() - start,
         "mean_last_100_loss": float(np.mean(losses[-100:])),
         "checkpoint": str(checkpoint),
         "checkpoint_sha256": _sha256_file(checkpoint),
         "joined_manifest": str(joined_path),
+        "joined_manifest_sha256": joined_sha256,
         "semantic_store": str(store_root),
+        "semantic_store_manifest_sha256": _sha256_file(store_root / "manifest.json"),
     }
     write_json(output_root / "runtime_manifest.json", runtime)
+    store.close()
     return runtime
 
 

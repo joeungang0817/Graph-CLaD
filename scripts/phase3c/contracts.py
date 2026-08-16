@@ -13,7 +13,6 @@ import json
 import math
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
 from typing import Any
 
 
@@ -126,8 +125,14 @@ def _edge_map(graph: Mapping[str, Any]) -> dict[tuple[str, str], Mapping[str, An
 def validate_graph(graph: Any, *, name: str = "graph") -> None:
     if not isinstance(graph, Mapping):
         raise ValueError(f"{name} must be an object")
-    _node_map(graph)
-    _edge_map(graph)
+    nodes = _node_map(graph)
+    edges = _edge_map(graph)
+    for source, target in edges:
+        missing = [node_id for node_id in (source, target) if node_id not in nodes]
+        if missing:
+            raise ValueError(
+                f"{name} edge {source}->{target} references missing nodes: {missing}"
+            )
 
 
 def parse_action_window(value: Any, *, tau: int = TAU) -> list[list[float]]:
@@ -178,6 +183,15 @@ def _candidate_edges(
     future_nodes = _node_map(future)
     current_edges = _edge_map(current)
     future_edges = _edge_map(future)
+    shared_nodes = set(current_nodes) & set(future_nodes)
+    for node_id in sorted(shared_nodes):
+        current_type = str(current_nodes[node_id].get("node_type"))
+        future_type = str(future_nodes[node_id].get("node_type"))
+        if current_type != future_type:
+            raise ValueError(
+                f"node type changed across target snapshots: {node_id} "
+                f"{current_type}->{future_type}"
+            )
     candidates: list[tuple[tuple[str, str], Mapping[str, Any], Mapping[str, Any]]] = []
     for key in sorted(set(current_edges) & set(future_edges)):
         source = current_nodes.get(key[0])
@@ -252,6 +266,8 @@ def scene_max_displacement(
     for node_id in sorted(set(current_nodes) & set(future_nodes)):
         left = current_nodes[node_id]
         right = future_nodes[node_id]
+        if str(left.get("node_type")) != str(right.get("node_type")):
+            raise ValueError(f"node type changed across motion target snapshots: {node_id}")
         if str(left.get("node_type")) != "object":
             continue
         left_position = _position(left)
@@ -261,7 +277,9 @@ def scene_max_displacement(
         distances.append(
             math.sqrt(sum((left_position[i] - right_position[i]) ** 2 for i in range(3)))
         )
-    return max(distances, default=0.0)
+    if not distances:
+        raise ValueError("scene motion target has no shared object with valid positions")
+    return max(distances)
 
 
 def model_input_view(record: Mapping[str, Any]) -> dict[str, Any]:
@@ -372,18 +390,3 @@ def support_report(
         },
         "relations": eligibility,
     }
-
-
-@dataclass(frozen=True)
-class JoinCounters:
-    source_records: int = 0
-    source_samples: int = 0
-    candidate_left_samples: int = 0
-    joined_samples: int = 0
-    boundary_drops: int = 0
-    missing_right_samples: int = 0
-    hash_mismatches: int = 0
-    duplicate_left_keys: int = 0
-    invalid_samples: int = 0
-    emitted_future_action_fields: int = 0
-

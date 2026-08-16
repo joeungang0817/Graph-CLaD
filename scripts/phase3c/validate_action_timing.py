@@ -11,11 +11,19 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 from .io import atomic_json, load_json_config
+
+
+def _path(value: Any) -> Path:
+    raw = os.path.expandvars(str(value))
+    if "$" in raw or "%" in raw:
+        raise ValueError(f"unresolved environment variable in path: {value}")
+    return Path(raw).expanduser()
 
 
 def max_abs_state_error(actual: Any, expected: Any) -> float:
@@ -57,6 +65,18 @@ def _probe_steps(frame_count: int, max_steps: int) -> list[int]:
     if frame_count < 2 or max_steps <= 0:
         return []
     return list(range(min(frame_count - 1, max_steps)))
+
+
+def action_timing_status(
+    rows: Sequence[Mapping[str, Any]], errors: Sequence[str], tolerance: float | None
+) -> str:
+    """Fail when any checked transition exceeds a configured tolerance."""
+
+    if not rows or errors:
+        return "fail"
+    if tolerance is None:
+        return "pass"
+    return "pass" if all(row.get("within_tolerance") is True for row in rows) else "fail"
 
 
 def validate_hdf5_action_timing(
@@ -112,6 +132,11 @@ def validate_hdf5_action_timing(
         environment.close()
 
     measured = [row["max_abs_state_error"] for row in rows]
+    within_count = (
+        sum(int(row["within_tolerance"] is True) for row in rows)
+        if tolerance is not None
+        else None
+    )
     report = {
         "contract": "phase3c-action-timing.v1",
         "source_hdf5": str(hdf5_path),
@@ -126,14 +151,11 @@ def validate_hdf5_action_timing(
             "checked": len(rows),
             "mean_max_abs_state_error": sum(measured) / len(measured) if measured else None,
             "max_max_abs_state_error": max(measured) if measured else None,
-            "within_tolerance": (
-                sum(int(row["within_tolerance"]) for row in rows if row["within_tolerance"] is not None)
-                if tolerance is not None
-                else None
-            ),
+            "within_tolerance": within_count,
+            "outside_tolerance": len(rows) - within_count if within_count is not None else None,
         },
         "errors": errors,
-        "status": "pass" if rows and not errors else "fail",
+        "status": action_timing_status(rows, errors, tolerance),
     }
     return report
 
@@ -164,8 +186,8 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
     config: dict[str, Any] = load_json_config(args.config) if args.config else {}
-    hdf5_paths = tuple(args.hdf5 or tuple(Path(value) for value in config.get("hdf5_inputs", [])))
-    bddl_roots = tuple(args.bddl_root or tuple(Path(value) for value in config.get("bddl_roots", [])))
+    hdf5_paths = tuple(_path(value) for value in (args.hdf5 or config.get("hdf5_inputs", [])))
+    bddl_roots = tuple(_path(value) for value in (args.bddl_root or config.get("bddl_roots", [])))
     if not hdf5_paths or not bddl_roots:
         raise SystemExit("--hdf5 and --bddl-root are required (directly or in --config)")
     reports = [

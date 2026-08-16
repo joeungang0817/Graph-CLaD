@@ -328,14 +328,15 @@ class GraphBatch:
     node_features: Tensor            # [B, Nmax, 8]
     node_mask: Tensor                # [B, Nmax]
     edge_geometry: Tensor            # [B, Nmax, Nmax, G]
-    edge_contact: Tensor             # [B, Nmax, Nmax, 4]
-    edge_relations: Tensor           # [B, Nmax, Nmax, 2*7*2]
+    edge_contact: Tensor             # [B, Nmax, Nmax, 2]
+    edge_relations: Tensor           # [B, Nmax, Nmax, 7*2]
     edge_mask: Tensor                # [B, Nmax, Nmax]
 ```
 
 Relation edge tensor의 7은 contact를 제외한 `left/right/front/behind/above/below/on`이다.
-각 시점에 value와 valid를 저장하므로 `2 time × 7 relation × 2 fields = 28`차원이다.
-Contact는 Geom과 Rel 양쪽이 받는 별도 2-time value/valid token으로 둔다.
+각 `GraphBatch`가 한 시점만 나타내므로 relation은 시점당
+`7 relations × (value, valid) = 14`차원이고 contact는 `(value, valid) = 2`차원이다.
+Prev/current/delta 시간 결합은 structured model에서 정확히 한 번만 계산한다.
 
 Node order는 sample 안에서 `(node_type_rank, logical_id)`로 deterministic하게 정렬하되, model
 test에서는 random permutation 후 pooled output 불변성을 확인한다.
@@ -399,7 +400,7 @@ step 전후 online parameter와 EMA parameter 변화를 모두 검사한다.
 
 - frozen CLaD output: 2048
 - base/adapter latent: 256
-- action embedding: 128
+- action-adapter hidden width: parameter-matched per candidate
 - relation output channels: 8
 - dropout: 0.1
 - activation: GELU
@@ -409,7 +410,8 @@ step 전후 online parameter와 EMA parameter 변화를 모두 검사한다.
 
 ```text
 CLaD foresight 2048 -> base projector 256
-[base 256; action 128] -> 2-layer semantic adapter -> 256
+past action 42 -> parameter-matched action MLP -> 256
+LayerNorm(base + sigmoid(gate) * action_adapter) -> shared heads
 ```
 
 Graph tensor를 forward signature에 받지 않는다. Shared trainer가 실수로 graph를 넘겨도

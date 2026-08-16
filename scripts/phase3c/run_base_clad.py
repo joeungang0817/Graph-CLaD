@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .io import load_json_config, write_json
+from .contracts import canonical_sha256
 from .train_base_clad import train
 
 
@@ -19,6 +20,24 @@ def _path(value: Any) -> Path:
     if "$" in raw:
         raise ValueError(f"unresolved environment variable in path: {value}")
     return Path(raw).expanduser()
+
+
+def _completed_runtime(
+    path: Path, *, fold: str, seed: int, config_sha256: str
+) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    with path.open("r", encoding="utf-8") as handle:
+        value = json.load(handle)
+    if not isinstance(value, dict) or value.get("status") != "completed":
+        return None
+    if (
+        str(value.get("fold")) != fold
+        or int(value.get("seed", -1)) != seed
+        or str(value.get("config_sha256")) != config_sha256
+    ):
+        raise ValueError(f"completed runtime seed mismatch: {path}")
+    return value
 
 
 def run(config: dict[str, Any]) -> dict[str, Any]:
@@ -32,12 +51,20 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
             run_config = copy.deepcopy(config)
             run_config.update({
                 "seed": seed,
+                "fold": fold,
                 "output_root": str(output_root / fold / f"seed{seed}"),
             })
             if match:
                 run_config["held_out_task_id"] = int(match.group(1))
-            results.append(train(run_config))
-    summary = {"schema": "phase3c-base-clad-screen.v1", "status": "completed", "folds": list(folds), "seeds": list(seeds), "runs": results}
+            runtime_path = Path(run_config["output_root"]) / "runtime_manifest.json"
+            result = _completed_runtime(
+                runtime_path,
+                fold=fold,
+                seed=seed,
+                config_sha256=canonical_sha256(run_config),
+            )
+            results.append(result if result is not None else train(run_config))
+    summary = {"schema": "phase3c-base-clad-screen.v2", "status": "completed", "folds": list(folds), "seeds": list(seeds), "runs": results}
     write_json(output_root / "screen_manifest.json", summary)
     return summary
 
