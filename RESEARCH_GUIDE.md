@@ -230,6 +230,10 @@ python -m scripts.phase3.analyze_corrected_predictions \
   --left-model H3-history-action --right-model H1-history
 ```
 
+Aligned/shuffled처럼 서로 다른 result JSON을 비교할 때는 `--left-result`와
+`--right-result`, 필요하면 각 prediction root를 함께 지정한다. 기존 단일 `--result`
+방식도 유지된다.
+
 현재 별도 deployment inference pipeline은 없다. “Inference”는 held-out graph pair에
 대한 `evaluate_model`과 per-sample prediction artifact를 뜻한다. Representation
 freeze/linear probe는 Phase 3C에서 같은-capacity protocol로 추가하고, 통과한
@@ -263,12 +267,18 @@ runtime manifest, code snapshot을 함께 가져야 한다.
 5. natural PR-AUC, release, hard-negative, perturbation gate를 통과할 때만 확대한다.
 6. Drive output에 source/config/manifest SHA와 code snapshot을 저장한다.
 7. 결과가 불리해도 그대로 `docs/research_log.md`에 기록한다.
+8. 실험 완료·중단·실패와 gate 판정마다 날짜, protocol/config, 실행 환경, artifact 경로,
+   확인된 원시 metric, 판정 근거와 claim limit을 함께 기록한다.
+9. Source·config·분석 기준을 수정하면 변경 파일, 수정 이유, 검증 방법과 기존 결과에
+   미치는 영향을 같은 연구기록에 남긴다.
+10. 아직 artifact에서 확인하지 않은 값은 추정해 채우지 않고 후속 분석 항목으로 표시한다.
 
 ## 12. 미완성·주의사항
 
 - Current holding event compatibility metric은 oracle current holding에 조건부다.
   End-to-end current/future event metric을 함께 보고한다.
-- H3 action-alignment 결과와 90-item human weak-label review가 아직 gate다.
+- H3 action-alignment gate는 실패로 판정됐다. 90-item human weak-label review는 아직
+  완료되지 않았다.
 - `inside`는 valid label support가 없어 deferred다.
 - 동일 task의 seeds는 test episode를 공유하므로 독립 표본이 아니다.
 - Phase 3C semantic/pair-local/graph representation bridge와 Phase 4 Stage 1 통합은

@@ -57,6 +57,22 @@ python -m scripts.phase3.run_corrected_architecture_gate \
 python -m scripts.phase3.analyze_corrected_predictions --help
 ```
 
+Aligned와 shuffled처럼 result JSON이 서로 다른 artifact root에 있을 때는 두 result와
+prediction root를 각각 지정한다. `--left-prediction-root`와
+`--right-prediction-root`는 artifact root 또는 `predictions/` 디렉터리일 수 있다.
+
+```bash
+python -m scripts.phase3.analyze_corrected_predictions \
+  --left-result ALIGNED_RESULT.json \
+  --right-result SHUFFLED_RESULT.json \
+  --left-prediction-root ALIGNED_ARTIFACT_ROOT \
+  --right-prediction-root SHUFFLED_ARTIFACT_ROOT \
+  --output ALIGNED_VS_SHUFFLED_ANALYSIS.json \
+  --left-model H3-history-action \
+  --right-model H3-train-shuffled \
+  --replicates 2000 --seed 20260816
+```
+
 Phase 2D 전체 변환은 다음 형태다. 실제 HDF5/BDDL/출력 경로는 Colab Drive 위치로
 바꾼다.
 

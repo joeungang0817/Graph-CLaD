@@ -433,3 +433,58 @@ GPU 이름, VRAM, CUDA, batch size는 각 launcher/result metadata에 기록한�
   보존하고 KCloud action-alignment 상태를 artifact로 재확인하며, running/completed run을
   중단하거나 반복하지 않는다. Paired 분석에 Colab aligned H3 prediction이 별도로
   필요하다는 점과 제출 직전 최소 실행 순서도 인계한다.
+
+## 2026-08-16 — H3 train-shuffled action-alignment 3-fold 완료와 gate 실패
+
+- Protocol: `phase3-pair-local-temporal-action-alignment-seed0-v1`.
+- Config: `configs/phase3_kcloudvpn_linux_pair_local_temporal_action_alignment_seed0_v1.json`.
+- KCloudVPN에서 `H3-train-shuffled` × task folds 0/1/2 × seed 0의 3/3 runs를 완료했다.
+- 각 run의 trainable parameter 수는 60,476이고 natural-validation에서 선택된 holding
+  threshold는 세 fold 모두 0.95였다.
+- Runner 최종 stdout은 `status=completed`, `runs=3`을 기록했다. Runtime manifest는
+  `/home/ubuntu/graphclad-artifacts/phase3_holder_action_v1/corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1/runtime_manifest.json`이다.
+
+Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값의 비교는 다음과
+같다.
+
+| Task | Aligned H3 PR-AUC | Shuffled H3 PR-AUC | Aligned−Shuffled | Aligned F1 | Shuffled F1 | Aligned release F1 | Shuffled release F1 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.4009 | 0.4245499224 | 약 −0.0236 | 0.4074 | 0.4523809524 | 0.2353 | 0.4000000000 |
+| 1 | 0.5731 | 0.5059178137 | 약 +0.0672 | 0.3357 | 0.7085714286 | 0.1075 | 0.5882352941 |
+| 2 | 0.4734 | 0.4913168425 | 약 −0.0179 | 0.3419 | 0.6033519553 | 0.0150 | 0.3733333333 |
+| Task macro | 0.4824 | 0.4739281929 | 약 +0.0085 | 0.3617 | 0.5881014454 | 0.1193 | 0.4538562092 |
+
+- 사전 gate는 aligned H3의 natural PR-AUC가 shuffled H3보다 최소 2/3 tasks에서 높을
+  것을 요구한다. 실제 우세는 task 1의 1/3뿐이므로 primary gate는 실패했다.
+- Aligned task-macro PR-AUC가 약 +0.0085 높다는 사실은 사전 정의한 task별 우세 기준을
+  대체하지 않는다. Outer evaluation unit은 task fold다.
+- Aligned release F1은 shuffled보다 3/3 tasks에서 낮았다. F1 계열은 fold별 validation
+  threshold에 민감하지만, 이 결과는 action alignment의 secondary support도 제공하지 않는다.
+- 따라서 올바르게 정렬된 action의 causal/semantic 효과를 입증했다고 주장하지 않는다.
+  계획대로 H3/H1/H3-train-shuffled seeds 1/2 확대를 중단하고 H3는 architecture-screen
+  finding으로만 보존한다. Phase 3C에서는 H1 또는 다른 action-free pair-local
+  representation을 우선 검토한다.
+- 위 표에 없는 hard-negative, end-to-end, challenge와 calibration 값은 result JSON 및
+  per-sample prediction을 이용한 후속 상세 분석에서 기록한다. 현재 stdout에 없는 값을
+  추정해 채우지 않는다.
+
+## 2026-08-16 — 지속적인 연구기록 운영 원칙 확정
+
+- 이후 모든 주요 실험 완료·중단·실패, gate 판정과 해석을 발생한 세션에서 바로
+  `docs/research_log.md`에 기록한다.
+- Source·config·분석 기준을 수정할 때도 변경 파일, 수정 이유, 검증 결과와 기존
+  artifact/결론에 미치는 영향을 기록한다.
+- 기록은 확인된 artifact와 출력에 근거하며, 확인하지 않은 metric이나 상태는 추정하지
+  않고 명시적인 미완료 항목으로 남긴다.
+
+## 2026-08-16 — 분리 result JSON paired 분석기 보강
+
+- Aligned H3와 KCloudVPN shuffled H3가 서로 다른 result JSON과 artifact root에 있어
+  기존 `analyze_corrected_predictions.py`의 단일 result 입력 계약으로는 직접 비교할 수
+  없었다.
+- 분석기에 `--left-result`, `--right-result`, `--left-prediction-root`,
+  `--right-prediction-root`를 추가했다. 원본 result JSON의 절대경로를 수정하지 않고,
+  prediction 파일명으로 지정 root를 재지정한다. 기존 `--result` 단일 파일 방식은
+  하위 호환으로 유지한다.
+- 분리 result JSON과 aligned prediction root 재지정 경로를 검증하는 테스트를 추가했다.
+  `python -m unittest tests.test_phase3_corrected_analysis` 결과는 2 tests, OK다.

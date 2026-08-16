@@ -5,6 +5,11 @@ independent test samples.  The report first stores same-fold/same-seed paired
 differences, then averages seeds within each task fold.  Confidence intervals
 resample task folds, episodes within a task, and explicit event clusters when
 available (otherwise the stable sample ID is recorded as an event proxy).
+
+The legacy ``--result`` mode compares two models recorded in one result JSON.
+The ``--left-result``/``--right-result`` mode compares models whose result JSONs
+and prediction artifact roots are stored separately, as in the aligned versus
+train-shuffled action control.
 """
 
 from __future__ import annotations
@@ -152,31 +157,81 @@ def _artifact_for(
     result: Mapping[str, Any],
     view: str = "natural_test",
     mode: str = "correct",
+    prediction_root: Path | None = None,
 ) -> Path:
     entry = result["prediction_artifacts"][f"{view}.{mode}"]
-    return Path(str(entry["path"]))
+    path = Path(str(entry["path"]))
+    if prediction_root is None:
+        return path
+    candidates = (
+        prediction_root / path.name,
+        prediction_root / "predictions" / path.name,
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(
+        f"prediction artifact {path.name!r} was not found under "
+        f"{prediction_root}"
+    )
+
+
+def _result_rows(path: Path) -> list[Mapping[str, Any]]:
+    report = json.loads(path.read_text(encoding="utf-8"))
+    rows = report.get("results", [])
+    if not isinstance(rows, list):
+        raise ValueError(f"result JSON results must be a list: {path}")
+    return [row for row in rows if isinstance(row, Mapping)]
 
 
 def analyze(
-    result_path: Path,
+    result_path: Path | None = None,
     *,
+    left_result_path: Path | None = None,
+    right_result_path: Path | None = None,
+    left_prediction_root: Path | None = None,
+    right_prediction_root: Path | None = None,
     left_model: str = "G1-late-action",
     right_model: str = "B1-v2",
     replicates: int = 2000,
     seed: int = 20260812,
 ) -> dict[str, Any]:
-    report = json.loads(result_path.read_text(encoding="utf-8"))
-    results = list(report.get("results", []))
-    by_run = {
+    if left_result_path is None:
+        left_result_path = result_path
+    if right_result_path is None:
+        right_result_path = result_path
+    if left_result_path is None or right_result_path is None:
+        raise ValueError(
+            "provide --result or both --left-result and --right-result"
+        )
+
+    left_results = _result_rows(left_result_path)
+    right_results = _result_rows(right_result_path)
+    left_by_run = {
         (str(row["fold"]), int(row["seed"]), str(row["comparison_id"])): row
-        for row in results
+        for row in left_results
     }
-    folds = sorted({str(row["fold"]) for row in results})
+    right_by_run = {
+        (str(row["fold"]), int(row["seed"]), str(row["comparison_id"])): row
+        for row in right_results
+    }
+    folds = sorted(
+        {
+            str(row["fold"])
+            for row in left_results
+            if str(row["comparison_id"]) == left_model
+        }
+        | {
+            str(row["fold"])
+            for row in right_results
+            if str(row["comparison_id"]) == right_model
+        }
+    )
     seeds_by_fold = {
         fold: sorted(
             {
                 int(row["seed"])
-                for row in results
+                for row in left_results
                 if str(row["fold"]) == fold
                 and str(row["comparison_id"]) == left_model
             }
@@ -188,13 +243,23 @@ def analyze(
     event_cluster_sources: set[str] = set()
     for fold in folds:
         for run_seed in seeds_by_fold[fold]:
-            left_result = by_run.get((fold, run_seed, left_model))
-            right_result = by_run.get((fold, run_seed, right_model))
+            left_result = left_by_run.get((fold, run_seed, left_model))
+            right_result = right_by_run.get((fold, run_seed, right_model))
             if left_result is None or right_result is None:
                 continue
             left_rows, right_rows = _paired_rows(
-                _read_rows(_artifact_for(left_result)),
-                _read_rows(_artifact_for(right_result)),
+                _read_rows(
+                    _artifact_for(
+                        left_result,
+                        prediction_root=left_prediction_root,
+                    )
+                ),
+                _read_rows(
+                    _artifact_for(
+                        right_result,
+                        prediction_root=right_prediction_root,
+                    )
+                ),
             )
             paired[(fold, run_seed)] = (left_rows, right_rows)
             event_cluster_sources.update(
@@ -209,6 +274,12 @@ def analyze(
                 )
                 for metric in METRICS
             }
+
+    if not paired:
+        raise ValueError(
+            "no same-fold/seed paired runs found for "
+            f"{left_model!r} and {right_model!r}"
+        )
 
     fold_seed_means: dict[str, Any] = {}
     for fold in folds:
@@ -284,7 +355,15 @@ def analyze(
     }
     return {
         "protocol": "phase3B-R1-corrected-hierarchical-bootstrap-v1",
-        "source_result": str(result_path),
+        "source_result": str(result_path) if result_path is not None else None,
+        "left_result": str(left_result_path),
+        "right_result": str(right_result_path),
+        "left_prediction_root": (
+            str(left_prediction_root) if left_prediction_root is not None else None
+        ),
+        "right_prediction_root": (
+            str(right_prediction_root) if right_prediction_root is not None else None
+        ),
         "comparison": f"{left_model}_minus_{right_model}",
         "view": "natural_test",
         "mode": "correct",
@@ -306,15 +385,50 @@ def analyze(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--result", type=Path, required=True)
+    parser.add_argument(
+        "--result",
+        type=Path,
+        help="Legacy result JSON containing both comparison models.",
+    )
+    parser.add_argument(
+        "--left-result",
+        type=Path,
+        help="Result JSON for the left model when reports are separate.",
+    )
+    parser.add_argument(
+        "--right-result",
+        type=Path,
+        help="Result JSON for the right model when reports are separate.",
+    )
+    parser.add_argument(
+        "--left-prediction-root",
+        type=Path,
+        help="Root containing the left prediction artifact, or its predictions/ directory.",
+    )
+    parser.add_argument(
+        "--right-prediction-root",
+        type=Path,
+        help="Root containing the right prediction artifact, or its predictions/ directory.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--left-model", default="G1-late-action")
     parser.add_argument("--right-model", default="B1-v2")
     parser.add_argument("--replicates", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=20260812)
     args = parser.parse_args()
+    separate_results = args.left_result is not None or args.right_result is not None
+    if args.result is not None and separate_results:
+        parser.error("use either --result or --left-result/--right-result")
+    if args.result is None and (
+        args.left_result is None or args.right_result is None
+    ):
+        parser.error("provide --result or both --left-result and --right-result")
     output = analyze(
         args.result,
+        left_result_path=args.left_result,
+        right_result_path=args.right_result,
+        left_prediction_root=args.left_prediction_root,
+        right_prediction_root=args.right_prediction_root,
         left_model=args.left_model,
         right_model=args.right_model,
         replicates=args.replicates,

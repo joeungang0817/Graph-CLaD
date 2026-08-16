@@ -1,7 +1,7 @@
 # Graph-CLaD 현재 상태와 실행 인계
 
 기준 시각: 2026-08-16 (Asia/Seoul)  
-공식 현재 단계: **Phase 3B — H3 action-alignment control**  
+공식 현재 단계: **Phase 3B action-alignment gate 판정 완료 — 실패, Phase 3C 전환 준비**
 이 문서는 다음 세션에서 가장 먼저 읽는 단일 현재상태 문서다. 공식 연구 질문과 단계별
 gate는 `01-plan/features/graph-clad-integrated-research-v4.plan.md`, 시간순 근거는
 `research_log.md`를 따른다. `revised_research_roadmap_v3.md`는 v4 이전의 단계 개정
@@ -10,9 +10,10 @@ gate는 `01-plan/features/graph-clad-integrated-research-v4.plan.md`, 시간순 
 ## 1. 한 줄 상태
 
 Pair-local H0–H3 three-fold seed-0 screen은 12/12 runs가 끝났고 H3의 natural
-PR-AUC가 가장 높았다. 그러나 action의 의미 정렬 효과를 분리하기 위한
-episode-disjoint matched train-shuffled H3 control이 아직 완료되지 않았으므로 H3를
-최종 representation으로 확정하지 않았다.
+PR-AUC가 가장 높았다. 이어서 episode-disjoint matched train-shuffled H3 control
+3/3 runs를 완료했지만 aligned H3가 shuffled H3보다 우세한 task는 1/3뿐이었다.
+사전 정의한 2/3-task 기준에 미달하므로 action-alignment gate는 실패했고 H3를 최종
+representation으로 확정하지 않는다.
 
 ## 2. 현재까지 확정된 결과
 
@@ -69,7 +70,7 @@ Corrected evaluation manifest는 다음 위치에 있다.
 `phase3B_R1_eval_manifest_v2_colab_original.json`으로 보존했다. Sample key, fold,
 payload hash, QA 결과는 바꾸지 않았다.
 
-## 5. 지금 실행할 control
+## 5. 완료된 action-alignment control
 
 Config:
 
@@ -79,26 +80,14 @@ Output:
 
 `/home/ubuntu/graphclad-artifacts/phase3_holder_action_v1/corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1`
 
-예상 범위는 H3 train-shuffled 1개 모델 × 3 folds × seed 0으로 총 3 runs다.
+범위는 H3 train-shuffled 1개 모델 × 3 folds × seed 0으로 총 3 runs이며, 2026-08-16
+KCloudVPN에서 3/3 runs를 완료했다. Runner 최종 stdout은 `status=completed`, `runs=3`과
+위 output 아래의 `runtime_manifest.json` 경로를 기록했다. 완료 artifact가 있으므로 같은
+config를 재실행하지 않는다.
 
-```bash
-tmux new -s graphclad-align
-cd ~/Graph-CLaD
-source .venv/bin/activate
-export GRAPH_CLAD_PROJECT_ROOT="$HOME/Graph-CLaD"
-export GRAPH_CLAD_ARTIFACT_ROOT="$HOME/graphclad-artifacts"
-python -u -m scripts.phase3.run_corrected_architecture_gate \
-  --config configs/phase3_kcloudvpn_linux_pair_local_temporal_action_alignment_seed0_v1.json
-```
+## 6. 완료 artifact와 비교 입력
 
-2026-08-16 사용자 확인으로 H3 action-alignment 실행은 시작했다. 다만 현재 process가
-계속 실행 중인지 이미 완료됐는지와 artifact 무결성은 아직 확인하지 않았다. 다음
-세션에서 `tmux ls`, output directory, result JSON으로 확인해야 한다. 완료 artifact가
-있으면 재실행하지 않는다.
-
-## 6. 완료 직후 검증
-
-다음을 모두 만족해야 control이 완료된 것이다.
+완료 artifact의 유지 조건은 다음과 같다.
 
 1. Result JSON의 `status`가 `completed`다.
 2. Result의 `results` 길이가 3이다.
@@ -112,18 +101,28 @@ Aligned H3의 기준 결과는 Colab Drive의 다음 root에 있다.
 
 `/content/drive/MyDrive/Graph-CLaD/artifacts/phase3_holder_action_v1/corrected_protocol_v2/pair_local_temporal_threefold_seed0_v1`
 
-현재 alignment runner는 shuffled H3만 학습한다. Config의 `comparison_source` 문자열이
-aligned result를 자동으로 불러와 비교해 주는 것은 아니다. 완료 후 same fold/seed 비교와
-hierarchical bootstrap을 하려면 위 aligned H3 result와 H3 prediction artifact를 읽거나
-서버로 별도 전송해야 한다. 기존 checkpoint 전체는 비교에 필요하지 않다.
+Alignment runner는 shuffled H3만 학습했다. Config의 `comparison_source` 문자열이
+aligned result를 자동으로 불러와 비교해 주는 것은 아니다. 후속 same-fold/seed
+hierarchical bootstrap과 상세 보고에는 위 aligned H3 result와 H3 prediction artifact를
+읽거나 서버로 별도 전송해야 한다. 기존 checkpoint 전체는 비교에 필요하지 않다.
 
 ## 7. Phase 3B gate
 
-Aligned H3가 shuffled H3보다 natural PR-AUC에서 최소 2/3 tasks 우세한지 먼저 본다.
-동시에 release F1과 hard-negative FPR이 심하게 악화되지 않는지 확인한다.
+Natural conditional/oracle-current event 결과는 다음과 같다.
 
-- 통과: H3, H1, H3-train-shuffled의 seeds 1/2 확대를 검토한다.
-- 실패: 추가 seed 확대를 중단하고 pair-local 결과를 architecture finding으로 보고한다.
+| Task | Aligned H3 PR-AUC | Shuffled H3 PR-AUC | Aligned−Shuffled | Aligned F1 | Shuffled F1 | Aligned release F1 | Shuffled release F1 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.4009 | 0.4245 | −0.0236 | 0.4074 | 0.4524 | 0.2353 | 0.4000 |
+| 1 | 0.5731 | 0.5059 | +0.0672 | 0.3357 | 0.7086 | 0.1075 | 0.5882 |
+| 2 | 0.4734 | 0.4913 | −0.0179 | 0.3419 | 0.6034 | 0.0150 | 0.3733 |
+| Task macro | 0.4824 | 0.4739 | 약 +0.0085 | 0.3617 | 0.5881 | 0.1193 | 0.4539 |
+
+Aligned H3의 task-macro PR-AUC는 약간 높지만 task별 우세는 1/3이라 사전 정의한 최소
+2/3-task 기준에 미달한다. Release F1도 aligned가 3/3 tasks에서 낮다. 따라서 gate는
+**실패**다. H3/H1/H3-train-shuffled seeds 1/2 확대를 중단하고 pair-local 결과는
+architecture finding으로만 보고한다. 올바르게 정렬된 action의 causal/semantic 효과를
+입증했다고 주장하지 않는다.
+
 - 어느 경우든 90-item weak-label human review는 별도 완료해야 한다.
 - Natural test가 primary이며 challenge는 독립 test가 아닌 stress analysis다.
 - Conditional event metric은 oracle current holding을 사용하므로 end-to-end metric도 함께 보고한다.
@@ -150,7 +149,7 @@ Aligned H3가 shuffled H3보다 natural PR-AUC에서 최소 2/3 tasks 우세한�
 
 ## 9. 아직 해결되지 않은 항목
 
-- Action-alignment control 완료 및 aligned-vs-shuffled paired 분석.
+- Aligned-vs-shuffled per-sample hierarchical bootstrap과 hard-negative/end-to-end 상세 보고.
 - 90-item weak-label human review.
 - Manifest builder의 streaming/low-memory 구현. 현재 실행에는 기존 pass manifest를 사용한다.
 - Phase 3C/4 구현과 notebook.
