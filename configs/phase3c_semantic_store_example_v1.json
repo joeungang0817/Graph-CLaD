@@ -1,0 +1,35 @@
+{
+  "semantic_feature_store": {
+    "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz",
+    "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
+    "hdf5_by_task": {
+      "0": "/absolute/path/to/task0/demo.hdf5"
+    },
+    "bddl_roots": [
+      "/absolute/path/to/libero/bddl_files"
+    ],
+    "libero_suite": "libero_spatial",
+    "camera_size": 224,
+    "cameras": [
+      {
+        "name": "external",
+        "key": "agentview_image",
+        "channel_order": "rgb",
+        "vertical_flip": false
+      },
+      {
+        "name": "wrist",
+        "key": "robot0_eye_in_hand_image",
+        "channel_order": "rgb",
+        "vertical_flip": false
+      }
+    ],
+    "decisionnce": {
+      "model_id": "DecisionNCE-P",
+      "python_module": "decisionnce",
+      "checkpoint": "/absolute/path/to/decisionnce/checkpoint.pt",
+      "preprocess": "model",
+      "load_kwargs": {}
+    }
+  }
+}

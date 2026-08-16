@@ -1,7 +1,7 @@
 # Phase 3B pair-local temporal encoder 계획
 
 날짜: 2026-08-12  
-상태: three-fold/seed-0 H0–H3 screen 완료, 다음 gate는 H3 action-alignment control.
+상태: three-fold/seed-0 H0–H3 screen과 H3 action-alignment control 완료; gate 실패.
 
 ## 연구 동기
 
@@ -91,3 +91,14 @@ three-fold/seed-0 H3 train-action-shuffled control을 실행한다. Aligned H3�
 에서 최소 2개 task 우세하고 release/hard-negative가 안전할 때만 H3, H1,
 H3-train-shuffled의 seeds 1/2를 실행한다. 상세 값은
 `docs/phase3_pair_local_temporal_threefold_seed0_result.md`에 있다.
+
+## Action-alignment 결과 — 2026-08-16
+
+KCloudVPN에서 H3 train-shuffled 3/3 runs를 완료했다. Aligned H3의 natural PR-AUC
+우세는 1/3 tasks였고 paired hierarchical bootstrap은 PR-AUC +0.0085
+95% CI [−0.0506,+0.0772], event F1 −0.2264 [−0.3955,−0.0459], release F1 −0.3346
+[−0.5339,−0.1016], hard-negative FPR +0.0057 [−0.0796,+0.1007]이었다.
+
+사전 기준에 따라 gate는 실패다. H3의 causal action 주장을 중단하고 seeds 1/2 확대를
+하지 않는다. Phase 3C 후보는 H1 또는 다른 action-free pair-local encoder로 좁힌다.
+상세 값은 `docs/phase3_pair_local_temporal_action_alignment_seed0_result.md`에 있다.

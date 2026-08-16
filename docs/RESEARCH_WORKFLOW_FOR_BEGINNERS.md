@@ -227,10 +227,18 @@ parameter 수로 비교한다.
 
 ### Phase 3C — CLaD-aligned foresight bridge
 
-아직 미구현이다. 미래 action이나 미래 graph를 encoder 입력으로 사용하지 않고 현재와
-과거 정보만으로 future transition에 유용한 latent를 만들 수 있는지 검사한다. Semantic,
-pair-local, graph encoder를 freeze한 뒤 같은-capacity probe로 holding, displacement,
-source→destination, spatial transition을 비교한다.
+아직 미구현이다. 여기서 `미래 action을 사용하지 않는다`와 `action을 전혀 사용하지
+않는다`는 구분해야 한다. 원 CLaD는 미래 action은 보지 않지만 이미 실행된 과거 action은
+사용한다.
+
+실행 시간을 줄이기 위해 action-free 비교를 먼저 전부 돌리지 않는다. Core 비교는
+controlled semantic CLaD, 같은 oracle scene을 edge 없이 읽는 SceneSet, pair-local,
+GeomMPNN, RelPool, RelMPNN에 같은 causal past action을 제공한다. Primary는 RelMPNN 대
+semantic의 sample-level valid spatial-relation any-change PR-AUC다. RelMPNN 대 RelPool은
+동일 relation token에서 message passing 효과를, RelMPNN 대 SceneSet은 broader scene-state
+control 대비 graph 구조의 가치를 확인한다. Transformer 2×2는 core 결과 후 secondary로
+실행한다.
+Holding은 human audit 전에는 checkpoint/gate에서 제외하고 diagnostic으로만 사용한다.
 
 ### Phase 4 — Graph-CLaD Stage 1 통합
 
@@ -239,12 +247,15 @@ foresight와 같은 데이터, horizon, latent/probe 조건에서 비교한다.
 
 ### Phase 5–7 — Stage 2와 rollout
 
-Stage 1을 freeze하고 canonical DDPM Diffusion Policy를 연결한다. 최종 비교는 다음 세
+Stage 1을 freeze하고 canonical DDPM Diffusion Policy를 연결한다. RelMPNN을 최종 graph
+후보로 선택한 경우 최종 비교는 다음 다섯
 조건을 동일한 policy capacity와 training/rollout budget으로 수행한다.
 
 1. Policy-only baseline.
 2. 기존 semantic foresight policy.
-3. 선택된 pair-local 또는 graph foresight policy.
+3. Semantic + SceneSet full-scene state control.
+4. Semantic + RelPool exact-token/no-message control.
+5. Semantic + RelMPNN graph foresight policy.
 
 이 단계가 완료돼야 graph/pair representation이 실제 robot action과 task success에
 도움이 되는지 평가할 수 있다.
@@ -292,10 +303,12 @@ Three-fold seed-0에서 H3의 mean natural PR-AUC가 가장 높았지만, 올바
 사용하는 confound가 있었다. Corrected protocol은 다음을 고정한다.
 
 - Current relation head는 action-free pair head.
-- Checkpoint는 natural validation holding event PR-AUC로 선택.
+- Phase 3B checkpoint는 natural validation holding event PR-AUC, Phase 3C checkpoint는
+  natural validation sample-level valid spatial-relation any-change macro PR-AUC로 선택.
 - Threshold는 natural validation에서 한 번 선택.
 - 같은 frozen threshold를 natural test, stress view, control에 적용.
-- Natural event PR-AUC를 primary로 사용.
+- Phase 3B는 natural event PR-AUC, Phase 3C는 sample-level valid spatial-relation
+  any-change macro PR-AUC를 primary로 사용.
 - F1, onset/release, hard-negative FPR, Brier score, ECE를 함께 저장.
 - 표본별 probability, target, episode/task/sample ID를 gzip prediction으로 저장.
 

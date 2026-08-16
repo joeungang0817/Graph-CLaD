@@ -1,7 +1,8 @@
 # Graph-CLaD 수정 연구 로드맵 v3
 
 기준일: 2026-08-16
-현재 공식 단계: **Phase 3B — H3 action-alignment control**
+이 문서 고정 당시 단계: **Phase 3B — H3 action-alignment control**
+현재 공식 단계와 결과는 `CURRENT_STATUS.md` 및 v4 통합 계획서를 따른다.
 원 영문 혼합본: `archive/pre_korean_translation_20260813.zip`
 
 > 문서 상태: v4 통합 계획서 작성 전까지 사용한 공식 roadmap이다. 2026-08-16 이후의

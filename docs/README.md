@@ -10,12 +10,14 @@ canonical navigation으로 사용한다. 과거 결과 문서는 삭제하거나
 |---:|---|---|
 | 1 | `CURRENT_STATUS.md` | 현재 실행 상태, 서버 경로, 다음 gate와 즉시 할 일 |
 | 2 | `01-plan/features/graph-clad-integrated-research-v4.plan.md` | 새 canonical 연구계획서: 질문, 비교, gate, 성공·중단 기준 |
-| 3 | `RESEARCH_WORKFLOW_FOR_BEGINNERS.md` | 연구 질문, 데이터, Phase, 지표를 처음부터 설명 |
-| 4 | `CODEBASE_GUIDE_FOR_BEGINNERS.md` | 폴더·Python 파일·입출력·실행 흐름을 상세 설명 |
-| 5 | `NEXT_SESSION_PROMPT.md` | 새 Codex 세션에 그대로 붙여 넣는 인계 프롬프트 |
-| 6 | `../RESEARCH_GUIDE.md` | 운영 중심의 전체 폴더와 실행 방법 설명 |
-| 7 | `research_log.md` | 날짜순 실행·판단 기록 |
-| 8 | `revised_research_roadmap_v3.md` | v4 이전 Phase 개정 근거와 이전 gate 보존 |
+| 3 | `01-plan/features/phase3c-oracle-graph-clad-core.plan.md` | 다음 구현의 six-model/data/training/evaluation 계획 |
+| 4 | `02-design/features/phase3c-oracle-graph-clad-core.design.md` | Phase 3C 파일·schema·tensor·model·test·실행 설계 |
+| 5 | `RESEARCH_WORKFLOW_FOR_BEGINNERS.md` | 연구 질문, 데이터, Phase, 지표를 처음부터 설명 |
+| 6 | `CODEBASE_GUIDE_FOR_BEGINNERS.md` | 폴더·Python 파일·입출력·실행 흐름을 상세 설명 |
+| 7 | `NEXT_SESSION_PROMPT.md` | 새 Codex 세션에 그대로 붙여 넣는 인계 프롬프트 |
+| 8 | `../RESEARCH_GUIDE.md` | 운영 중심의 전체 폴더와 실행 방법 설명 |
+| 9 | `research_log.md` | 날짜순 실행·판단 기록 |
+| 10 | `revised_research_roadmap_v3.md` | v4 이전 Phase 개정 근거와 이전 gate 보존 |
 
 현재 상태가 다른 문서와 충돌하면 먼저 `CURRENT_STATUS.md`와 최신
 `research_log.md`를 확인한다. 향후 연구 판단은 v4 계획서의 gate를 따르고, 결정은
@@ -27,9 +29,17 @@ canonical navigation으로 사용한다. 과거 결과 문서는 삭제하거나
 |---|---|
 | `phase3_corrected_protocol_v2.md` | natural validation, frozen threshold, metric 계약 |
 | `phase3_pair_local_temporal_threefold_seed0_result.md` | H0–H3 12-run 결과와 gate |
+| `phase3_pair_local_temporal_action_alignment_seed0_result.md` | H3 aligned-vs-shuffled 결과, bootstrap와 gate 실패 |
 | `phase3_weak_label_audit_v2.md` | 90-item weak-label audit 절차와 한계 |
 | `01-plan/features/phase3_pair_local_temporal_encoder.plan.md` | pair-local history/action 설계 |
 | `kcloudvpn_linux_ssh_runbook_ko.md` | RTX 3090 서버 실행 및 artifact 보존 방법 |
+
+## 다음 Phase 3C 구현 문서
+
+| 문서 | 내용 |
+|---|---|
+| `01-plan/features/phase3c-oracle-graph-clad-core.plan.md` | causal join, semantic replay, six-model core, gate와 artifact 계획 |
+| `02-design/features/phase3c-oracle-graph-clad-core.design.md` | 구현 파일, JSON/tensor schema, model/loss/metric/test/runner 계약 |
 
 ## 이전 Phase와 설계 근거
 

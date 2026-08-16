@@ -1,0 +1,29 @@
+{
+  "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz",
+  "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
+  "base_checkpoints": {
+    "test_task0": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad/test_task0/seed0/checkpoints/last.pt",
+    "test_task1": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad/test_task1/seed0/checkpoints/last.pt",
+    "test_task2": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad/test_task2/seed0/checkpoints/last.pt"
+  },
+  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen",
+  "models": [
+    "C3-Sem-PastAct",
+    "C3-SceneSet-PastAct",
+    "C3-Pair-PastAct",
+    "C3-GeomMPNN-PastAct",
+    "C3-RelPool-PastAct",
+    "C3-RelMPNN-PastAct"
+  ],
+  "folds": ["test_task0", "test_task1", "test_task2"],
+  "seeds": [0],
+  "train_split": "train",
+  "evaluation_split": "test",
+  "updates": 3000,
+  "batch_size": 64,
+  "vl_dim": 1024,
+  "hidden_dim": 128,
+  "structured_dim": 256,
+  "max_nodes": 32,
+  "device": "cuda"
+}

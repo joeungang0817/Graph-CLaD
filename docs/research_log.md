@@ -488,3 +488,316 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   하위 호환으로 유지한다.
 - 분리 result JSON과 aligned prediction root 재지정 경로를 검증하는 테스트를 추가했다.
   `python -m unittest tests.test_phase3_corrected_analysis` 결과는 2 tests, OK다.
+
+## 2026-08-16 — H3 aligned-vs-shuffled paired bootstrap 완료
+
+- Analysis comparison은 `H3-history-action_minus_H3-train-shuffled`이다.
+- Output은 KCloudVPN의
+  `corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1/aligned_vs_shuffled_bootstrap_v1.json`에 저장했다.
+- Task fold → episode → event cluster 계층으로 2,000회 재표집했고 bootstrap seed는
+  `20260816`이다.
+
+| Metric | Aligned−shuffled estimate | 95% CI |
+|---|---:|---:|
+| Event PR-AUC | +0.0085088954 | [−0.0506334643, +0.0771584896] |
+| Event F1 | −0.2264341004 | [−0.3955016732, −0.0459489249] |
+| Release F1 | −0.3345700114 | [−0.5339250228, −0.1016183067] |
+| Hard-negative FPR | +0.0056898657 | [−0.0795714496, +0.1007211270] |
+
+- Event PR-AUC와 hard-negative FPR interval은 0을 포함해 aligned action의 뚜렷한 이점을
+  지지하지 않는다.
+- Event F1과 release F1 interval은 모두 0 아래이며 aligned가 낮다. F1 계열은 각
+  model/fold의 natural-validation threshold를 적용한 thresholded metric이라는 제한을
+  함께 둔다.
+- 이 결과는 사전 2/3-task primary 기준 실패와 일치한다. Phase 3B action-alignment gate
+  실패를 확정하고 seeds 1/2 확대를 중단한다.
+- 상세 결과와 claim limit은
+  `docs/phase3_pair_local_temporal_action_alignment_seed0_result.md`에 고정했다.
+
+## 2026-08-16 — Human weak-label audit 일시 보류와 Phase 3C smoke 선행
+
+- Interactive audit viewer를 열었지만 현재 화면은 weak label의 `holding`, `state`,
+  `followed`, `confidence`와 label 생성에 사용된 contact/closure/follow 신호를 함께
+  보여준다. 같은 규칙을 보고 판정하면 독립 human validation보다 rule-consistency
+  confirmation에 가까워진다는 한계를 확인했다.
+- 사용자 결정으로 90-item human review는 0/90 상태에서 일시 보류한다. Audit package와
+  빈 review CSV는 그대로 보존하며 pass로 처리하지 않는다.
+- Phase 3C one-task/seed-0 technical smoke는 shape, leakage, metric과 artifact 계약 검증
+  목적으로 먼저 진행한다.
+- Human audit 완료 전에는 holding weak label의 정확성, 작은 metric gain, 최종
+  representation 우월성을 주장하지 않으며 multi-seed/full-scale 확대도 하지 않는다.
+
+## 2026-08-16 — 원 CLaD 방법 재확인과 Phase 3C graph 후보 구분
+
+- `CLaD_CVPR_2026.pdf`의 Section 4와 Figure 2, 제공된
+  `baseline_code/LatentDynamics.py`를 대조했다. 원 CLaD Stage 1은 현재 상태만 보는
+  action-free encoder가 아니다. `t-tau`와 `t`의 semantic/proprioceptive state 및 그
+  사이에 이미 실행된 과거 action `a[t-tau:t]`로 두 transition token을 만든 뒤,
+  proprioceptive transition이 semantic transition을 query하는 비대칭 cross-attention으로
+  shared dynamics를 구성하고 `t+tau` latent를 예측한다. 미래 action은 입력하지 않는다.
+- 따라서 Phase 3C에서는 `strict no-action`과 `no-future-action but causal past-action`을
+  구분해야 한다. 전자는 안전한 ablation이고 후자가 원 논문 입력 계약에 더 가깝다.
+- 과거 P3 geometric GNN은 한 시점의 complete directed graph에서 상대 xyz, 거리,
+  geometry-valid edge를 사용하고, action은 message passing 뒤 prediction head에 붙여
+  미래 relation을 직접 분류했다. 이는 semantic relation token과 graph history를 담는
+  CLaD-aligned object-relation transition encoder와 동일하지 않다.
+- Weak-label audit 완료는 새 encoder를 자동으로 추가하는 절차가 아니다. Audit가 holding
+  label을 지지하면 동일한 frozen representation에 holding onset/release probe를 정식
+  secondary target으로 추가한다. 오류가 발견되면 label version을 수정하고 영향받은
+  실험만 재평가한다.
+- 권장 Phase 3C 비교안은 semantic CLaD baseline, H1 action-free pair-local baseline,
+  action-free object-relation graph, 그리고 원 논문 정렬을 위한 causal-past-action graph
+  variant다. 새 graph의 효과를 relation/history 효과와 혼동하지 않도록 geometric-only
+  graph ablation을 유지한다. 이 구성은 아직 최종 확정 전 설계 권고로 기록한다.
+
+## 2026-08-16 — Phase 3C two-tier 비교계획 확정
+
+- 사용자 확인에 따라 `no-future-action`과 `strict action-free`를 분리했다. Action-free
+  graph만 원 CLaD와 다른 것이 아니라 action을 제거한 semantic/pair/graph 모델 모두가
+  원 CLaD 입력 계약과 다르다. 원 CLaD는 future action 없이 causal past action
+  `a[t-tau:t]`을 사용한다.
+- Representation과 action 효과를 혼동하지 않도록 Phase 3C를 두 tier로 확정했다.
+  - Tier A strict action-free: `C3-Sem-AF`, `C3-Pair-AF`, `C3-GeomGraph-AF`,
+    `C3-RelGraph-AF`.
+  - Tier B CLaD-causal: `C3-Sem-PastAct`, `C3-Pair-PastAct`,
+    `C3-RelGraph-PastAct`.
+- Tier A에서는 모든 모델이 같은 `<=t` state/history만 보고 action은 전혀 보지 않는다.
+  `C3-GeomGraph-AF`와 `C3-RelGraph-AF`는 topology, history, capacity, objective를 맞추고
+  valid current relation token의 유무를 핵심 차이로 둔다. 이전 P3 geometric GNN은
+  single-snapshot/future-interval-action/direct-classifier 계약이라 그대로 재사용하지 않는다.
+- Tier B는 Tier A에서 relation graph가 object displacement 또는 valid spatial transition의
+  natural held-out metric으로 semantic 및 matched geometric graph보다 이점을 보일 때만
+  실행한다. 세 모델 모두 같은 causal past-action availability를 사용하고 future action과
+  future graph는 금지한다.
+- Human weak-label audit은 모델을 추가하는 gate가 아니다. Audit가 label을 지지하면 같은
+  frozen representations의 holding onset/release probe를 정식 secondary target으로
+  승격한다. Audit 전 technical smoke의 primary target은 object displacement와 valid
+  spatial transition이다.
+- 이 결정을 canonical v4 plan, `CURRENT_STATUS.md`, `NEXT_SESSION_PROMPT.md`, beginner
+  workflow 및 root research guide에 반영했다.
+
+## 2026-08-16 — Phase 3C causal-past-action main comparison으로 직행
+
+- 제출 속도를 우선한 사용자 결정으로 strict action-free Tier A의 4-model 선행 실행을
+  제거했다. Phase 3C는 원 CLaD 입력 계약에 가까운 causal past-action main comparison으로
+  바로 시작한다.
+- Main comparison은 `C3-Sem-PastAct`, `C3-Pair-PastAct`,
+  `C3-GeomGraph-PastAct`, `C3-RelGraph-PastAct` 네 모델이다. 모든 모델은 같은 `<=t`
+  state/history, 같은 `a[t-tau:t]` past action, 같은 split/capacity/probe/update budget을
+  사용한다. Future action `a[t:t+tau]`과 future graph는 금지한다.
+- Past-action record는 Phase 2D를 다시 replay하지 않고 같은 episode/tau의 연속 sample을
+  join해 만든다. `(t-tau -> t)` sample은 graph history와 past action을 제공하고
+  `(t -> t+tau)` sample은 future target만 제공한다. 공유 `graph[t]` hash, episode, split,
+  tau가 모두 일치해야 하며 두 번째 sample의 future action window는 encoder에서 버린다.
+- `C3-GeomGraph-PastAct`는 relation graph의 추가 가치를 분리하기 위한 필수 matched
+  control이다. 과거 P3는 single snapshot/future-interval-action/direct-classifier여서
+  그대로 재사용하지 않는다.
+- `C3-RelGraph-PastAct`가 semantic 및 matched geometric graph보다 natural object
+  displacement 또는 valid spatial transition에서 유망할 때만 `C3-RelGraph-AF`와
+  `C3-RelGraph-ShuffledPastAct`를 추가한다. 따라서 action-free는 main 선행 단계가 아니라
+  유망 graph의 action-use ablation으로 축소됐다.
+- Human audit의 역할은 이전 결정과 동일하다. 새 모델을 추가하지 않으며, 완료 후 holding
+  onset/release를 정식 secondary target으로 승격할 수 있다.
+- Canonical plan version을 4.4로 올리고 `CURRENT_STATUS.md`, `NEXT_SESSION_PROMPT.md`,
+  beginner workflow, root guide와 README를 같은 순서로 갱신했다.
+
+## 2026-08-16 — Phase 3C graph encoder 2×2와 6-model main comparison 확정
+
+- 사용자가 Transformer가 아닌 graph encoder 두 개도 같은 Phase 3C smoke에 포함하는
+  방안을 제안했다. 이는 임의 model 추가가 아니라 edge content와 encoder family를
+  분리하는 2×2 factorial이므로 main comparison에 포함하기로 결정했다.
+- 최종 six-model main set은 `C3-Sem-PastAct`, `C3-Pair-PastAct`,
+  `C3-GeomMPNN-PastAct`, `C3-RelMPNN-PastAct`, `C3-GeomTx-PastAct`,
+  `C3-RelTx-PastAct`다.
+- Graph 2×2의 row는 temporal MPNN과 edge-token Transformer, column은 geometry-only와
+  geometry+relation이다. Relation effect는 `RelMPNN−GeomMPNN`과 `RelTx−GeomTx`, encoder
+  effect는 `GeomTx−GeomMPNN`과 `RelTx−RelMPNN`으로 분리 보고한다.
+- 네 graph cell은 같은 node/edge set, topology, causal graph history, past-action embedding,
+  output/probe와 training budget을 사용한다. Base edge token에 같은 action embedding을
+  제공하고 MPNN은 message input, Transformer는 edge-token input으로 처리한다. Parameter는
+  near-match하고 실제 차이를 공개한다.
+- 과거 P3/G1은 temporal/action/target 계약이 다르므로 새 MPNN cell로 재사용하지 않는다.
+- Relation model이 유망할 때만 `C3-RelPool-PastAct`를 추가해 relation feature와
+  scene-level interaction을 분리하고, 선택된 relation encoder에 no-action 및
+  shuffled-past-action controls를 추가한다.
+- Canonical plan version을 4.5로 올리고 current status, next-session prompt, beginner
+  workflow, root guide와 README를 같은 모델 집합으로 갱신했다.
+
+## 2026-08-17 — Graph-CLaD improvement 목표와 Phase 3C primary protocol 확정
+
+- 최종 연구 목표를 oracle representation screen 자체가 아니라 controlled semantic CLaD
+  대비 Graph-CLaD의 개선으로 확정했다. 최종 성능 주장은 같은 Stage 2 policy와 rollout
+  budget의 paired task success 결과가 있을 때만 허용한다.
+- Phase 3C의 유일한 primary offline contrast는 사전 지정한
+  `C3-RelMPNN-PastAct − C3-Sem-PastAct`이고, target/metric은 `tau=6` valid
+  spatial-relation-change task-macro PR-AUC로 고정했다. Object displacement와
+  source→destination은 secondary로 이동했다.
+- `C3-Sem-PastAct`는 제공된 CLaD Stage 1 core와 replayed visual/language/proprioception,
+  causal past action을 사용하는 controlled semantic baseline이어야 한다. 이를 충족하지
+  못하면 `C3-SemProxy-PastAct`로 이름을 바꾸며 primary CLaD 비교를 대체하지 않는다.
+- Graph와 같은 full-scene oracle state를 받되 edge/message passing이 없는
+  `C3-SceneSet-PastAct`를 information-matched non-graph baseline으로 추가했다. Relation
+  change no-change와 future-state copy-current trivial baseline도 필수 보고한다.
+- Holding human audit은 0/90 상태로 보류할 수 있으나, Phase 3C에서는 holding을 loss,
+  checkpoint, threshold, model selection과 gate에서 완전히 제외한다. Holding은 audit 전
+  diagnostic으로만 저장한다.
+- Core main comparison은 semantic, SceneSet, pair, GeomMPNN, RelMPNN으로 두고 RelMPNN을
+  primary graph candidate로 사전 지정했다. Geometry/relation × Transformer cell은 core
+  결과 후 secondary backbone robustness comparison으로 둔다.
+- Simulator-state graph를 계속 사용하는 최종 variant는 `Oracle Graph-CLaD`로 표기하며
+  RGB에서 graph를 추출하거나 deployable perception을 검증한 것으로 주장하지 않는다.
+
+## 2026-08-17 — Phase 3C 코드 생성·실행 계획과 기술 설계 확정
+
+- 사용자 요청에 따라 다음 작업이 코드 생성 단계임을 확인하고, 바로 full training code부터
+  만들지 않고 data contract → semantic feature → controlled CLaD → six-model core → runner
+  순서의 구현 계획과 gate를 문서화했다.
+- 구현 계획은 `docs/01-plan/features/phase3c-oracle-graph-clad-core.plan.md`, 파일·schema·tensor·
+  model·loss·test·실행 interface의 상세 설계는
+  `docs/02-design/features/phase3c-oracle-graph-clad-core.design.md`에 고정했다.
+- 기존 v4.6 계획의 공정성 문제를 수정했다. `SceneSet`은 full-scene state control이지만
+  explicit relation edge token을 받지 않아 RelMPNN과 exact information match가 아니다.
+  따라서 RelMPNN과 동일 edge token을 받고 message passing만 제거한
+  `C3-RelPool-PastAct`를 conditional experiment에서 필수 core control로 승격했다.
+- Core는 `Sem`, `SceneSet`, `Pair`, `GeomMPNN`, `RelPool`, `RelMPNN`의 6개로 확정했다.
+  Primary는 `RelMPNN−Sem`, exact-token 구조 guard는 `RelMPNN−RelPool`, broader scene-state
+  guard는 `RelMPNN−SceneSet`이다. Transformer는 core 후 secondary로 유지했다.
+- Primary 출력은 global semantic model과 graph model이 같은 head로 비교될 수 있도록
+  `tau=6` sample-level relation any-change 8-vector로 구체화했다. Candidate edge는
+  object→object/fixture이고, relation은 현재 handler에 실제 존재하는 `left`, `right`,
+  `front`, `behind`, `above`, `below`, `contact`, `on`만 쓴다. 구현되지 않은 `near`와
+  `support`, support 부족 `inside`, audit 미완료 `holding`, unary `open/close`는 제외했다.
+- Relation eligibility는 test를 보지 않고 train/validation positive·negative minimum
+  support로 고정한다. Fold당 evaluable relation이 2개 미만이면 학습 전에 unsupported로
+  중단하도록 했다.
+- 기존 Phase 2D artifact에는 RGB/semantic embedding이 없음을 확인했다. Controlled semantic
+  CLaD를 위해 official HDF5 state의 joined-manifest unique frame만 render해 DecisionNCE
+  embedding store를 만드는 단계를 필수로 추가했다. CLaD 논문은 DecisionNCE P/T variant와
+  optimizer를 명시하지 않으므로 `DecisionNCE-P`, AdamW 설정은 controlled assumption으로
+  표기하고 repository commit/checkpoint/config SHA를 저장한다.
+- Phase 3C screen은 fold별 base CLaD를 원 latent/reconstruction objective로 학습한 뒤 freeze하고,
+  six candidate adapter와 동일 head를 relation change/motion target으로 학습하는 matched
+  architecture screen으로 정의했다. 따라서 이를 순수 self-supervised frozen-probe 결과로
+  부르지 않는다. 최종 Graph-CLaD는 Phase 4에서 선택 구조를 CLaD foresight residual로 다시
+  통합하고 adapter-off equivalence를 통과한 뒤 Stage 2로 넘긴다.
+- RelMPNN을 최종 후보로 선택할 경우 Stage 2에서도 semantic+RelPool을 유지한다. 최종 policy
+  비교는 policy-only, semantic, semantic+SceneSet, semantic+RelPool, semantic+RelMPNN으로
+  구성해 relation token의 효과와 message passing의 효과를 policy 수준에서도 분리한다.
+- 아직 Phase 3C model 코드는 생성하거나 실행하지 않았다. 다음 구현은 위 plan/design의
+  Milestone 1인 contract, streaming join, target/support report와 unit test부터 시작한다.
+
+## 2026-08-17 — Phase 3C Milestone 1 구현 시작
+
+- `scripts/phase3c/` package를 생성하고 torch/LIBERO와 독립적인 causal data contract를
+  구현했다. `contracts.py`는 canonical graph hash, action shape `[6,7]`, forbidden input
+  field, object→object/fixture candidate edge, 8개 relation any-change target, displacement와
+  train/validation support report를 정의한다.
+- `build_joined_manifest.py`는 Phase 2D의 `(t-6 → t)`와 `(t → t+6)` sample을 episode/task/demo/
+  split/tau와 shared `graph[t]` SHA-256으로 검증한 뒤 join한다. left sample의 past action만
+  `past_action_window`으로 복사하고 right sample의 future action은 output schema에 넣지 않는다.
+- `io.py`에 gzip JSONL streaming reader와 atomic JSON/JSONL writer를 추가했다. 오류가 나면
+  destination을 덮어쓰지 않고 QA report에 실패 원인과 counter를 남긴다.
+- `validate_action_timing.py`와 pure helper test를 추가했다. 실제 HDF5/LIBERO 실행은 아직
+  하지 않았으며, SSH에서 train/validation tolerance를 먼저 고정한 뒤 test frame에는 frozen
+  tolerance를 적용해야 한다.
+- Synthetic test 8개가 통과했고, 새 package `compileall` 및 `git diff --check`도 통과했다.
+  현재 구현은 Milestone 1까지이며 DecisionNCE feature store, CLaD wrapper, structured model은
+  아직 구현하지 않았다.
+## 2026-08-17 — Phase 3C Milestone 2 semantic feature store implementation
+
+- Added `scripts/phase3c/build_semantic_feature_store.py`. It separates a
+  dependency-free camera/config layer from the SSH-only HDF5/LIBERO/DecisionNCE
+  extraction path. The builder consumes the causal joined manifest and renders
+  only unique `t-6`, `t`, and `t+6` state frames per demo.
+- Camera selection is an exact two-key contract. The selected key, channel
+  order, vertical-flip flag, frame shape/dtype, and observation inventory are
+  recorded; missing keys, inconsistent shapes, non-finite pixels, or implicit
+  orientation/preprocessing fallbacks fail the build.
+- Added a thin frozen DecisionNCE wrapper with explicit image/text encoding,
+  feature-dimension checks, finite-value checks, and checkpoint provenance.
+  Per-demo `.npz` shards store `steps`, `view0`, `view1`, `language`, and
+  simulator state-restore error; `manifest.json` records source/HDF5/checkpoint
+  hashes and the shard index.
+- Added the path template
+  `configs/phase3c_semantic_store_example_v1.json`, package documentation, and
+  CPU tests for camera normalization, exact camera keys, frame deduplication,
+  and wrapper shape contracts.
+- Local verification with the bundled Python runtime: 12 Phase 3C tests passed
+  (one torch-dependent wrapper test skipped because local Python has no torch),
+  `compileall` passed, and `git diff --check` reported no whitespace errors.
+- This milestone does not claim that SSH extraction has completed. The real
+  camera keys, DecisionNCE package/checkpoint, HDF5 mapping, and one-episode
+  render smoke remain required before the store is accepted as a completed
+  artifact.
+## 2026-08-17 — Phase 3C Milestone 3 controlled CLaD wrapper implementation
+
+- Added `scripts/phase3c/models/semantic_clad.py` with `ControlledCLaD` and a
+  typed `CLaDBatch` contract. The original `baseline_code.LatentDynamics` is
+  left untouched; the wrapper enforces `v_history=[B,2,2,D]`, `p_history=[B,2,16]`,
+  `past_action=[B,6,7]`, `language=[B,D]`, and target-only training inputs.
+- `encode_foresight` temporarily enters eval mode, passes `action_mask_ratio=0`,
+  never reads target/future tensors, and returns `[B,2D]`. The training path
+  requires the four original CLaD losses and the explicit post-optimizer EMA
+  update is exposed as `update_ema_after_optimizer_step`.
+- Added wrapper tests for dimension rejection, synthetic loss/foresight shape,
+  EMA call order, and target-free inference. Local bundled-Python verification:
+  15 Phase 3C tests passed with four torch-dependent tests skipped because the
+  local runtime has no torch; compileall and diff checks passed.
+- The H=1024 real CLaD smoke remains an SSH-only gate and has not been claimed.
+## 2026-08-17 — Phase 3C Milestone 4 structured model implementation
+
+- Added a shared `GraphBatch`/`StructuredBatch` tensor contract and five
+  structured encoders: `SceneSetPastAct`, `PairPastAct`, `GeomMPNNPastAct`,
+  `RelPoolPastAct`, and `RelMPNNPastAct`. All consume exactly the two graph
+  snapshots plus `[B,6,7]` past action; no future graph/action field is part of
+  their forward interface.
+- The GeomMPNN path uses temporal geometry/contact only. RelPool and RelMPNN
+  share the exact temporal relation-token encoder; RelPool performs masked
+  edge-token pooling without message passing, while RelMPNN adds two residual
+  message-passing layers. This is the planned relation-token fairness control.
+- Added `models/adapters.py` with a shared semantic/structured projector,
+  relation-change head, and scene-motion head so candidate comparisons do not
+  change output head or fusion dimensions.
+- Added CPU-skippable tests for common output shape, RelPool permutation
+  invariance, and GeomMPNN insensitivity to relation-channel changes. The local
+  environment has no torch, so these runtime tests are deferred to SSH; import
+  compilation and the remaining 18 Phase 3C tests pass.
+- This milestone implements model interfaces and invariance guards only; no
+  GPU training, parameter matching, or performance claim has been made.
+## 2026-08-17 — Phase 3C Milestone 5 dataset/trainer implementation
+
+- Added `scripts/phase3c/dataset.py`: immutable semantic-store lookup,
+  deterministic node ordering, Phase 2D task-slot guard, 16-D proprio
+  extraction (`joint_pos[7] + joint_vel[7] + gripper_qpos[2]`), temporal geometry,
+  contact/relation value-valid tensors, and `Phase3CBatch` collation.
+- Added `losses.py` and `metrics.py`. Relation BCE is masked by
+  `relation_valid`; unknown relations never become negative examples. Motion
+  uses a separate smooth-L1 term, and metric helpers return `null`/`None` for
+  single-class relations rather than inventing PR-AUC/F1 values.
+- Added `train_base_clad.py` and `train_core.py` with fixed action/history
+  schema, atomic checkpoints, source/checkpoint hashes, seed/device/runtime
+  manifests, frozen-base core training, and common adapter/head wiring.
+- Local verification: 20 Phase 3C tests collected, 11 dependency-free tests
+  passed and 9 torch-dependent tests skipped because local Python has no torch;
+  compileall and diff checks passed. No GPU training result is claimed.
+- Added `run_core.py`, `analyze_core.py`, and `parameter_match.py` interfaces
+  for sequential model/fold/seed execution, paired task bootstrap, and explicit
+  trainable-parameter accounting. `run_core` treats `test_taskN` as a held-out
+  task filter rather than silently reusing that task in training.
+- Added smoke/full config templates for the semantic store, base CLaD, one core
+  model, and the six-model screen. The templates use `$GRAPH_CLAD_ARTIFACT_ROOT`
+  and intentionally require real SSH paths and completed base checkpoints.
+- Core trainer now emits atomic checkpoint, prediction, metrics, and runtime
+  artifacts; evaluation is restricted to held-out test task when the fold name
+  encodes `test_taskN`. These are implementation interfaces only; no run has
+  been executed or performance claim has been made.
+- Added `run_base_clad.py` so the three held-out task folds can be trained with
+  one explicit command; `test_taskN` is converted into an exclusion filter for
+  base training. Added the corresponding 25K-update screen template.
+- Added train-only `NormalizationStats` for node continuous channels, proprio,
+  and relative geometry/distance; the stats are saved in the base checkpoint and
+  reused by core training. Binary validity/task-reserved channels are not
+  normalized.
+- Tightened semantic-store extraction to enforce one global camera frame shape
+  and batch both configured views through DecisionNCE. No fallback camera or
+  orientation is introduced.

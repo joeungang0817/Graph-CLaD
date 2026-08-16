@@ -21,7 +21,7 @@
 | 8 | Phase 3B | `phase_3b_evaluation_and_controls.ipynb` | 통계, action control, weak-label 판정 |
 
 현재 진행 단계와 서버 output은 `../docs/CURRENT_STATUS.md`를 먼저 확인한다. 공식
-진행 단계는 Phase 3B action-alignment control이다. Phase 3C는 아직 실행
+Phase 3B action-alignment gate는 실패로 완료됐다. Phase 3C는 아직 실행
 노트북으로 만들지 않았고, Phase 4 Stage 1 및 Phase 5~8도 gate 통과 전까지 차단한다.
 
 장시간 또는 상태를 변경하는 셀은 기본적으로 `RUN_* = False`다. 하나의 플래그를

@@ -1,7 +1,7 @@
 # Graph-CLaD 현재 상태와 실행 인계
 
-기준 시각: 2026-08-16 (Asia/Seoul)  
-공식 현재 단계: **Phase 3B action-alignment gate 판정 완료 — 실패, Phase 3C 전환 준비**
+기준 시각: 2026-08-17 (Asia/Seoul)
+공식 현재 단계: **Phase 3B action-alignment gate 판정 완료 — 실패, Phase 3C Milestone 1 구현 중**
 이 문서는 다음 세션에서 가장 먼저 읽는 단일 현재상태 문서다. 공식 연구 질문과 단계별
 gate는 `01-plan/features/graph-clad-integrated-research-v4.plan.md`, 시간순 근거는
 `research_log.md`를 따른다. `revised_research_roadmap_v3.md`는 v4 이전의 단계 개정
@@ -117,13 +117,24 @@ Natural conditional/oracle-current event 결과는 다음과 같다.
 | 2 | 0.4734 | 0.4913 | −0.0179 | 0.3419 | 0.6034 | 0.0150 | 0.3733 |
 | Task macro | 0.4824 | 0.4739 | 약 +0.0085 | 0.3617 | 0.5881 | 0.1193 | 0.4539 |
 
+Paired hierarchical bootstrap 2,000회 결과는 aligned minus shuffled 기준으로 다음과 같다.
+
+| Metric | Estimate | 95% CI |
+|---|---:|---:|
+| Event PR-AUC | +0.0085 | [−0.0506, +0.0772] |
+| Event F1 | −0.2264 | [−0.3955, −0.0459] |
+| Release F1 | −0.3346 | [−0.5339, −0.1016] |
+| Hard-negative FPR | +0.0057 | [−0.0796, +0.1007] |
+
 Aligned H3의 task-macro PR-AUC는 약간 높지만 task별 우세는 1/3이라 사전 정의한 최소
 2/3-task 기준에 미달한다. Release F1도 aligned가 3/3 tasks에서 낮다. 따라서 gate는
 **실패**다. H3/H1/H3-train-shuffled seeds 1/2 확대를 중단하고 pair-local 결과는
 architecture finding으로만 보고한다. 올바르게 정렬된 action의 causal/semantic 효과를
 입증했다고 주장하지 않는다.
 
-- 어느 경우든 90-item weak-label human review는 별도 완료해야 한다.
+- 90-item weak-label human review는 0/90 상태에서 일시 보류한다. Phase 3C technical
+  smoke는 진행할 수 있지만 label validity나 작은 성능 차이에 대한 최종 주장은 audit
+  완료 전까지 금지한다.
 - Natural test가 primary이며 challenge는 독립 test가 아닌 stress analysis다.
 - Conditional event metric은 oracle current holding을 사용하므로 end-to-end metric도 함께 보고한다.
 
@@ -131,15 +142,38 @@ architecture finding으로만 보고한다. 올바르게 정렬된 action의 cau
 
 사용자가 선택한 제출 전 기본 방향은 다음과 같다.
 
-1. Phase 3C에서 future action/graph 없이 semantic CLaD, pair-local temporal, 선택 graph
-   representation의 foresight bridge를 같은 데이터와 same-capacity probe로 비교한다.
-2. Phase 4에서 선택 representation을 CLaD Stage 1 latent foresight에 통합한다.
-3. Stage 1을 freeze하고 canonical DDPM Diffusion Policy를 Stage 2로 연결한다.
-4. Policy-only, semantic foresight, 선택 pair-local/graph foresight를 같은 policy 용량과
-   학습 budget으로 비교한다.
-5. Action chunk horizon은 원 논문 설정과 맞춰 `tau=6`을 우선 사용한다.
-6. Current observation과 predicted foresight를 modality별 FiLM으로 결합하고 표준
+1. 최종 목표는 controlled semantic CLaD 대비 Graph-CLaD improvement이며, 최종 주장은
+   같은 Stage 2 policy/budget의 paired rollout success로 판단한다.
+2. Phase 3C core는 `C3-Sem-PastAct`, `C3-SceneSet-PastAct`, `C3-Pair-PastAct`,
+   `C3-GeomMPNN-PastAct`, `C3-RelPool-PastAct`, `C3-RelMPNN-PastAct`다. 모든 모델은 같은
+   `<=t` causal history와 `a[t-tau:t]` past action을 받는다. `RelPool`은 RelMPNN과 동일한
+   relation edge token에서 message passing만 제거한 필수 fairness control이다. Transformer
+   두 cell은 core 결과 후 secondary로 둔다.
+   기존 Phase 2D의 연속 `(t-tau -> t)`와 `(t -> t+tau)` sample을 join해 새 replay 없이
+   구성하며, 공유 `graph[t]` hash와 episode/split/tau 일치를 먼저 검사한다.
+3. Phase 3C primary는 `tau=6` sample-level valid spatial-relation any-change task-macro
+   PR-AUC이며, primary contrast는 `RelMPNN−controlled semantic CLaD`다.
+   `RelMPNN−RelPool`은 exact-token message-passing guard, `RelMPNN−SceneSet`은 broader
+   scene-state guard다. Primary relation은 현재 구현된 `left/right`, `front/behind`,
+   `above/below`, `contact`, `on`만 사용한다.
+4. Object displacement와 source→destination은 secondary다. Holding은 audit 전 loss,
+   checkpoint, threshold, model selection과 gate에서 제외하고 diagnostic으로만 저장한다.
+5. Relation model이 유망할 때만 선택된 relation encoder의
+   no-action/shuffled-past-action control을 실행한다. `RelPool`은 이미 core에 포함한다.
+6. Future action `a[t:t+tau]`과 future graph는 모든 Phase 3C 입력에서 금지한다.
+7. Phase 4에서 선택 representation을 CLaD Stage 1 latent foresight에 통합한다.
+8. Stage 1을 freeze하고 canonical DDPM Diffusion Policy를 Stage 2로 연결한다.
+9. Policy-only, controlled semantic CLaD, semantic+SceneSet, semantic+RelPool,
+   semantic+RelMPNN Graph-CLaD를 같은 policy 용량과 학습 budget으로 비교한다. RelPool은
+   policy 수준의 exact-token/no-message control이다.
+10. Action chunk horizon은 원 논문 설정과 맞춰 `tau=6`을 우선 사용한다.
+11. Current observation과 predicted foresight를 modality별 FiLM으로 결합하고 표준
    epsilon-prediction objective를 사용한다.
+
+Weak-label audit 완료는 별도 encoder를 추가하는 조건이 아니다. Audit가 holding label을
+지지하면 같은 frozen representations에 holding onset/release probe를 정식 secondary
+target으로 추가한다. Audit 전 Phase 3C에서는 holding을 diagnostic으로만 기록하며
+checkpoint나 확대 결정에 사용하지 않는다.
 
 저장소에는 공식 Stage 2 코드와 rollout pipeline이 없다. 따라서 이 구현은 논문 설명을
 따른 **CLaD-compatible controlled reimplementation**으로 표현하고 공식 재현이라고
@@ -149,9 +183,10 @@ architecture finding으로만 보고한다. 올바르게 정렬된 action의 cau
 
 ## 9. 아직 해결되지 않은 항목
 
-- Aligned-vs-shuffled per-sample hierarchical bootstrap과 hard-negative/end-to-end 상세 보고.
-- 90-item weak-label human review.
-- Manifest builder의 streaming/low-memory 구현. 현재 실행에는 기존 pass manifest를 사용한다.
+- Action-alignment end-to-end/challenge/calibration 상세 보고와 analysis artifact SHA 기록.
+- 90-item weak-label human review: 0/90, Phase 3C technical smoke 동안 일시 보류.
+- Phase 3C Milestone 1의 SSH 실제 HDF5 action-timing/data smoke.
+- DecisionNCE semantic feature store, CLaD Stage 1 wrapper, Phase 3C six-model implementation.
 - Phase 3C/4 구현과 notebook.
 - Stage 2 Diffusion Policy, LIBERO rollout environment, success-rate evaluator.
 - Semantic/VLM observation pipeline과 실제 CLaD Stage 1 trainer의 미공개 세부사항.
@@ -162,5 +197,22 @@ architecture finding으로만 보고한다. 올바르게 정렬된 action의 cau
 1. 이 파일 `docs/CURRENT_STATUS.md`.
 2. `docs/NEXT_SESSION_PROMPT.md`.
 3. `docs/01-plan/features/graph-clad-integrated-research-v4.plan.md`의 Phase 3C 이후.
-4. `docs/phase3_pair_local_temporal_threefold_seed0_result.md`.
-5. 새 action-alignment result JSON과 runtime manifest.
+4. `docs/01-plan/features/phase3c-oracle-graph-clad-core.plan.md`.
+5. `docs/02-design/features/phase3c-oracle-graph-clad-core.design.md`.
+6. `docs/phase3_pair_local_temporal_action_alignment_seed0_result.md`.
+7. `docs/phase3_pair_local_temporal_threefold_seed0_result.md`.
+## 2026-08-17 implementation update
+
+Phase 3C Milestone 2 is now implemented locally. The semantic feature-store
+builder, exact two-camera contract, frozen DecisionNCE wrapper, per-demo shard
+schema, and CPU contract tests are present. SSH extraction has not been run;
+the real HDF5 mapping, BDDL roots, camera keys, DecisionNCE installation, and
+checkpoint must be filled and smoke-tested there. CLaD wrapper and structured
+six-model adapters remain the next implementation milestones.
+
+Latest implementation update: Milestones 3–5 are now also present locally:
+controlled CLaD wrapper, dataset/tensorizer, five structured encoders plus the
+semantic control, masked losses/metrics, base/core trainers, fold runners, and
+paired analyzer. This does not supersede the SSH gates: torch/LIBERO/DecisionNCE
+imports, real camera inventory, H=1024 smoke, parameter/runtime checks, and
+actual training artifacts are still unverified until you run them on SSH.

@@ -3,9 +3,9 @@
 > Summary: CLaD의 semantic foresight를 pair-local 또는 object–relation graph transition으로 구조화했을 때 robot–object interaction과 spatial transition, 나아가 동일 조건의 diffusion policy 성능이 개선되는지 단계적으로 검증한다.
 >
 > Project: Graph-CLaD  
-> Version: 4.2  
+> Version: 4.7
 > Author: Graph-CLaD 연구팀  
-> Date: 2026-08-16  
+> Date: 2026-08-17
 > Status: Review
 
 ---
@@ -37,7 +37,8 @@ protocol, KCloudVPN 실행 환경, 제출 직전의 최소 실행 범위를 반�
 
 - 어떤 물체가 이동하거나 잡혔는가.
 - robot과 각 object 사이의 관계가 어떻게 변했는가.
-- source와 destination, support, near 같은 공간 관계가 어떻게 바뀌었는가.
+- source와 destination 사이의 left/right, above/below, contact/on 같은 현재 구현된 공간
+  관계가 어떻게 바뀌었는가.
 - 여러 물체 중 task-relevant object가 무엇이며 action이 어느 pair에 작용했는가.
 
 Graph-CLaD의 출발 가설은 두 시점의 상태를 object–relation graph로 만들고,
@@ -71,8 +72,9 @@ object displacement, source→destination, valid spatial relation transition을 
 ### RQ2. Temporal history와 action의 기여
 
 현재 snapshot만으로 부족한 holding transition 정보가 `<= t` causal history로
-보완되는가? Action은 history와 독립적으로 추가 정보를 제공하며, 의미가 어긋난 action을
-넣으면 성능이 일관되게 하락하는가?
+보완되는가? Strict action-free 조건과, 원 CLaD처럼 이미 실행된 causal past action
+`a[t-tau:t]`을 쓰는 조건을 분리했을 때 past action이 history와 독립적인 추가 정보를
+제공하는가? Future action `a[t:t+tau]`은 Phase 3C 입력에서 항상 금지한다.
 
 ### RQ3. Pair-local과 scene-level graph의 차이
 
@@ -91,7 +93,7 @@ DDPM Diffusion Policy에서 task success와 sample efficiency 개선으로 이�
 
 | ID | 가설 | 지지 근거 | 반증 또는 제한 해석 |
 |---|---|---|---|
-| H1 | 구조화된 representation은 semantic baseline보다 relation transition을 잘 보존한다. | 같은-capacity frozen probe의 natural held-out PR-AUC·spatial metric이 여러 task에서 paired 개선 | 개선이 한 task/seed에만 있거나 hard-negative가 크게 악화되면 일반 우월성 주장 금지 |
+| H1 | 구조화된 representation은 semantic baseline보다 relation transition을 잘 보존한다. | frozen CLaD backbone 위 같은-capacity matched adapter/head screen의 natural held-out PR-AUC가 여러 task에서 paired 개선 | 개선이 한 task/seed에만 있거나 hard-negative가 크게 악화되면 일반 우월성 주장 금지 |
 | H2 | Causal past history는 snapshot에 누락된 interaction state를 보완한다. | H1−H0, H3−H2가 task 전반에서 양수이고 release/robustness도 유지 | gain이 weak-label feature 복제나 특정 threshold에만 의존하면 제한적 결과로 해석 |
 | H3 | 올바르게 정렬된 action은 미래 transition에 유효한 조건이다. | aligned가 episode-disjoint matched shuffled보다 same fold/seed에서 일관되게 우세 | action-free current head에서도 차이가 없거나 shuffle이 우세하면 causal action 주장 금지 |
 | H4 | Graph context는 pair-local 정보 이상의 spatial 이점을 제공한다. | exact/near-capacity pair baseline 대비 valid spatial relation과 perturbation test에서 개선 | G1처럼 일관된 개선이 없으면 pair-local inductive bias가 더 적합하다는 결과로 보고 |
@@ -108,7 +110,8 @@ perturbation/control, task 단위 반복 근거가 필요하다.
 
 - LIBERO official demonstration의 exact state replay로 만든 task 0·1·2 dataset.
 - Simulator state에서 얻는 canonical object identity와 oracle graph.
-- Holding, contact 및 valid support가 확인된 spatial relation.
+- Contact와 validity가 확인된 현재 구현 spatial relation.
+- Holding은 human audit 완료 전 diagnostic으로만 제한.
 - Semantic, pair-local temporal, graph-transition representation 비교.
 - CLaD-compatible Stage 1 foresight와 canonical DDPM Diffusion Policy 연결.
 - Natural held-out test, stress analysis, perturbation, sample-efficiency 평가.
@@ -140,9 +143,9 @@ Oracle graph 결과는 structured representation의 feasibility와 upper-bound �
 | Phase 2A | 완료 | deterministic static GraphSpec/extractor |
 | Phase 2R | diagnostic 완료 | scripted contact/handler/frame regression; main claim에서 제외 |
 | Phase 2D | 완료 | official-demo replay, temporal graph, holding target dataset, episode split |
-| Phase 3A | code/data QA 완료, human QA 대기 | quota/leakage/hash 검사와 90-item audit package |
+| Phase 3A | code/data QA 완료, human QA 일시 보류 | quota/leakage/hash 검사와 90-item audit package; 0/90 |
 | Phase 3B legacy/corrected GNN | 완료 | B1이 가장 강한 baseline; G1의 일반 우월성 미입증 |
-| Phase 3B pair-local H0–H3 | three-fold seed-0 완료 | H3가 후보이나 action-alignment control 대기 |
+| Phase 3B pair-local H0–H3 | action-alignment gate 실패 | Aligned PR-AUC 우세 1/3; causal action 주장과 seed 확대 중단 |
 | Phase 3C 이후 | 미시작 | 앞 gate 통과 전 대규모 실행 금지 |
 
 ### 6.2 Phase 0–2D 기반 결과
@@ -349,11 +352,11 @@ Authoritative Phase 3 artifact는 다음 위치에서 찾는다.
 | Corrected GNN seed-0 | `corrected_protocol_v2/threefold_seed0_combined/phase3_corrected_threefold_seed0_combined_v2.json` | 12 runs 결합 완료 |
 | Pair-local task-1 smoke | `corrected_protocol_v2/pair_local_temporal_smoke_task1_seed0_v1` | SHA256 `ae986247...c502` |
 | Pair-local three-fold | `corrected_protocol_v2/pair_local_temporal_threefold_seed0_v1` | SHA256 `492d4552...d188`, 12/12 완료 |
-| H3 action-alignment | KCloud `corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1` | 실행 시작 확인; 완료·무결성 재확인 필요 |
+| H3 action-alignment | KCloud `corrected_protocol_v2/kcloudvpn_pair_local_temporal_action_alignment_seed0_v1` | 3/3 완료; paired bootstrap 완료; gate 실패 |
 
 SHA 축약값은 탐색용 표기다. 무결성 검증에는 각 result 문서와 artifact에 저장된 전체
-SHA256을 사용한다. 현재 action-alignment 상태는 연구계획서에 고정하지 않고 매 세션
-`CURRENT_STATUS.md`, server process, result JSON으로 다시 확인한다.
+SHA256을 사용한다. 이후 실행 상태는 `CURRENT_STATUS.md`, server artifact와 result
+JSON으로 다시 확인한다.
 
 ### 6.10 누적 의사결정
 
@@ -368,8 +371,8 @@ SHA256을 사용한다. 현재 action-alignment 상태는 연구계획서에 고
   validity가 확인되기 전에는 우월성 또는 causal action 효과를 주장할 수 없다.
 - 다음 architecture 선택은 action-alignment 결과에 따라 H3, H1 또는 다른 action-free
   pair-local 후보 중에서 이루어진다.
-- 최종 Graph-CLaD 주장은 Phase 3C frozen representation 비교와 Stage 2 paired rollout이
-  끝난 뒤에만 가능하다.
+- 최종 Graph-CLaD 주장은 Phase 3C matched architecture screen, Phase 4 CLaD foresight
+  integration, Stage 2 paired rollout이 끝난 뒤에만 가능하다.
 
 ---
 
@@ -386,7 +389,7 @@ Official HDF5 demonstration + BDDL
   -> natural multi-horizon samples
   -> event-enriched stress view
   -> corrected evaluation manifest
-  -> model training / frozen probe / policy conditioning
+  -> base CLaD training / matched adapter screen / foresight integration / policy conditioning
 ```
 
 ### 7.2 입력 경계
@@ -394,6 +397,10 @@ Official HDF5 demonstration + BDDL
 - Primary encoder input은 현재 시점 `t` 이하의 state/history만 사용한다.
 - Future graph, future action, future event identity, future success/reward는 입력에서
   제외한다.
+- `strict action-free` tier는 action을 전혀 입력하지 않는다.
+- `CLaD-causal` tier는 원 논문과 같이 `t-tau`부터 `t`까지 이미 실행된 past action만
+  입력한다. 이 action은 `t` 이후의 prediction target 구간 action과 payload 및 field
+  수준에서 분리한다.
 - `is_object_of_interest`, BDDL-derived target relevance처럼 target identity 또는 future
   selection shortcut이 될 수 있는 field도 primary model input에서 제외한다.
 - Label 또는 target 생성에 future frame을 사용할 수 있으나 input payload와 엄격히
@@ -432,20 +439,32 @@ Label 통과율과 오류 유형이 문서화된 뒤에만 작은 model gain을 
 
 1. 비교 모델은 같은 sample ID, split, loss, epoch, patience, batch 조건을 사용한다.
 2. Current auxiliary head는 action-free로 통일하거나 `current_loss_weight=0`으로 둔다.
-3. Checkpoint는 **natural validation holding event PR-AUC**로 선택한다.
-4. Threshold는 natural validation에서 한 번 선택한다.
-5. 선택 threshold를 natural test와 stress view에 그대로 적용한다.
+3. Phase 3B holding 실험의 checkpoint는 **natural validation holding event PR-AUC**로
+   선택한다.
+4. Phase 3C의 checkpoint는 human audit가 끝나지 않은 holding을 사용하지 않고,
+   **natural validation sample-level valid spatial-relation any-change macro PR-AUC**로
+   선택한다.
+5. Threshold가 필요한 secondary metric은 natural validation에서 한 번 선택하고 natural
+   test와 stress view에 그대로 적용한다.
 
 ### 8.2 Metric 우선순위
 
 Primary:
 
-- Natural held-out conditional/oracle-current event PR-AUC.
-- Phase 3C 이후에는 valid spatial relation별 PR-AUC와 displacement/source→destination
-  metric을 함께 primary outcome으로 둔다.
+- Phase 3B: natural held-out conditional/oracle-current holding-event PR-AUC.
+- Phase 3C: `tau=6`에서 eligible object→object/fixture edge 중 하나라도
+  `relation[t] != relation[t+tau]`이면 1인 sample-level valid spatial-relation any-change의
+  task별 macro PR-AUC. Relation eligibility와 minimum positive/negative support는
+  train/validation에서만 고정하고 test 결과를 보고 바꾸지 않는다. Primary relation 후보는
+  현재 handler에 구현된 `left`, `right`, `front`, `behind`, `above`, `below`, `contact`,
+  `on`으로 제한한다.
+- Phase 7의 최종 Graph-CLaD 개선 주장: 같은 policy와 rollout budget에서 controlled
+  semantic CLaD 대비 paired task success rate.
 
 Secondary:
 
+- Object displacement error와 moving-object subset error.
+- Source→destination 변화.
 - Event F1, onset F1, release F1.
 - Hard-negative false-positive rate.
 - End-to-end predicted-current/predicted-future event PR-AUC·F1.
@@ -495,18 +514,100 @@ pair-local/semantic baseline보다 valid spatial relation에서 명확한 추가
 
 ### 9.2 Phase 3C representation bridge
 
-같은 `<= t` data로 다음 encoder를 학습하고 freeze한다.
+`No-future-action`은 `action-free`와 같은 뜻이 아니다. 원 CLaD는 future action을 보지
+않지만 이미 실행된 past action `a[t-tau:t]`은 사용한다. 최종 연구 질문에 직접 답하고
+중복 실행을 줄이기 위해 strict action-free 4-model screen을 선행하지 않고
+**CLaD-causal past-action main comparison부터 실행한다.**
 
-1. Semantic transition encoder.
-2. Gate를 통과한 pair-local temporal encoder.
-3. 선택된 graph-transition encoder 또는 graph context variant.
+Phase 3C는 oracle structured representation의 upper-bound screen이다. 최종 목표는 단순
+offline graph predictor가 아니라 **Graph-CLaD improvement**이며, 이를 주장하려면 Phase
+4의 semantic CLaD 통합과 Phase 7의 paired policy rollout까지 통과해야 한다. Simulator
+state graph를 계속 사용하는 경우 최종 표기는 `Oracle Graph-CLaD`로 제한하고 deployable
+RGB graph extractor를 구현한 것으로 표현하지 않는다.
 
-모든 encoder에 동일 capacity의 linear 또는 small probe를 붙여 다음을 예측한다.
+#### Main comparison — CLaD-causal past-action
 
-- Holding onset/release.
+모든 모델은 같은 `<=t` state/history와 같은 causal past-action window를 받는다.
+
+기존 Phase 2D sample 두 개를 같은 episode/tau에서 연속으로 join해 새 replay 없이 입력을
+구성한다.
+
+```text
+left sample:  graph[t-tau] -- action[t-tau:t] --> graph[t]
+right sample: graph[t]     --------------------> graph[t+tau] target
+```
+
+Left sample의 action window만 encoder input으로 사용하고 right sample의
+`action[t:t+tau]`은 버린다. 두 sample이 공유하는 `graph[t]` payload hash가 동일하고
+episode/split/tau가 같은 경우에만 결합한다.
+
+1. `C3-Sem-PastAct`: 제공된 CLaD Stage 1 core, replayed visual/language/proprioception과
+   causal past action을 사용하는 controlled semantic CLaD baseline. 이 계약을 충족하지
+   못한 단순 semantic feature 모델은 `C3-SemProxy-PastAct`로 이름을 바꾸며 primary CLaD
+   비교를 대체할 수 없다.
+2. `C3-SceneSet-PastAct`: graph와 같은 full-scene oracle node/state 및 past action을
+   사용하되 relation edge와 message passing 없이 node encoder와 set pooling만 사용하는
+   information-matched non-graph baseline.
+3. `C3-Pair-PastAct`: pair-local history + causal past action인 강한 structured baseline.
+4. `C3-GeomMPNN-PastAct`: geometry/contact/valid mask edge를 쓰는 temporal MPNN.
+5. `C3-RelMPNN-PastAct`: 같은 MPNN에 valid current spatial-relation token과 relation
+   history를 추가한다.
+6. `C3-RelPool-PastAct`: RelMPNN과 동일한 geometry/contact/relation edge token을 각 edge별로
+   독립 encoding하고 attention pooling하되 edge 사이 message passing을 제거한다.
+7. `C3-GeomTx-PastAct`: geometry/contact/valid mask edge-token Transformer.
+8. `C3-RelTx-PastAct`: relation edge-token Transformer.
+
+Core main comparison은 1--6이다. `C3-RelMPNN-PastAct`를 사전 지정한 primary graph
+candidate로 두고, `C3-RelPool-PastAct`는 relation 정보 자체와 message passing 효과를
+분리하는 필수 exact-token fairness control로 둔다. Transformer 두 cell은 core 결과를 본
+뒤 backbone robustness를 검사하는 secondary comparison으로 실행한다. 추가로 학습이
+필요 없는 다음 trivial baseline을 모든 target에 보고한다.
+
+- `PERSIST-ZERO`: displacement는 0, direct relation change는 no-change로 예측한다.
+- `COPY-CURRENT`: future relation state diagnostic에서 current relation state를 복사한다.
+
+Direct-change primary metric에서 `COPY-CURRENT`는 no-change와 같으므로 서로 다른 두
+baseline처럼 해석하지 않는다.
+
+네 graph cell은 다음 2×2 factorial을 이룬다.
+
+| | Geometry edge | Geometry + relation edge |
+|---|---|---|
+| Temporal MPNN | `C3-GeomMPNN-PastAct` | `C3-RelMPNN-PastAct` |
+| Edge-token Transformer | `C3-GeomTx-PastAct` | `C3-RelTx-PastAct` |
+
+네 graph model은 node/edge set, topology, causal history, past-action embedding, output/probe,
+training budget을 공유한다. Base edge token에 같은 past-action embedding을 제공하고 MPNN은
+이를 message input으로, Transformer는 edge-token input으로 처리한다. MPNN과 Transformer는
+target parameter count에 near-match하고 실제 count와 차이를 보고한다.
+
+과거 P3/G1은 single snapshot 또는 future interval action, late concat, direct relation
+classification을 사용했으므로 새 MPNN cell로 그대로 재사용하지 않는다.
+
+#### Conditional diagnostic controls
+
+Main comparison에서 relation model이 유망할 때만 다음을 추가한다.
+
+1. `C3-RelWinner-AF`: 선택된 relation encoder에서 causal past action만 제거한다.
+2. `C3-RelWinner-ShuffledPastAct`: task-local, episode-disjoint 방식으로 past action의
+   temporal/semantic alignment를 깨뜨린다.
+
+두 control은 선택된 graph가 past action을 실제로 이용하는지 검증한다. H3의 Phase 3B
+action-alignment 실패는 prediction target 구간 action을 사용한 forward-dynamics
+실험이므로 causal past-action 결과를 미리 결정하지 않는다.
+
+모든 encoder에 동일 capacity의 small head를 붙인다. Global semantic representation과 graph
+representation을 같은 출력으로 비교하기 위해 Phase 3C primary target은 candidate
+object→object/fixture edge 중 하나라도 변했는지를 나타내는 sample-level valid
+spatial-relation any-change로 고정하고 나머지는 secondary로 둔다.
+
 - Object displacement.
 - Source→destination 변화.
-- Valid spatial relation transition: `on`, `support`, `near`, `left/right` 등.
+- Valid spatial relation transition: `left/right`, `front/behind`, `above/below`, `contact`,
+  `on`. 현재 handler에 없는 `near`, `support`는 v1 target에서 제외한다.
+- Holding onset/release는 human audit 완료 전에는 diagnostic weak-label metric으로만 두고,
+  audit가 지지한 뒤 정식 secondary target으로 승격한다. Audit 완료 자체가 새 encoder를
+  추가하는 것은 아니다.
 
 Label fraction을 줄인 100%, 25%, 10% probe로 sample efficiency를 검사한다. Edge/action
 permutation은 inference-time sensitivity와 donor provenance를 함께 기록한다.
@@ -548,8 +649,15 @@ step, rollout wrapper, checkpoint criterion은 baseline one-task smoke 전에 ve
 최소 비교:
 
 1. Policy-only.
-2. Semantic CLaD foresight.
-3. Phase 3C/4에서 선택된 pair-local 또는 graph foresight.
+2. Controlled semantic CLaD foresight.
+3. Semantic CLaD + `SceneSet` full-scene oracle-state adapter.
+4. Semantic CLaD + `RelPool` exact relation-token/no-message adapter.
+5. Semantic CLaD + `RelMPNN` graph adapter인 Graph-CLaD.
+
+Graph-CLaD가 semantic CLaD만 이기는 것으로는 message passing 구조의 효과를 확정하지
+않는다. Full-scene state control인 `SceneSet`과 exact relation-token control인 `RelPool`을
+함께 보고한다. RelMPNN이 RelPool을 이기지 못하면 relation token의 유용성과 graph message
+passing의 유용성을 분리해서 결론낸다.
 
 가능하면 shuffled/zeroed foresight control을 추가해 policy가 conditioning을 실제로
 사용하는지 확인한다.
@@ -581,10 +689,23 @@ step, rollout wrapper, checkpoint criterion은 baseline one-task smoke 전에 ve
 Phase 3C 후보로 검토한다. 이는 연구 실패가 아니라 action conditioning의 한계를 밝힌
 결과다.
 
+실제 결과는 aligned PR-AUC 우세 1/3, paired PR-AUC +0.0085
+95% CI [−0.0506,+0.0772], event F1 −0.2264 [−0.3955,−0.0459], release F1 −0.3346
+[−0.5339,−0.1016], hard-negative FPR +0.0057 [−0.0796,+0.1007]이다. Gate는 실패했고
+seed 확대를 중단한다.
+
 ### Phase 3A-H — Human weak-label audit
 
 90-item audit를 완료하고 task/event별 통과율, false onset, delayed release, contact-only,
 occlusion/trajectory ambiguity 같은 오류 유형을 기록한다.
+
+2026-08-16 사용자 결정으로 0/90 상태에서 일시 보류한다. Phase 3C one-task/seed-0
+technical smoke는 구현·shape·leakage·artifact QA 목적으로 먼저 진행할 수 있다. 다만
+holding을 loss, checkpoint, threshold, model/gate 선택에서 완전히 제외한 Phase 3C
+spatial-relation/displacement 실험은 audit 전에 진행할 수 있다. Audit 완료 전 holding은
+diagnostic 출력으로만 저장하며 성능 주장이나 확대 결정에 사용하지 않는다. Spatial
+relation은 별도의 handler/version/validity QA를 통과해야 하며 이를 human-audited ground
+truth 또는 `unweak` label로 부르지 않는다.
 
 - 통과율이 낮거나 특정 task에 오류가 집중되면 해당 label을 수정하고 새 dataset/config
   version으로 관련 실험만 재평가한다.
@@ -598,13 +719,31 @@ Action-alignment gate를 통과한 후보만 seeds 1/2로 확대한다. H0–H3 
 ### Phase 3C — No-future-action foresight bridge
 
 목표는 offline future-action predictor가 아니라 실제 CLaD 입력 경계에서 유효한
-representation을 선택하는 것이다.
+representation을 선택하는 것이다. 모든 모델이 action을 전혀 보지 않는 선행 Tier A는
+생략하고, 모든 후보에 동일한 causal past action을 제공하는 CLaD-causal main
+comparison으로 바로 시작한다.
 
 통과 기준:
 
-- Natural held-out primary metric이 matched semantic baseline보다 최소 2개 task에서
-  개선된다.
-- Release 또는 valid spatial transition 중 적어도 하나에서 일관된 개선이 있다.
+- 사전 지정한 `C3-RelMPNN-PastAct`의 natural sample-level valid spatial-relation
+  any-change macro PR-AUC가 `C3-Sem-PastAct`보다 최소 2개 task에서 높고 task-macro 차이도
+  양수다. 이것이 Phase 3C의 유일한 primary model/metric contrast다.
+- `C3-RelMPNN-PastAct`가 동일 relation edge token을 받는
+  `C3-RelPool-PastAct`보다 나은지 반드시 보고한다. 이 비교가 음수면 message passing의
+  추가 가치 주장은 금지한다.
+- `C3-RelMPNN-PastAct`가 같은 oracle information을 받는 `C3-SceneSet-PastAct`보다 나은지
+  broader information guard로 반드시 보고한다. 이 비교가 음수면 full-scene set encoding
+  이상의 graph 구조 가치는 지지되지 않은 것으로 기록한다.
+- Relation token 효과는 backbone별 `RelMPNN−GeomMPNN`과 `RelTx−GeomTx`로 보고하고,
+  mechanistic secondary result로 해석한다.
+- Encoder 효과는 input별 `GeomTx−GeomMPNN`과 `RelTx−RelMPNN`으로 보고한다. 두 차이가
+  엇갈리면 Transformer 일반 우월성이 아니라 relation-specific interaction으로 해석한다.
+- Graph context의 추가 가치는 가장 강한 relation model 대 `C3-Pair-PastAct`로 같은
+  causal-action 계약에서 평가한다. 이 비교가 음수면 graph 우월성 대신 pair-local 우세로
+  기록한다.
+- Relation model이 유망할 때 `C3-RelWinner-AF`,
+  `C3-RelWinner-ShuffledPastAct`를 추가해 past action의 추가 가치와 alignment sensitivity를
+  분리한다. `C3-RelPool-PastAct`는 이미 core에 포함한다.
 - Hard-negative와 calibration이 심하게 악화되지 않는다.
 - 낮은 label fraction에서 sample-efficiency 이점이 관찰된다.
 - Action/edge/history perturbation 결과가 모델 구조와 일치한다.
@@ -619,7 +758,7 @@ representation을 선택하는 것이다.
 - Adapter-off baseline equivalence test 통과.
 - 모든 variant의 latent interface와 update budget 일치.
 - Training/validation이 finite하고 reproducible하다.
-- Frozen-probe 결과가 Phase 3C 방향과 모순되지 않는다.
+- Phase 4 latent/foresight 결과가 Phase 3C matched screen의 방향과 모순되지 않는다.
 - Foresight perturbation에 representation-sensitive response가 있다.
 
 ### Phase 5 — Stage 2 policy 구현과 one-task smoke
@@ -660,7 +799,7 @@ Offline representation 결과와 policy 결과를 분리한 뒤 연결 관계를
 1. H3 action-alignment 3-run 완료와 paired table.
 2. 90-item human audit 중 가능한 범위의 명시적 완료율과 미완료 항목 공개.
 3. Phase 3C의 한 task/seed technical smoke.
-4. Semantic baseline과 최종 structured 후보의 matched frozen probe.
+4. Frozen base CLaD 위 semantic·structured candidate의 matched adapter/head comparison.
 5. Stage 1 residual adapter와 adapter-off equivalence.
 6. Stage 2 one-task DDPM training/rollout smoke.
 7. 시간이 남을 때만 동일 budget의 reduced policy comparison.
@@ -750,13 +889,21 @@ artifact root는 `/home/ubuntu/graphclad-artifacts`이며, 기존 Colab artifact
 
 ## 15. 즉시 다음 작업
 
-1. KCloudVPN `graphclad-align` session과 output에서 H3 shuffled 3-run 완료 여부를 확인한다.
-2. Aligned H3 result/prediction을 서버 또는 분석 환경에 준비한다.
-3. Same fold/seed paired comparison과 hierarchical bootstrap artifact를 만든다.
-4. Phase 3B gate 판정을 `CURRENT_STATUS.md`, result 문서, `research_log.md`에 기록한다.
-5. 90-item human weak-label audit를 완료한다.
-6. 통과한 representation만 Phase 3C technical smoke로 이동한다.
-7. Stage 1 adapter-off baseline부터 구현한 뒤 Stage 2 one-task smoke를 수행한다.
+1. `C3-Sem-PastAct`, `C3-SceneSet-PastAct`, `C3-Pair-PastAct`,
+   `C3-GeomMPNN-PastAct`, `C3-RelPool-PastAct`, `C3-RelMPNN-PastAct`의
+   입력·target·parameter/head 계약과 relation-change support rule을 config로 고정한다.
+2. 한 task, seed 0에서 core 여섯 모델과 persistence/copy baseline의 shape, leakage,
+   training, metric, artifact technical smoke를 실행한다. 성능으로 모델을 선택하지 않는다.
+3. Three-task seed-0 core comparison에서 primary `RelMPNN−Sem` relation-change PR-AUC,
+   exact-token guard `RelMPNN−RelPool`, broader scene-state guard
+   `RelMPNN−SceneSet`을 평가한다. Holding audit은 이 결정에 사용하지 않는다.
+4. Core 결과 후에만 Transformer 2×2를 secondary backbone comparison으로 실행한다.
+5. Relation model이 유망할 때만 선택된 relation encoder의
+   no-action/shuffled-past-action control을 실행한다.
+6. Main comparison과 conditional action control을 통과한 representation, semantic baseline,
+   가장 가까운 fairness control을 Phase 4 Stage 1 adapter에 연결하고 adapter-off baseline
+   equivalence 뒤 Stage 2 one-task smoke를 수행한다. RelMPNN을 최종 후보로 쓸 때 RelPool을
+   최종 policy comparison에서도 유지한다.
 
 ---
 
@@ -767,6 +914,8 @@ artifact root는 `/home/ubuntu/graphclad-artifacts`이며, 기존 Colab artifact
 - 코드 입문: `docs/CODEBASE_GUIDE_FOR_BEGINNERS.md`
 - 수정 로드맵 v3: `docs/revised_research_roadmap_v3.md`
 - Pair-local 설계: `docs/01-plan/features/phase3_pair_local_temporal_encoder.plan.md`
+- Phase 3C 구현 계획: `docs/01-plan/features/phase3c-oracle-graph-clad-core.plan.md`
+- Phase 3C 기술 설계: `docs/02-design/features/phase3c-oracle-graph-clad-core.design.md`
 - Corrected protocol: `docs/phase3_corrected_protocol_v2.md`
 - 초기 holder–object smoke: `docs/phase3_holder_action_v2_smoke_result.md`
 - Topology/action 후속: `docs/phase3_topology_action_followup_result.md`
@@ -786,6 +935,11 @@ artifact root는 `/home/ubuntu/graphclad-artifacts`이며, 기존 Colab artifact
 
 | Version | Date | 변경 내용 | Author |
 |---|---|---|---|
+| 4.7 | 2026-08-17 | Phase 3C 구현 전 논리 감사를 반영해 RelPool을 필수 exact-token control로 승격; primary를 sample-level relation any-change로 구체화; 현재 handler에 없는 near/support를 제거하고 8개 relation·candidate edge·support 계약을 별도 plan/design으로 고정 | Graph-CLaD 연구팀 |
+| 4.6 | 2026-08-17 | 최종 목표를 Graph-CLaD improvement로 확정; Phase 3C primary를 RelMPNN 대 controlled semantic CLaD의 valid spatial-relation-change macro PR-AUC로 고정; holding을 Phase 3C checkpoint/gate에서 제거; SceneSet·persistence/copy baseline과 최종 Stage 2 information-matched adapter 비교 추가; Transformer는 secondary backbone comparison으로 이동 | Graph-CLaD 연구팀 |
+| 4.5 | 2026-08-16 | Phase 3C main comparison을 semantic/pair baseline과 geometry/relation × MPNN/edge-token Transformer 2×2의 총 6 models로 확장; relation model이 유망할 때만 RelPool 및 winner action controls 추가 | Graph-CLaD 연구팀 |
+| 4.4 | 2026-08-16 | 제출 속도를 위해 strict action-free Tier A 선행을 제거하고 semantic, pair, geometric graph, relation graph의 CLaD-causal past-action 4-model main comparison으로 직행; relation graph가 유망할 때만 no-action/shuffled-past-action control 추가 | Graph-CLaD 연구팀 |
+| 4.3 | 2026-08-16 | Phase 3C의 no-future-action과 strict action-free를 분리하고, Tier A 4-model action-free representation screen과 Tier B 3-model CLaD-causal past-action bridge, audit의 역할 및 matched geometric graph control을 확정 | Graph-CLaD 연구팀 |
 | 4.2 | 2026-08-16 | 연구기록 대조 후 metric path, weak legacy shuffle, threshold·통계 단위, G1 action 명명 교정과 authoritative artifact 위치, Stage 2 미확정 설정 계약을 추가 | Graph-CLaD 연구팀 |
 | 4.1 | 2026-08-16 | Phase 0–2D 기반 결과, legacy 45-run 탐색, topology/action gate, 36-run reduced cross-fold, corrected bootstrap, H0–H3와 weak-label audit 준비 결과를 시간순으로 추가 | Graph-CLaD 연구팀 |
 | 4.0 | 2026-08-16 | 초기 PDF 계획, v3 로드맵, corrected GNN 결과, H0–H3 결과, Stage 2 controlled reimplementation 결정을 통합한 새 canonical 계획서 작성 | Graph-CLaD 연구팀 |

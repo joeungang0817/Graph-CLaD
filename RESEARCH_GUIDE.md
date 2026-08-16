@@ -1,6 +1,6 @@
 # Graph-CLaD 연구 폴더 설명서
 
-Last updated: 2026-08-16
+Last updated: 2026-08-17
 
 ## 1. 연구 목적과 핵심 아이디어
 
@@ -14,11 +14,11 @@ representation을 학습하지만 물체별 상태와 물체 간 관계 변화�
 4. representation이 semantic baseline보다 robot–object interaction과 spatial
    transition을 잘 보존하는지 같은-capacity probe로 비교한다.
 
-Holding은 최종 과제가 아니라 architecture/probe 검사다. Primary 지표는 natural
-held-out test의 conditional/oracle-current holding event PR-AUC다. Thresholded F1,
-onset/release F1, hard-negative FPR, calibration, action/edge perturbation은 보조
-진단이다. Challenge는 natural held-out episode에서 미래 event로 선택한 stress
-view이며 독립 generalization test가 아니다.
+Holding은 최종 과제가 아니라 architecture/probe 검사다. Phase 3B의 primary는 natural
+held-out conditional/oracle-current holding event PR-AUC였지만, Phase 3C에서는 audit가
+끝나지 않은 holding을 checkpoint와 gate에서 제외한다. Phase 3C primary는 `tau=6`
+sample-level valid spatial-relation any-change macro PR-AUC이고, object displacement,
+holding, calibration과 perturbation은 secondary 또는 diagnostic이다.
 
 ## 2. 현재 진행 상태
 
@@ -32,16 +32,21 @@ view이며 독립 generalization test가 아니다.
 - Corrected protocol v2: 구현 및 three-fold seed-0 gate 완료.
 - Late/global-action G1: B1 pair MLP를 일관되게 이기지 못해 3-seed 확대 중단.
 - Pair-local H0–H3: three-fold seed-0 12/12 runs 완료.
-- H3 train-action-shuffled alignment control: 기존 Colab 실행은 runtime 종료 전에
-  중단됐다. KCloudVPN manifest 준비를 완료했고 새 version의 3-run 실행 명령을
-  전달했다. 실제 시작·완료 여부는 `docs/CURRENT_STATUS.md`의 경로에서 확인한다.
+- H3 train-action-shuffled alignment control: KCloudVPN 3/3 runs와 paired bootstrap
+  완료. Aligned PR-AUC 우세 1/3, paired PR-AUC +0.0085
+  95% CI [−0.0506,+0.0772]로 gate 실패.
 - Weak-label audit: 90-item trajectory evidence package 준비 완료. Human decision은
   아직 완료되지 않았으므로 weak label을 ground truth로 표현하지 않는다.
-- Phase 3C no-future-action representation/foresight bridge: 아직 시작하지 않음.
+- Phase 3C CLaD-causal representation/foresight bridge: 구현 계획·기술 설계 완료, code는
+  아직 시작하지 않음. Core는 controlled semantic CLaD, SceneSet, pair-local, GeomMPNN,
+  RelPool, RelMPNN이며 같은 causal past action을 제공한다. RelPool은 동일 relation token에서
+  message passing을 제거한 필수 control이다. RelMPNN을 primary graph candidate로 고정하고
+  Transformer 2×2는 secondary로 실행한다. Future action/graph는 항상 금지한다.
 - Phase 4 Graph-CLaD Stage 1 통합: 아직 시작하지 않음.
 
-실행 중인 작업과 다음 명령은 `docs/CURRENT_STATUS.md`를 먼저 본다. 최근 pair-local 결과는
-`docs/phase3_pair_local_temporal_threefold_seed0_result.md`를 본다. 연구 판단의
+실행 중인 작업과 다음 명령은 `docs/CURRENT_STATUS.md`를 먼저 본다. 최근 pair-local
+action-alignment 결과는
+`docs/phase3_pair_local_temporal_action_alignment_seed0_result.md`를 본다. 연구 판단의
 시간순 기록은 `docs/research_log.md`가 기준이다.
 
 ## 3. 전체 연구 흐름
@@ -56,7 +61,7 @@ Phase 0  supplied CLaD baseline 무결성 검사
   -> Phase 3 corrected protocol: natural validation, frozen threshold, calibration
   -> Pair-local causal history/action H0–H3 factorial
   -> action-alignment + weak-label audit gate
-  -> Phase 3C frozen representation/foresight bridge (아직 gated)
+  -> Phase 3C frozen-base matched adapter/foresight screen (설계 완료)
   -> Phase 4 Graph-CLaD Stage 1 통합
   -> Phase 5–7 canonical DDPM Stage 2와 rollout 비교
 ```

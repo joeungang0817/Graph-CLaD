@@ -1,0 +1,46 @@
+{
+  "protocol": "phase3c-oracle-graph-clad-core-seed0-v1",
+  "schema": "phase3c-joined-sample.v1",
+  "tau": 6,
+  "relations": [
+    "left",
+    "right",
+    "front",
+    "behind",
+    "above",
+    "below",
+    "contact",
+    "on"
+  ],
+  "candidate_edge": {
+    "source_node_types": ["object"],
+    "target_node_types": ["object", "fixture"],
+    "exclude_robot_edges_from_primary": true
+  },
+  "support_thresholds": {
+    "train_positive": 20,
+    "train_negative": 20,
+    "validation_positive": 5,
+    "validation_negative": 5
+  },
+  "input_blacklist": [
+    "graph_target",
+    "future_graph",
+    "future_action",
+    "action_future",
+    "action_window_future",
+    "reward",
+    "success",
+    "is_object_of_interest",
+    "task_semantics",
+    "bddl",
+    "goal",
+    "goal_state",
+    "relation_changes"
+  ],
+  "notes": {
+    "semantic_encoder": "DecisionNCE-P is a controlled reimplementation assumption; record repository/checkpoint SHA.",
+    "holding": "excluded from Phase 3C loss, checkpoint, threshold, model selection, and gate until audit completion",
+    "future_action": "right sample action_window is never copied into the joined model-input record"
+  }
+}

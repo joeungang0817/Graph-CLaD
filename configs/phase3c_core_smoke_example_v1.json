@@ -1,0 +1,21 @@
+{
+  "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz",
+  "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
+  "base_checkpoint": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad/smoke/seed0/checkpoints/last.pt",
+  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen/C3-RelMPNN-PastAct/smoke/seed0",
+  "model_id": "C3-RelMPNN-PastAct",
+  "split": "train",
+  "evaluation_split": "test",
+  "seed": 0,
+  "updates": 100,
+  "batch_size": 8,
+  "vl_dim": 1024,
+  "hidden_dim": 64,
+  "structured_dim": 256,
+  "max_nodes": 32,
+  "relation_weight": 1.0,
+  "motion_weight": 0.1,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "device": "cuda"
+}

@@ -1,7 +1,8 @@
 # Phase 3A holding weak-label audit v2
 
 날짜: 2026-08-12  
-상태: trajectory-enriched audit bundle과 interactive reviewer 준비 완료, human decision 대기.
+상태: trajectory-enriched audit bundle과 interactive reviewer 준비 완료. Human decision은
+0/90에서 일시 보류하며, Phase 3C technical smoke 후 최종 label-validity 해석 전에 재개한다.
 
 ## 목적과 주장 경계
 

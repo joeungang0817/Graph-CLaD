@@ -1,0 +1,17 @@
+{
+  "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz",
+  "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
+  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad",
+  "folds": ["test_task0", "test_task1", "test_task2"],
+  "seeds": [0],
+  "split": "train",
+  "updates": 25000,
+  "batch_size": 128,
+  "vl_dim": 1024,
+  "hidden_dim": 1024,
+  "max_nodes": 32,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "recon_weight": 0.1,
+  "device": "cuda"
+}

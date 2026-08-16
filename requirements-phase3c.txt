@@ -1,0 +1,11 @@
+# Phase 3C non-LIBERO Python dependencies. Install into the existing project
+# environment; keep the SSH CUDA/PyTorch build selected by the cluster image.
+numpy==1.26.4
+h5py==3.11.0
+einops==0.8.0
+pillow==10.4.0
+scikit-learn==1.5.1
+
+# LIBERO and DecisionNCE are intentionally not guessed here. Their repository
+# commits/checkpoints are recorded in semantic_store/manifest.json after the
+# SSH environment is verified.
