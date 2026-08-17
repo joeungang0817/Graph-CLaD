@@ -251,12 +251,23 @@ class _EdgeModel(_StructuredBase):
         )
         self.message_layers = nn.ModuleList()
         self.node_update_layers = nn.ModuleList()
-        for _ in range(int(layers)):
-            self.message_layers.append(nn.Sequential(nn.Linear(self.hidden_dim, self.hidden_dim), nn.GELU()))
-            self.node_update_layers.append(
-                nn.Sequential(nn.Linear(self.hidden_dim * 2, self.hidden_dim), nn.LayerNorm(self.hidden_dim), nn.GELU())
-            )
-        self.edge_pool = MaskedAttentionPool(self.hidden_dim)
+        if self.message_passing:
+            for _ in range(int(layers)):
+                self.message_layers.append(
+                    nn.Sequential(
+                        nn.Linear(self.hidden_dim, self.hidden_dim), nn.GELU()
+                    )
+                )
+                self.node_update_layers.append(
+                    nn.Sequential(
+                        nn.Linear(self.hidden_dim * 2, self.hidden_dim),
+                        nn.LayerNorm(self.hidden_dim),
+                        nn.GELU(),
+                    )
+                )
+            self.edge_pool = None
+        else:
+            self.edge_pool = MaskedAttentionPool(self.hidden_dim)
 
     def _edge_tokens(self, previous: GraphBatch, current: GraphBatch, action: torch.Tensor, node_hidden: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         edge_features, edge_mask = self._edge_temporal(previous, current, include_relations=self.include_relations)
@@ -292,6 +303,8 @@ class _EdgeModel(_StructuredBase):
             return self.readout(pooled)
         edge_values = tokens.reshape(tokens.shape[0], -1, tokens.shape[-1])
         flat_mask = edge_mask.reshape(edge_mask.shape[0], -1)
+        if self.edge_pool is None:
+            raise RuntimeError("non-message edge model has no edge pool")
         return self.readout(self.edge_pool(edge_values, flat_mask))
 
 

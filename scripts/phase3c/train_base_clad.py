@@ -75,17 +75,15 @@ def _configure_determinism(seed: int) -> dict[str, Any]:
     torch.backends.cudnn.benchmark = False
     try:
         torch.use_deterministic_algorithms(True, warn_only=True)
-        deterministic_algorithms = True
         warn_only = True
     except TypeError:  # older torch without warn_only
         torch.use_deterministic_algorithms(True)
-        deterministic_algorithms = True
         warn_only = False
     return {
         "seed": seed,
         "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
         "cudnn_benchmark": bool(torch.backends.cudnn.benchmark),
-        "deterministic_algorithms": deterministic_algorithms,
+        "deterministic_algorithms": True,
         "deterministic_warn_only": warn_only,
     }
 

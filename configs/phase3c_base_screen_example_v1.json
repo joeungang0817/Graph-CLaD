@@ -1,7 +1,7 @@
 {
   "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
   "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
-  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v3",
+  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v4",
   "folds": ["test_task0", "test_task1", "test_task2"],
   "seeds": [0],
   "split": "train",
