@@ -1643,3 +1643,24 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   model/data setup. The scope selector requires this complete wall time rather
   than the narrower training-loop `elapsed_seconds`; it still consults no
   performance metric.
+
+## 2026-08-17 — Corrected Core v5 technical smoke completed
+
+- The preserved `core_smoke_v5` screen completed all six configured models for
+  `test_task0`, seed 0, 20 updates, batch 64. Every run reports
+  `status=completed`, a finite mean loss, validation-selected update 20, CUDA
+  execution with BF16, and checkpoint/resume/metrics/prediction hash fields.
+- Parameter matching passed for all six candidates. Relative parameter errors
+  versus the 848,779-parameter RelMPNN reference were: Sem 0.070%, SceneSet
+  0.215%, Pair 1.103%, GeomMPNN 0.633%, RelPool 1.095%, and RelMPNN 0.000%, all
+  below the preregistered 5% tolerance.
+- Per-model trainer times were 548.73 s (Sem), 543.94 s (SceneSet), 552.60 s
+  (Pair), 562.54 s (GeomMPNN), 565.48 s (RelPool), and 567.73 s (RelMPNN), for
+  3,341.02 s summed trainer time. Peak CUDA allocations ranged from about 1.50
+  to 2.14 GB as reported by the runtime manifests.
+- The supplied screen JSON has SHA-256
+  `873c9f418cb9f6150c81ada53c8d4d1fb6da974397691051f40136416b6ac431`.
+  It is schema v3 and its evaluation split is test, so its validation/test
+  scores and checkpoints remain ineligible for formal model selection. It
+  satisfies only the previously documented technical-smoke waiver; formal
+  runs use the post-integrity schema-v4 code and new versioned output roots.
