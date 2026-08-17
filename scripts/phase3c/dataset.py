@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 from collections import OrderedDict
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -136,7 +137,18 @@ class SemanticFeatureStore:
         if int(max_open_shards) <= 0:
             raise ValueError("max_open_shards must be positive")
         self.max_open_shards = int(max_open_shards)
-        self._shards: OrderedDict[str, Any] = OrderedDict()
+        # NPZ members are compressed. Keeping an ``NpzFile`` open does not
+        # cache the inflated arrays: every ``archive[member]`` access inflates
+        # that member again. Training requests several frames from the same
+        # demo, so cache the materialized arrays per shard instead.
+        self._shards: OrderedDict[str, dict[str, np.ndarray]] = OrderedDict()
+        declared_hashes = self.manifest.get("shard_sha256")
+        if not isinstance(declared_hashes, Mapping) or not declared_hashes:
+            raise ValueError("semantic feature-store manifest has no shard SHA-256 map")
+        self.shard_sha256 = {str(key): str(value) for key, value in declared_hashes.items()}
+        if int(self.manifest.get("shards", -1)) != len(self.shard_sha256):
+            raise ValueError("semantic feature-store shard count/hash map mismatch")
+        self._verified_shards: set[str] = set()
 
     @property
     def feature_dim(self) -> int:
@@ -148,26 +160,101 @@ class SemanticFeatureStore:
             raise KeyError(f"semantic feature is absent: {key}")
         return value
 
-    def _shard(self, name: str) -> Any:
+    def _verify_shard_file(self, name: str) -> Path:
+        shard = (self.root / name).resolve()
+        if self.root.resolve() not in shard.parents:
+            raise ValueError(f"feature-store shard escapes root: {name}")
+        if not shard.exists():
+            raise FileNotFoundError(shard)
+        expected_sha = self.shard_sha256.get(name)
+        if expected_sha is None:
+            raise ValueError(f"semantic shard is absent from manifest hash map: {name}")
+        if name not in self._verified_shards:
+            digest = hashlib.sha256()
+            with shard.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            if digest.hexdigest() != expected_sha:
+                raise ValueError(f"semantic shard SHA-256 mismatch: {name}")
+            self._verified_shards.add(name)
+        return shard
+
+    def _shard(self, name: str) -> dict[str, np.ndarray]:
         if name in self._shards:
             value = self._shards.pop(name)
             self._shards[name] = value
             return value
         if name not in self._shards:
-            shard = (self.root / name).resolve()
-            if self.root.resolve() not in shard.parents:
-                raise ValueError(f"feature-store shard escapes root: {name}")
-            if not shard.exists():
-                raise FileNotFoundError(shard)
-            self._shards[name] = np.load(shard, allow_pickle=False)
+            shard = self._verify_shard_file(name)
+            with np.load(shard, allow_pickle=False) as archive:
+                self._shards[name] = {
+                    key: np.asarray(archive[key]) for key in archive.files
+                }
             while len(self._shards) > self.max_open_shards:
-                _, old = self._shards.popitem(last=False)
-                old.close()
+                self._shards.popitem(last=False)
         return self._shards[name]
 
+    def verify_integrity(self, *, require_orientation_attestation: bool = True) -> dict[str, Any]:
+        """Hash every declared shard and verify the post-extraction human QA gate."""
+
+        actual = {
+            str(path.relative_to(self.root)).replace("\\", "/")
+            for path in self.root.rglob("*.npz")
+        }
+        declared = {name.replace("\\", "/") for name in self.shard_sha256}
+        if actual != declared:
+            raise ValueError(
+                "semantic feature-store shard inventory mismatch: "
+                f"missing={sorted(declared - actual)[:5]}, extra={sorted(actual - declared)[:5]}"
+            )
+        for name in sorted(self.shard_sha256):
+            # Integrity verification hashes every compressed shard without
+            # needlessly inflating all feature arrays at process startup.
+            self._verify_shard_file(name)
+        attestation_path = self.root / "qa" / "orientation_human_attestation.json"
+        attestation_sha = None
+        if require_orientation_attestation:
+            if not attestation_path.exists():
+                raise FileNotFoundError(
+                    "semantic store is missing qa/orientation_human_attestation.json"
+                )
+            with attestation_path.open("r", encoding="utf-8") as handle:
+                attestation = json.load(handle)
+            if (
+                attestation.get("schema")
+                != "phase3c-camera-orientation-human-attestation.v1"
+                or attestation.get("status") != "pass"
+                or attestation.get("accepted_existing_semantic_store") is not True
+            ):
+                raise ValueError("camera-orientation human attestation does not accept this store")
+            source_qa = Path(str(attestation.get("source_qa", "")))
+            if not source_qa.is_absolute():
+                source_qa = (attestation_path.parent / source_qa).resolve()
+            if not source_qa.exists():
+                raise FileNotFoundError(f"orientation attestation source QA is missing: {source_qa}")
+            digest = hashlib.sha256(source_qa.read_bytes()).hexdigest()
+            if digest != str(attestation.get("source_qa_sha256", "")):
+                raise ValueError("orientation attestation source QA hash mismatch")
+            contact_sheet = Path(str(attestation.get("source_contact_sheet", "")))
+            if not contact_sheet.is_absolute():
+                contact_sheet = (attestation_path.parent / contact_sheet).resolve()
+            if not contact_sheet.exists():
+                raise FileNotFoundError(
+                    f"orientation attestation contact sheet is missing: {contact_sheet}"
+                )
+            contact_digest = hashlib.sha256(contact_sheet.read_bytes()).hexdigest()
+            if contact_digest != str(
+                attestation.get("source_contact_sheet_sha256", "")
+            ):
+                raise ValueError("orientation attestation contact-sheet hash mismatch")
+            attestation_sha = hashlib.sha256(attestation_path.read_bytes()).hexdigest()
+        return {
+            "verified_shards": len(self._verified_shards),
+            "orientation_attestation": str(attestation_path) if require_orientation_attestation else None,
+            "orientation_attestation_sha256": attestation_sha,
+        }
+
     def close(self) -> None:
-        for shard in self._shards.values():
-            shard.close()
         self._shards.clear()
 
     def __enter__(self) -> "SemanticFeatureStore":

@@ -5,7 +5,9 @@ import gzip
 import copy
 import tempfile
 import unittest
+import hashlib
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
@@ -29,6 +31,68 @@ class Phase3CDatasetTest(unittest.TestCase):
             (root / "manifest.json").write_text(json.dumps({"schema": "bad"}), encoding="utf-8")
             with self.assertRaises(ValueError):
                 SemanticFeatureStore(root)
+
+    def test_semantic_store_verifies_shards_and_orientation_attestation(self):
+        if self.torch is None:
+            self.skipTest("torch is not installed in the local CPU environment")
+        from scripts.phase3c.dataset import SemanticFeatureStore
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            shard = root / "0" / "demo_0.npz"
+            shard.parent.mkdir(parents=True)
+            np.savez(
+                shard,
+                steps=np.asarray([0], dtype=np.int32),
+                view0=np.zeros((1, 4), dtype=np.float32),
+                view1=np.zeros((1, 4), dtype=np.float32),
+                language=np.zeros(4, dtype=np.float32),
+            )
+            shard_sha = hashlib.sha256(shard.read_bytes()).hexdigest()
+            qa = root / "qa" / "determinism.json"
+            qa.parent.mkdir(parents=True)
+            qa.write_text("{}\n", encoding="utf-8")
+            sheet = root / "qa" / "orientation_contact_sheet.png"
+            sheet.write_bytes(b"reviewed image")
+            attestation = {
+                "schema": "phase3c-camera-orientation-human-attestation.v1",
+                "status": "pass",
+                "accepted_existing_semantic_store": True,
+                "source_qa": "determinism.json",
+                "source_qa_sha256": hashlib.sha256(qa.read_bytes()).hexdigest(),
+                "source_contact_sheet": "orientation_contact_sheet.png",
+                "source_contact_sheet_sha256": hashlib.sha256(
+                    sheet.read_bytes()
+                ).hexdigest(),
+            }
+            (root / "qa" / "orientation_human_attestation.json").write_text(
+                json.dumps(attestation), encoding="utf-8"
+            )
+            manifest = {
+                "schema": "phase3c-semantic-feature-store.v2",
+                "decisionnce": {"feature_dim": 4},
+                "index": {
+                    "0/demo_0/0/view0": {"shard": "0/demo_0.npz", "row": 0},
+                    "0/demo_0/0/view1": {"shard": "0/demo_0.npz", "row": 0},
+                    "0/demo_0/language": {"shard": "0/demo_0.npz"},
+                },
+                "shards": 1,
+                "shard_sha256": {"0/demo_0.npz": shard_sha},
+            }
+            (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            store = SemanticFeatureStore(root)
+            self.assertEqual(store.verify_integrity()["verified_shards"], 1)
+            self.assertEqual(len(store._shards), 0)
+            with patch("scripts.phase3c.dataset.np.load", wraps=np.load) as loader:
+                np.testing.assert_array_equal(store.image(0, "demo_0", 0, 0), np.zeros(4))
+                np.testing.assert_array_equal(store.image(0, "demo_0", 0, 1), np.zeros(4))
+                np.testing.assert_array_equal(store.language(0, "demo_0"), np.zeros(4))
+                self.assertEqual(loader.call_count, 1)
+            self.assertIsInstance(store._shards["0/demo_0.npz"], dict)
+            store.close()
+            shard.write_bytes(shard.read_bytes() + b"corrupt")
+            with self.assertRaisesRegex(ValueError, "SHA-256 mismatch"):
+                SemanticFeatureStore(root).verify_integrity()
 
     def test_graph_tensors_reserve_task_slot_and_build_masks(self):
         if self.torch is None:

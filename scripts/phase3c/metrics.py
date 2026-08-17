@@ -129,6 +129,21 @@ def _f1_at_threshold(y_true: np.ndarray, score: np.ndarray, threshold: float) ->
     return float(2 * tp / denominator) if denominator else 0.0
 
 
+def _f1_at_row_thresholds(
+    y_true: np.ndarray, score: np.ndarray, thresholds: np.ndarray
+) -> float | None:
+    if y_true.size == 0 or np.unique(y_true).size < 2:
+        return None
+    if thresholds.shape != score.shape or not np.isfinite(thresholds).all():
+        raise ValueError("row-specific thresholds must be finite and match score shape")
+    prediction = score >= thresholds
+    tp = int(np.logical_and(prediction, y_true == 1).sum())
+    fp = int(np.logical_and(prediction, y_true == 0).sum())
+    fn = int(np.logical_and(~prediction, y_true == 1).sum())
+    denominator = 2 * tp + fp + fn
+    return float(2 * tp / denominator) if denominator else 0.0
+
+
 def _calibration(y_true: np.ndarray, score: np.ndarray, bins: int = 10) -> tuple[float | None, float | None]:
     if y_true.size == 0:
         return None, None
@@ -164,8 +179,15 @@ def evaluate_relation_predictions(
     threshold_grid = list(thresholds or np.linspace(0.05, 0.95, 19))
     if not threshold_grid:
         raise ValueError("threshold grid must not be empty")
-    if fixed_thresholds is not None and len(fixed_thresholds) != score.shape[1]:
-        raise ValueError("fixed_thresholds must contain one value per relation")
+    fixed_array = None
+    if fixed_thresholds is not None:
+        fixed_array = np.asarray(fixed_thresholds, dtype=np.float64)
+        if fixed_array.shape not in ((score.shape[1],), score.shape):
+            raise ValueError(
+                "fixed_thresholds must be [R] or row-specific [N,R]"
+            )
+        if not np.isfinite(fixed_array).all():
+            raise ValueError("fixed_thresholds contain NaN or Inf")
     names = ("left", "right", "front", "behind", "above", "below", "contact", "on")
     per_relation: dict[str, Any] = {}
     pr_values: list[float] = []
@@ -177,13 +199,20 @@ def evaluate_relation_predictions(
         y = target[valid, index]
         s = score[valid, index]
         ap = _average_precision(y, s)
-        if fixed_thresholds is None:
+        threshold_values = None
+        if fixed_array is None:
             f1, threshold = _best_f1(y, s, threshold_grid)
-        else:
-            threshold = float(fixed_thresholds[index])
+        elif fixed_array.ndim == 1:
+            threshold = float(fixed_array[index])
             f1 = _f1_at_threshold(y, s, threshold)
+        else:
+            selected_thresholds = fixed_array[valid, index]
+            f1 = _f1_at_row_thresholds(y, s, selected_thresholds)
+            unique_thresholds = sorted(set(float(value) for value in selected_thresholds))
+            threshold = unique_thresholds[0] if len(unique_thresholds) == 1 else None
+            threshold_values = unique_thresholds
         brier, ece = _calibration(y, s)
-        entry = {"valid_count": int(valid.sum()), "positive_count": int((y == 1).sum()), "pr_auc": ap, "f1": f1, "threshold": threshold, "brier": brier, "ece_10bin": ece}
+        entry = {"valid_count": int(valid.sum()), "positive_count": int((y == 1).sum()), "pr_auc": ap, "f1": f1, "threshold": threshold, "threshold_values": threshold_values, "brier": brier, "ece_10bin": ece}
         per_relation[name] = entry
         if ap is not None:
             pr_values.append(ap)
@@ -200,7 +229,13 @@ def evaluate_relation_predictions(
         "macro_brier": float(np.mean(brier_values)) if brier_values else None,
         "macro_ece_10bin": float(np.mean(ece_values)) if ece_values else None,
         "valid_rows": int(mask.sum()),
-        "threshold_source": "validation_fixed" if fixed_thresholds is not None else "optimized_on_rows",
+        "threshold_source": (
+            "validation_fixed_per_row"
+            if fixed_array is not None and fixed_array.ndim == 2
+            else "validation_fixed"
+            if fixed_array is not None
+            else "optimized_on_rows"
+        ),
     }
     result.update(aggregate_relation_families(per_relation))
     return result
@@ -248,12 +283,20 @@ def no_change_fpr(logits: Any, targets: Any, masks: Any, thresholds: Sequence[fl
     mask = np.asarray(masks, dtype=bool)
     if score.ndim != 2 or target.shape != score.shape or mask.shape != score.shape:
         raise ValueError("relation prediction arrays must have shape [N,R]")
-    if len(thresholds) != score.shape[1]:
-        raise ValueError("thresholds must contain one value per relation")
+    threshold_array = np.asarray(thresholds, dtype=np.float64)
+    if threshold_array.shape not in ((score.shape[1],), score.shape):
+        raise ValueError("thresholds must be [R] or [N,R]")
+    if not np.isfinite(threshold_array).all():
+        raise ValueError("thresholds contain NaN or Inf")
     values: list[float] = []
-    for index, threshold in enumerate(thresholds):
+    for index in range(score.shape[1]):
         valid_no_change = np.logical_and(mask[:, index], target[:, index] == 0)
-        predicted_change = score[:, index] >= float(threshold)
+        threshold = (
+            float(threshold_array[index])
+            if threshold_array.ndim == 1
+            else threshold_array[:, index]
+        )
+        predicted_change = score[:, index] >= threshold
         denominator = int(valid_no_change.sum())
         if denominator:
             values.append(float(np.logical_and(valid_no_change, predicted_change).sum() / denominator))

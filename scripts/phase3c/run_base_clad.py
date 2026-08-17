@@ -13,7 +13,10 @@ from typing import Any
 
 from .io import load_json_config, set_run_state, write_json
 from .contracts import canonical_sha256
-from .train_base_clad import train
+from . import train_base_clad as train_base_module
+from .provenance import attach_log_provenance, tee_run_output
+
+train = train_base_module.train
 
 
 def _sha256_file(path: Path) -> str:
@@ -32,7 +35,14 @@ def _path(value: Any) -> Path:
 
 
 def _completed_runtime(
-    path: Path, *, fold: str, seed: int, config_sha256: str
+    path: Path,
+    *,
+    fold: str,
+    seed: int,
+    config_sha256: str,
+    trainer_source_sha256: str | None = None,
+    code_sha256: str | None = None,
+    runner_source_sha256: str | None = None,
 ) -> dict[str, Any] | None:
     if not path.exists():
         return None
@@ -46,9 +56,21 @@ def _completed_runtime(
         or str(value.get("config_sha256")) != config_sha256
     ):
         raise ValueError(f"completed runtime seed mismatch: {path}")
+    for name, expected in (
+        ("trainer_source_sha256", trainer_source_sha256),
+        ("code_sha256", code_sha256),
+        ("runner_source_sha256", runner_source_sha256),
+    ):
+        if expected is not None and str(value.get(name, "")) != str(expected):
+            raise ValueError(
+                f"completed base runtime {name} does not match the current code; "
+                "use a new versioned output_root"
+            )
     for path_key, hash_key in (
         ("checkpoint", "checkpoint_sha256"),
         ("resume_checkpoint", "resume_checkpoint_sha256"),
+        ("stdout_log", "stdout_log_sha256"),
+        ("stderr_log", "stderr_log_sha256"),
     ):
         if not value.get(path_key) or not value.get(hash_key):
             raise ValueError(f"completed base runtime is missing {path_key}/{hash_key}")
@@ -64,6 +86,9 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
     folds = tuple(str(value) for value in config.get("folds", ["test_task0", "test_task1", "test_task2"]))
     seeds = tuple(int(value) for value in config.get("seeds", [config.get("seed", 0)]))
     output_root = _path(config.get("output_root", "phase3c_base_clad"))
+    current_trainer_source_sha256 = _sha256_file(Path(train_base_module.__file__))
+    current_code_sha256 = train_base_module._code_sha256()
+    current_runner_source_sha256 = _sha256_file(Path(__file__))
     results: list[dict[str, Any]] = []
     for fold in folds:
         for seed in seeds:
@@ -84,12 +109,19 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                 fold=fold,
                 seed=seed,
                 config_sha256=identity["config_sha256"],
+                trainer_source_sha256=current_trainer_source_sha256,
+                code_sha256=current_code_sha256,
+                runner_source_sha256=current_runner_source_sha256,
             )
             if result is None:
                 write_json(run_root / "run_config.json", run_config)
                 set_run_state(run_root, "RUNNING", identity)
                 try:
-                    result = train(run_config)
+                    with tee_run_output(run_root) as (stdout_path, stderr_path):
+                        result = train(run_config)
+                    attach_log_provenance(result, stdout_path, stderr_path)
+                    result["runner_source_sha256"] = current_runner_source_sha256
+                    write_json(runtime_path, result)
                 except Exception as exc:
                     set_run_state(
                         run_root,
@@ -103,7 +135,15 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                 {**identity, "runtime_manifest": str(runtime_path)},
             )
             results.append(result)
-    summary = {"schema": "phase3c-base-clad-screen.v3", "status": "completed", "folds": list(folds), "seeds": list(seeds), "runs": results}
+    summary = {
+        "schema": "phase3c-base-clad-screen.v4",
+        "status": "completed",
+        "protocol": config.get("protocol"),
+        "claim_scope": config.get("claim_scope"),
+        "folds": list(folds),
+        "seeds": list(seeds),
+        "runs": results,
+    }
     write_json(output_root / "screen_manifest.json", summary)
     return summary
 

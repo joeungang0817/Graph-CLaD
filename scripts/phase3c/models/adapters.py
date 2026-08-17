@@ -7,6 +7,8 @@ from typing import Any
 import torch
 import torch.nn as nn
 
+from .structured import structured_input_view
+
 
 class SemanticPastActEncoder(nn.Module):
     """Action-only adapter used by the no-graph C3-Sem-PastAct control."""
@@ -55,7 +57,13 @@ class CommonRelationHead(nn.Module):
         self.relation_head = nn.Linear(latent_dim, relation_dim)
         self.motion_head = nn.Linear(latent_dim, 1)
 
-    def forward(self, semantic: torch.Tensor, structured: torch.Tensor) -> dict[str, torch.Tensor]:
+    def forward(
+        self,
+        semantic: torch.Tensor,
+        structured: torch.Tensor,
+        *,
+        adapter_enabled: bool = True,
+    ) -> dict[str, torch.Tensor]:
         semantic = semantic.float()
         structured = structured.float()
         if semantic.ndim != 2 or semantic.shape[1] != self.semantic_projector[0].in_features:
@@ -68,7 +76,8 @@ class CommonRelationHead(nn.Module):
             raise ValueError("fusion inputs contain non-finite values")
         base = self.semantic_projector(semantic)
         adapter = self.structured_projector(structured)
-        latent = self.dropout(self.fusion_norm(base + torch.sigmoid(self.adapter_gate) * adapter))
+        adapter_scale = torch.sigmoid(self.adapter_gate) if adapter_enabled else 0.0
+        latent = self.dropout(self.fusion_norm(base + adapter_scale * adapter))
         return {"latent": latent, "relation_logits": self.relation_head(latent), "scene_motion": self.motion_head(latent)}
 
 
@@ -82,6 +91,16 @@ class Phase3CAdapter(nn.Module):
             semantic_dim=semantic_dim, structured_dim=structured_dim, relation_dim=relation_dim
         )
 
-    def forward(self, batch: Any, semantic_foresight: torch.Tensor) -> dict[str, torch.Tensor]:
-        structured = self.structured_encoder(batch)
-        return self.head(semantic_foresight, structured)
+    def forward(
+        self,
+        batch: Any,
+        semantic_foresight: torch.Tensor,
+        *,
+        adapter_enabled: bool = True,
+    ) -> dict[str, torch.Tensor]:
+        structured = self.structured_encoder(structured_input_view(batch))
+        return self.head(
+            semantic_foresight,
+            structured,
+            adapter_enabled=adapter_enabled,
+        )

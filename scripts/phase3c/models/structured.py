@@ -38,6 +38,16 @@ class StructuredBatch:
     past_action: torch.Tensor
 
 
+def structured_input_view(batch: Any) -> StructuredBatch:
+    """Physically remove metadata and all future/target tensors before forward."""
+
+    return StructuredBatch(
+        graph_prev=_graph(_field(batch, "graph_prev")),
+        graph_current=_graph(_field(batch, "graph_current")),
+        past_action=_field(batch, "past_action"),
+    )
+
+
 def _field(value: Any, name: str) -> Any:
     if isinstance(value, Mapping):
         if name not in value:

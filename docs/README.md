@@ -12,6 +12,7 @@ canonical navigation으로 사용한다. 과거 결과 문서는 삭제하거나
 | 2 | `01-plan/features/graph-clad-integrated-research-v4.plan.md` | 새 canonical 연구계획서: 질문, 비교, gate, 성공·중단 기준 |
 | 3 | `01-plan/features/phase3c-oracle-graph-clad-core.plan.md` | 다음 구현의 six-model/data/training/evaluation 계획 |
 | 4 | `02-design/features/phase3c-oracle-graph-clad-core.design.md` | Phase 3C 파일·schema·tensor·model·test·실행 설계 |
+| 5 | `phase3c_deadline_pilot_runbook.md` | 제출 기한용 reduced three-fold pilot의 고정 예산·실행 순서·claim 제한 |
 | 5 | `RESEARCH_WORKFLOW_FOR_BEGINNERS.md` | 연구 질문, 데이터, Phase, 지표를 처음부터 설명 |
 | 6 | `CODEBASE_GUIDE_FOR_BEGINNERS.md` | 폴더·Python 파일·입출력·실행 흐름을 상세 설명 |
 | 7 | `NEXT_SESSION_PROMPT.md` | 새 Codex 세션에 그대로 붙여 넣는 인계 프롬프트 |

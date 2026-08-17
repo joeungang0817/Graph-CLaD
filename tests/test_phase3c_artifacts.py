@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts.phase3c.contracts import canonical_sha256
+
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -38,7 +40,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 ["COMPLETED.json"],
             )
 
-    def test_core_smoke_config_covers_all_six_models(self):
+    def test_versioned_run_configs_have_frozen_scope(self):
         root = Path(__file__).resolve().parents[1]
         config = json.loads(
             (root / "configs" / "phase3c_core_smoke_example_v1.json").read_text(
@@ -61,6 +63,167 @@ class Phase3CArtifactTest(unittest.TestCase):
         self.assertEqual(config["updates"], 20)
         self.assertEqual(config["batch_size"], 64)
 
+        base_deadline = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_base_deadline_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(
+            base_deadline["protocol"], "phase3c-deadline-threefold-seed0-v1"
+        )
+        self.assertEqual(base_deadline["claim_scope"], "deadline-constrained-pilot")
+        self.assertEqual(
+            base_deadline["folds"],
+            ["test_task0", "test_task1", "test_task2"],
+        )
+        self.assertEqual(base_deadline["seeds"], [0])
+        self.assertEqual(base_deadline["updates"], 500)
+        self.assertEqual(base_deadline["batch_size"], 64)
+        self.assertEqual(base_deadline["validation_interval"], 250)
+        self.assertEqual(base_deadline["recon_weight"], 0.1)
+        self.assertNotIn("reconstruction_weight", base_deadline)
+
+        core_deadline = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_core_deadline_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(core_deadline["protocol"], base_deadline["protocol"])
+        self.assertEqual(
+            core_deadline["models"],
+            [
+                "C3-Sem-PastAct",
+                "C3-RelMPNN-PastAct",
+                "C3-RelPool-PastAct",
+            ],
+        )
+        self.assertEqual(core_deadline["folds"], base_deadline["folds"])
+        self.assertEqual(core_deadline["seeds"], [0])
+        self.assertEqual(core_deadline["updates"], 200)
+        self.assertEqual(core_deadline["batch_size"], 64)
+        self.assertEqual(core_deadline["validation_interval"], 100)
+        self.assertEqual(core_deadline["minimum_updates"], 200)
+        self.assertEqual(core_deadline["evaluation_split"], "test")
+        self.assertEqual(core_deadline["motion_weight"], 0.1)
+        self.assertNotIn("test_split", core_deadline)
+        self.assertNotIn("parameter_matching", core_deadline)
+        self.assertEqual(
+            set(core_deadline["base_checkpoints"]), set(base_deadline["folds"])
+        )
+
+        analysis_deadline = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_analysis_deadline_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(analysis_deadline["protocol"], base_deadline["protocol"])
+        self.assertEqual(
+            list(analysis_deadline["prediction_files"]), core_deadline["models"]
+        )
+        self.assertTrue(
+            all(
+                len(paths) == 3
+                and all(path.endswith("predictions/evaluation.jsonl.gz") for path in paths)
+                for paths in analysis_deadline["prediction_files"].values()
+            )
+        )
+        self.assertEqual(analysis_deadline["expected_folds"], base_deadline["folds"])
+        self.assertEqual(analysis_deadline["expected_seeds"], [0])
+        self.assertEqual(analysis_deadline["replicates"], 2000)
+
+        benchmark = json.loads(
+            (
+                root / "configs" / "phase3c_core_postcache_benchmark_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(
+            benchmark["protocol"], "phase3c-deadline-postcache-throughput-v1"
+        )
+        self.assertEqual(benchmark["claim_scope"], "technical-throughput-only")
+        self.assertEqual(benchmark["models"], ["C3-Sem-PastAct"])
+        self.assertEqual(benchmark["folds"], ["test_task0"])
+        self.assertEqual(benchmark["updates"], 100)
+        self.assertEqual(benchmark["batch_size"], 64)
+        self.assertEqual(benchmark["evaluation_split"], "validation")
+
+        six_model = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_core_deadline_sixmodel_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(
+            six_model["models"],
+            [
+                "C3-Sem-PastAct",
+                "C3-RelMPNN-PastAct",
+                "C3-RelPool-PastAct",
+                "C3-SceneSet-PastAct",
+                "C3-Pair-PastAct",
+                "C3-GeomMPNN-PastAct",
+            ],
+        )
+        self.assertEqual(six_model["folds"], base_deadline["folds"])
+        self.assertEqual(six_model["updates"], core_deadline["updates"])
+        self.assertEqual(six_model["batch_size"], core_deadline["batch_size"])
+
+        analysis_six = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_analysis_deadline_sixmodel_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(list(analysis_six["prediction_files"]), six_model["models"])
+        self.assertTrue(
+            all(len(paths) == 3 for paths in analysis_six["prediction_files"].values())
+        )
+
+        from scripts.phase3c.select_deadline_core_scope import select_scope
+
+        with tempfile.TemporaryDirectory() as directory:
+            runtime_path = Path(directory) / "runtime_manifest.json"
+            runtime = {
+                "status": "completed",
+                "protocol": "phase3c-deadline-postcache-throughput-v1",
+                "claim_scope": "technical-throughput-only",
+                "model_id": "C3-Sem-PastAct",
+                "fold": "test_task0",
+                "seed": 0,
+                "updates": 100,
+                "batch_size": 64,
+                "elapsed_seconds": 100.0,
+                "total_elapsed_seconds": 100.0,
+                "best_validation_macro_pr_auc": 0.99,
+            }
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            fast = select_scope(runtime_path, remaining_hours=10.0)
+            self.assertEqual(fast["selection"], "six-model")
+            self.assertEqual(fast["performance_fields_consulted"], [])
+            self.assertEqual(fast["benchmark_total_elapsed_seconds"], 100.0)
+
+            runtime["total_elapsed_seconds"] = 1200.0
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            medium = select_scope(runtime_path, remaining_hours=10.0)
+            self.assertEqual(medium["selection"], "three-model")
+
+            runtime["total_elapsed_seconds"] = 2000.0
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            slow = select_scope(runtime_path, remaining_hours=10.0)
+            self.assertEqual(slow["selection"], "insufficient-time")
+
+            runtime.pop("total_elapsed_seconds")
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "total_elapsed_seconds"):
+                select_scope(runtime_path, remaining_hours=10.0)
+
     def test_completed_base_runtime_checks_artifact_hashes(self):
         if self.torch is None:
             self.skipTest("torch is unavailable")
@@ -70,8 +233,12 @@ class Phase3CArtifactTest(unittest.TestCase):
             root = Path(directory)
             best = root / "best.pt"
             last = root / "last.pt"
+            stdout = root / "stdout.log"
+            stderr = root / "stderr.log"
             best.write_bytes(b"best")
             last.write_bytes(b"last")
+            stdout.write_bytes(b"stdout")
+            stderr.write_bytes(b"stderr")
             runtime = root / "runtime_manifest.json"
             runtime.write_text(
                 json.dumps(
@@ -84,6 +251,10 @@ class Phase3CArtifactTest(unittest.TestCase):
                         "checkpoint_sha256": _sha(best),
                         "resume_checkpoint": str(last),
                         "resume_checkpoint_sha256": _sha(last),
+                        "stdout_log": str(stdout),
+                        "stdout_log_sha256": _sha(stdout),
+                        "stderr_log": str(stderr),
+                        "stderr_log_sha256": _sha(stderr),
                     }
                 ),
                 encoding="utf-8",
@@ -96,6 +267,14 @@ class Phase3CArtifactTest(unittest.TestCase):
                     config_sha256="config",
                 )
             )
+            with self.assertRaisesRegex(ValueError, "current code"):
+                _completed_runtime(
+                    runtime,
+                    fold="test_task0",
+                    seed=0,
+                    config_sha256="config",
+                    code_sha256="different-code",
+                )
             best.write_bytes(b"corrupted")
             with self.assertRaises(ValueError):
                 _completed_runtime(
@@ -113,7 +292,14 @@ class Phase3CArtifactTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             artifacts = {}
-            for name in ("checkpoint", "resume_checkpoint", "metrics", "predictions"):
+            for name in (
+                "checkpoint",
+                "resume_checkpoint",
+                "metrics",
+                "predictions",
+                "stdout_log",
+                "stderr_log",
+            ):
                 path = root / name
                 path.write_bytes(name.encode("ascii"))
                 artifacts[name] = path
@@ -138,6 +324,15 @@ class Phase3CArtifactTest(unittest.TestCase):
                     config_sha256="config",
                 )
             )
+            with self.assertRaisesRegex(ValueError, "current code"):
+                _completed_runtime(
+                    runtime,
+                    model_id="C3-RelMPNN-PastAct",
+                    fold="test_task0",
+                    seed=0,
+                    config_sha256="config",
+                    trainer_source_sha256="different-trainer",
+                )
             artifacts["metrics"].write_bytes(b"corrupted")
             with self.assertRaises(ValueError):
                 _completed_runtime(
@@ -170,6 +365,9 @@ class Phase3CArtifactTest(unittest.TestCase):
 
             def close(self):
                 pass
+
+            def verify_integrity(self, **kwargs):
+                return {"verified_shards": 1, "orientation_attestation_sha256": "qa"}
 
         class FakeControlled(nn.Module):
             def __init__(self, **kwargs):
@@ -238,7 +436,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 first = train_base_clad.train(config)
                 second = train_base_clad.train(config)
 
-            self.assertEqual(first["schema"], "phase3c-base-clad-run.v3")
+            self.assertEqual(first["schema"], "phase3c-base-clad-run.v4")
             self.assertTrue((output / "checkpoints" / "best.pt").exists())
             self.assertTrue((output / "checkpoints" / "last.pt").exists())
             self.assertEqual(second["resumed_from_update"], 2)
@@ -287,7 +485,7 @@ class Phase3CArtifactTest(unittest.TestCase):
             ), patch.object(run_core, "trainable_parameter_count", return_value=100):
                 result = run_core.run(config)
 
-            self.assertEqual(result["schema"], "phase3c-core-screen.v3")
+            self.assertEqual(result["schema"], "phase3c-core-screen.v4")
             self.assertEqual(len(calls), 18)
             self.assertTrue(all(call["updates"] == 10000 for call in calls))
             self.assertEqual(
@@ -321,6 +519,9 @@ class Phase3CArtifactTest(unittest.TestCase):
 
             def close(self):
                 pass
+
+            def verify_integrity(self, **kwargs):
+                return {"verified_shards": 1, "orientation_attestation_sha256": "qa"}
 
         class FakeClad(nn.Module):
             def __init__(self, **kwargs):
@@ -404,11 +605,17 @@ class Phase3CArtifactTest(unittest.TestCase):
             base = root / "base.pt"
             torch.save(
                 {
-                    "schema": "phase3c-base-clad-checkpoint.v3",
+                    "schema": "phase3c-base-clad-checkpoint.v4",
                     "kind": "validation_best",
                     "model_state": {},
                     "source_joined_manifest_sha256": _sha(joined),
                     "semantic_store_manifest_sha256": _sha(store_manifest),
+                    "semantic_store_integrity_sha256": canonical_sha256(
+                        {
+                            "verified_shards": 1,
+                            "orientation_attestation_sha256": "qa",
+                        }
+                    ),
                     "vl_dim": 4,
                     "hidden_dim": 4,
                 },
@@ -466,7 +673,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 first = train_core.train(config)
                 second = train_core.train(config)
 
-            self.assertEqual(first["schema"], "phase3c-core-run.v3")
+            self.assertEqual(first["schema"], "phase3c-core-run.v4")
             self.assertTrue((output / "checkpoints" / "best.pt").exists())
             self.assertTrue((output / "checkpoints" / "last.pt").exists())
             self.assertEqual(second["resumed_from_update"], 2)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 import os
 from collections import defaultdict
@@ -14,7 +15,27 @@ import numpy as np
 
 from .io import write_json
 from .metrics import evaluate_motion, evaluate_relation_predictions
-from .contracts import PRIMARY_RELATIONS
+from .contracts import PRIMARY_RELATIONS, canonical_sha256
+from .provenance import runtime_provenance
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _prediction_paths(value: Any) -> list[Path]:
+    raw_paths = list(value.values()) if isinstance(value, dict) else value
+    if isinstance(raw_paths, (str, os.PathLike)):
+        raw_paths = [raw_paths]
+    if not isinstance(raw_paths, (list, tuple)) or not raw_paths:
+        raise ValueError("prediction file entry must be a path, path list, or fold mapping")
+    return [
+        Path(os.path.expandvars(str(raw_path))).expanduser() for raw_path in raw_paths
+    ]
 
 
 def load_predictions(path: Path) -> list[dict[str, Any]]:
@@ -30,43 +51,107 @@ def load_predictions(path: Path) -> list[dict[str, Any]]:
             rows.append(value)
     if not rows or rows[0].get("schema") != "phase3c-core-prediction.v2":
         return rows
-    grouped: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    grouped: dict[tuple[str, int, str], dict[str, dict[str, Any]]] = defaultdict(dict)
     for row in rows:
         if row.get("schema") != "phase3c-core-prediction.v2":
             raise ValueError("prediction artifact mixes incompatible row schemas")
         sample_id = str(row.get("sample_id"))
+        fold = str(row.get("fold", f"test_task{row.get('task_id')}"))
+        seed = int(row.get("seed", 0))
+        identity = (fold, seed, sample_id)
         relation = str(row.get("relation"))
         if relation not in PRIMARY_RELATIONS:
             raise ValueError(f"unknown prediction relation: {relation}")
-        if relation in grouped[sample_id]:
-            raise ValueError(f"duplicate prediction row: {sample_id}/{relation}")
-        grouped[sample_id][relation] = row
+        if relation in grouped[identity]:
+            raise ValueError(f"duplicate prediction row: {identity}/{relation}")
+        grouped[identity][relation] = row
     pivoted: list[dict[str, Any]] = []
-    for sample_id, per_relation in grouped.items():
+    for (fold, seed, sample_id), per_relation in grouped.items():
         missing = [name for name in PRIMARY_RELATIONS if name not in per_relation]
         if missing:
             raise ValueError(f"prediction sample {sample_id} is missing relations {missing}")
         ordered = [per_relation[name] for name in PRIMARY_RELATIONS]
         first = ordered[0]
         for row in ordered[1:]:
-            for key in ("task_id", "episode_id", "scene_motion", "target_scene_motion"):
+            for key in (
+                "task_id",
+                "episode_id",
+                "model_id",
+                "prev_step",
+                "current_step",
+                "target_step",
+                "tau",
+                "scene_motion",
+                "target_scene_motion",
+            ):
                 if row.get(key) != first.get(key):
                     raise ValueError(f"prediction sample {sample_id} has inconsistent {key}")
         pivoted.append({
             "sample_id": sample_id,
+            "paired_key": f"{fold}|seed{seed}|{sample_id}",
+            "model_id": first.get("model_id"),
+            "fold": fold,
+            "seed": seed,
             "task_id": first["task_id"],
             "episode_id": first["episode_id"],
+            "prev_step": int(first.get("prev_step", first.get("current_step", 6) - first.get("tau", 6))),
+            "current_step": int(first.get("current_step", -1)),
+            "target_step": int(first.get("target_step", -1)),
+            "tau": int(first.get("tau", 6)),
             "relation_logits": [float(row["logit"]) for row in ordered],
             "target_relation_change": [0 if row["target"] is None else int(row["target"]) for row in ordered],
             "target_relation_mask": [int(bool(row["evaluated"])) for row in ordered],
             "fixed_thresholds": [float(row["threshold"]) for row in ordered],
             "scene_motion": float(first["scene_motion"]),
             "target_scene_motion": float(first["target_scene_motion"]),
+            "train_prevalence": (
+                [float(row["train_prevalence"]) for row in ordered]
+                if all(row.get("train_prevalence") is not None for row in ordered)
+                else None
+            ),
         })
     return pivoted
 
 
-def score_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def load_prediction_collection(value: Any) -> list[dict[str, Any]]:
+    """Load one path, a path list, or a fold-to-path mapping for one model."""
+
+    rows: list[dict[str, Any]] = []
+    for path in _prediction_paths(value):
+        rows.extend(load_predictions(path))
+    keys = [str(row.get("paired_key", row.get("sample_id"))) for row in rows]
+    if len(keys) != len(set(keys)):
+        raise ValueError("prediction collection contains duplicate fold/seed/sample keys")
+    return rows
+
+
+def _baseline_rows(
+    rows: list[dict[str, Any]], *, mode: str
+) -> list[dict[str, Any]] | None:
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        if mode == "no_change":
+            probability = np.zeros(len(PRIMARY_RELATIONS), dtype=np.float64)
+        elif mode == "train_prevalence":
+            raw = row.get("train_prevalence")
+            if raw is None:
+                return None
+            probability = np.asarray(raw, dtype=np.float64)
+            if probability.shape != (len(PRIMARY_RELATIONS),):
+                raise ValueError("train_prevalence must contain one value per relation")
+        else:
+            raise ValueError(f"unknown trivial baseline: {mode}")
+        clipped = np.clip(probability, 1e-12, 1.0 - 1e-12)
+        baseline = dict(row)
+        baseline["relation_logits"] = np.log(clipped / (1.0 - clipped)).tolist()
+        baseline["fixed_thresholds"] = [0.5] * len(PRIMARY_RELATIONS)
+        result.append(baseline)
+    return result
+
+
+def score_rows(
+    rows: list[dict[str, Any]], *, include_baselines: bool = True
+) -> dict[str, Any]:
     if not rows:
         return {"status": "empty"}
     fixed_thresholds = None
@@ -74,13 +159,15 @@ def score_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     if any(value is not None for value in threshold_rows):
         if any(value is None for value in threshold_rows):
             raise ValueError("prediction rows mix fixed and optimized thresholds")
-        first_thresholds = [float(value) for value in threshold_rows[0]]
-        if any([float(value) for value in row] != first_thresholds for row in threshold_rows[1:]):
-            raise ValueError("fixed thresholds differ across prediction samples")
-        fixed_thresholds = first_thresholds
-    return {
+        fixed_thresholds = [
+            [float(value) for value in threshold_row]
+            for threshold_row in threshold_rows
+        ]
+    result = {
         "status": "completed",
         "rows": len(rows),
+        "folds": sorted(set(str(row.get("fold", "unknown")) for row in rows)),
+        "seeds": sorted(set(int(row.get("seed", 0)) for row in rows)),
         "relation": evaluate_relation_predictions(
             [row["relation_logits"] for row in rows],
             [row["target_relation_change"] for row in rows],
@@ -92,6 +179,17 @@ def score_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
             [row["target_scene_motion"] for row in rows],
         ),
     }
+    if include_baselines:
+        baselines: dict[str, Any] = {}
+        for mode in ("no_change", "train_prevalence"):
+            baseline = _baseline_rows(rows, mode=mode)
+            baselines[mode] = (
+                score_rows(baseline, include_baselines=False)
+                if baseline is not None
+                else {"status": "unavailable", "reason": "missing_train_prevalence"}
+            )
+        result["trivial_baselines"] = baselines
+    return result
 
 
 def _task_episode_groups(
@@ -122,12 +220,15 @@ def hierarchical_bootstrap_difference(
 ) -> dict[str, Any]:
     if int(replicates) <= 0:
         raise ValueError("replicates must be positive")
-    if len({str(row["sample_id"]) for row in candidate}) != len(candidate):
-        raise ValueError("candidate predictions contain duplicate sample_id values")
-    if len({str(row["sample_id"]) for row in baseline}) != len(baseline):
-        raise ValueError("baseline predictions contain duplicate sample_id values")
-    left = {str(row["sample_id"]): row for row in candidate}
-    right = {str(row["sample_id"]): row for row in baseline}
+    def paired_key(row: dict[str, Any]) -> str:
+        return str(row.get("paired_key", row["sample_id"]))
+
+    if len({paired_key(row) for row in candidate}) != len(candidate):
+        raise ValueError("candidate predictions contain duplicate paired keys")
+    if len({paired_key(row) for row in baseline}) != len(baseline):
+        raise ValueError("baseline predictions contain duplicate paired keys")
+    left = {paired_key(row): row for row in candidate}
+    right = {paired_key(row): row for row in baseline}
     left_ids = set(left)
     right_ids = set(right)
     if left_ids != right_ids:
@@ -143,6 +244,10 @@ def hierarchical_bootstrap_difference(
             raise ValueError(f"paired prediction task mismatch for sample_id={sample_id}")
         if str(left[sample_id].get("episode_id")) != str(right[sample_id].get("episode_id")):
             raise ValueError(f"paired prediction episode mismatch for sample_id={sample_id}")
+        if str(left[sample_id].get("fold")) != str(right[sample_id].get("fold")):
+            raise ValueError(f"paired prediction fold mismatch for sample_id={sample_id}")
+        if int(left[sample_id].get("seed", 0)) != int(right[sample_id].get("seed", 0)):
+            raise ValueError(f"paired prediction seed mismatch for sample_id={sample_id}")
     aligned_left = [left[key] for key in paired_ids]
     aligned_right = [right[key] for key in paired_ids]
     tasks = sorted(set(str(row.get("task_id")) for row in aligned_left))
@@ -170,8 +275,8 @@ def hierarchical_bootstrap_difference(
                 episode_key = str(episode)
                 sampled_left.extend(rows_left[task_key][episode_key])
                 sampled_right.extend(rows_right[task_key][episode_key])
-            left_score = score_rows(sampled_left)["relation"].get(metric)
-            right_score = score_rows(sampled_right)["relation"].get(metric)
+            left_score = score_rows(sampled_left, include_baselines=False)["relation"].get(metric)
+            right_score = score_rows(sampled_right, include_baselines=False)["relation"].get(metric)
             if left_score is not None and right_score is not None:
                 left_task_scores.append(float(left_score))
                 right_task_scores.append(float(right_score))
@@ -180,11 +285,11 @@ def hierarchical_bootstrap_difference(
     estimate = None
     if aligned_left and aligned_right:
         left_task_scores = [
-            score_rows([row for episode in rows_left[task].values() for row in episode])["relation"].get(metric)
+            score_rows([row for episode in rows_left[task].values() for row in episode], include_baselines=False)["relation"].get(metric)
             for task in tasks
         ]
         right_task_scores = [
-            score_rows([row for episode in rows_right[task].values() for row in episode])["relation"].get(metric)
+            score_rows([row for episode in rows_right[task].values() for row in episode], include_baselines=False)["relation"].get(metric)
             for task in tasks
         ]
         if all(score is not None for score in left_task_scores + right_task_scores):
@@ -209,31 +314,113 @@ def analyze(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("analyze_core requires prediction_files mapping model_id -> path")
     scored: dict[str, Any] = {}
     loaded: dict[str, list[dict[str, Any]]] = {}
+    input_artifacts: dict[str, Any] = {}
     for model_id, raw_path in prediction_files.items():
-        path = Path(os.path.expandvars(str(raw_path))).expanduser()
-        rows = load_predictions(path)
+        paths = _prediction_paths(raw_path)
+        rows = load_prediction_collection(raw_path)
+        observed_model_ids = {
+            str(row["model_id"])
+            for row in rows
+            if row.get("model_id") is not None
+        }
+        if observed_model_ids and observed_model_ids != {str(model_id)}:
+            raise ValueError(
+                f"prediction collection model identity mismatch for {model_id}: "
+                f"{sorted(observed_model_ids)}"
+            )
         loaded[str(model_id)] = rows
         scored[str(model_id)] = score_rows(rows)
+        input_artifacts[str(model_id)] = [
+            {"path": str(path), "sha256": _sha256_file(path)} for path in paths
+        ]
+    expected_folds = config.get("expected_folds")
+    expected_seeds = config.get("expected_seeds")
+    for model_id, rows in loaded.items():
+        if expected_folds is not None and {
+            str(row.get("fold")) for row in rows
+        } != {str(value) for value in expected_folds}:
+            raise ValueError(f"prediction collection has incomplete folds for {model_id}")
+        if expected_seeds is not None and {
+            int(row.get("seed", 0)) for row in rows
+        } != {int(value) for value in expected_seeds}:
+            raise ValueError(f"prediction collection has incomplete seeds for {model_id}")
     primary_model = str(config.get("primary_model", "C3-RelMPNN-PastAct"))
     baseline_model = str(config.get("baseline_model", "C3-Sem-PastAct"))
-    comparison = None
-    if primary_model in loaded and baseline_model in loaded:
-        relation_difference = hierarchical_bootstrap_difference(
-            loaded[primary_model], loaded[baseline_model],
-            metric="macro_pr_auc", replicates=int(config.get("replicates", 2000)), seed=int(config.get("seed", 0)),
-        )
-        family_difference = hierarchical_bootstrap_difference(
-            loaded[primary_model], loaded[baseline_model],
-            metric="family_macro_pr_auc", replicates=int(config.get("replicates", 2000)), seed=int(config.get("seed", 0)),
-        )
-        comparison = {
-            "candidate": primary_model,
-            "baseline": baseline_model,
-            "relation": relation_difference,
-            "relation_macro": relation_difference,
-            "family_macro": family_difference,
-        }
-    result = {"schema": "phase3c-core-analysis.v2", "status": "completed", "models": scored, "comparison": comparison}
+    comparator_values = config.get(
+        "comparators", [model_id for model_id in loaded if model_id != primary_model]
+    )
+    if isinstance(comparator_values, (str, os.PathLike)):
+        comparator_values = [comparator_values]
+    if not isinstance(comparator_values, (list, tuple)):
+        raise ValueError("comparators must be a model-id list")
+    comparators = [str(value) for value in comparator_values]
+    replicates = int(config.get("replicates", 2000))
+    seed = int(config.get("seed", 0))
+
+    def comparisons_for(
+        rows_by_model: dict[str, list[dict[str, Any]]]
+    ) -> dict[str, Any]:
+        reports: dict[str, Any] = {}
+        if primary_model not in rows_by_model:
+            return reports
+        for comparator in comparators:
+            if comparator not in rows_by_model or comparator == primary_model:
+                continue
+            relation_difference = hierarchical_bootstrap_difference(
+                rows_by_model[primary_model],
+                rows_by_model[comparator],
+                metric="macro_pr_auc",
+                replicates=replicates,
+                seed=seed,
+            )
+            family_difference = hierarchical_bootstrap_difference(
+                rows_by_model[primary_model],
+                rows_by_model[comparator],
+                metric="family_macro_pr_auc",
+                replicates=replicates,
+                seed=seed,
+            )
+            reports[comparator] = {
+                "candidate": primary_model,
+                "baseline": comparator,
+                "relation_macro": relation_difference,
+                "family_macro": family_difference,
+            }
+        return reports
+
+    comparisons = comparisons_for(loaded)
+    initial_filtered = {
+        model_id: [row for row in rows if int(row.get("prev_step", -1)) != 0]
+        for model_id, rows in loaded.items()
+    }
+    sensitivity = {
+        "policy": "exclude_all_prev_step_zero_samples",
+        "predicate": "prev_step != 0",
+        "removed_rows": {
+            model_id: len(loaded[model_id]) - len(rows)
+            for model_id, rows in initial_filtered.items()
+        },
+        "models": {
+            model_id: score_rows(rows) for model_id, rows in initial_filtered.items()
+        },
+        "comparisons": comparisons_for(initial_filtered),
+    }
+    comparison = comparisons.get(baseline_model)
+    result = {
+        "schema": "phase3c-core-analysis.v3",
+        "status": "completed",
+        "protocol": config.get("protocol"),
+        "claim_scope": config.get("claim_scope"),
+        "config_sha256": canonical_sha256(config),
+        "analyzer_source_sha256": _sha256_file(Path(__file__)),
+        "runtime_provenance": runtime_provenance(),
+        "input_artifacts": input_artifacts,
+        "primary_model": primary_model,
+        "models": scored,
+        "comparisons": comparisons,
+        "comparison": comparison,
+        "initial_transition_sensitivity": sensitivity,
+    }
     output = config.get("output")
     if output:
         write_json(Path(os.path.expandvars(str(output))).expanduser(), result)

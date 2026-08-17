@@ -5,8 +5,8 @@
     "$GRAPH_CLAD_ARTIFACT_ROOT/phase2d/data/phase2d_full_demo_v2_inputclean_stream1/task1/phase2d_task1_graph_dataset.jsonl.gz",
     "$GRAPH_CLAD_ARTIFACT_ROOT/phase2d/data/phase2d_full_demo_v2_inputclean_stream1/task2/phase2d_task2_graph_dataset.jsonl.gz"
   ],
-  "output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
-  "qa_output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed_qa.json",
+  "output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_builder_v2_candidate.jsonl.gz",
+  "qa_output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_builder_v2_candidate_qa.json",
   "tau": 6,
   "relations": [
     "left",
