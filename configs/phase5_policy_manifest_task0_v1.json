@@ -1,0 +1,13 @@
+{
+  "stage2_policy_manifest": {
+    "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+    "output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_pilot_v1/policy_manifest_task0.jsonl.gz",
+    "qa_output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_pilot_v1/policy_manifest_task0.qa.json",
+    "task_id": 0,
+    "tau": 6,
+    "splits": ["train", "validation"],
+    "phase2d_by_task": {
+      "0": "$GRAPH_CLAD_ARTIFACT_ROOT/phase2d/data/phase2d_full_demo_v2_inputclean_stream1/task0/phase2d_task0_graph_dataset.jsonl.gz"
+    }
+  }
+}

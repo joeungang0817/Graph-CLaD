@@ -1700,3 +1700,40 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   post-cache wall-clock selector confirms it fits. Phase 3C remains an offline
   oracle-graph architecture screen: its result prioritizes representations for
   Stage 2, but cannot establish downstream policy or rollout improvement.
+
+## 2026-08-17 — Deadline Base three-fold screen completed
+
+- The reduced Base CLaD screen completed all three held-out-task folds at 500
+  updates, batch 64, seed 0. Every fold selected the final update 500 as its
+  validation-best checkpoint and produced both `best.pt` and `last.pt`.
+- Validation Stage-1 losses were 0.02430744 (`test_task0`), 0.02501204
+  (`test_task1`), and 0.03052484 (`test_task2`). Trainer times were 19.96,
+  21.60, and 20.70 minutes, totaling 62.27 minutes. Reported throughput ranged
+  from 24.686 to 26.714 samples/s, and peak CUDA allocation was stable at about
+  5.18 GiB for every fold.
+- The Base screen therefore passes the completion/resource gate for the Core
+  pilot. These losses select fold-specific frozen Base checkpoints; they are
+  not downstream relation-change or policy-success metrics.
+
+## 2026-08-17 — Stage 2 controlled one-task pilot implementation
+
+- Because the remaining deadline does not support a full official CLaD Stage 2
+  reproduction and LIBERO rollout evaluation, a deliberately narrower pilot was
+  implemented. It compares a semantic-only arm against one selected Phase 3C
+  structured-graph arm on task 0, seed 0, using the same frozen Base checkpoint,
+  action statistics, diffusion policy, batch schedule, and validation rows.
+- The policy manifest is built from the fixed Phase 3C joined manifest plus the
+  authoritative Phase 2D action window at `current_step`. It emits
+  `action_target_window` only as a supervised label and omits the future graph,
+  future action from model inputs, and all target metadata from the causal view.
+- The graph arm uses the selected Phase 3C structured encoder frozen and trains
+  only a residual foresight adapter plus the shared policy. The semantic arm
+  uses the frozen semantic CLaD foresight interface. Both arms use the same
+  small epsilon-prediction DDPM policy and report validation DDPM loss and
+  adapter sensitivity, not LIBERO success.
+- This artifact is explicitly `stage2-one-task-preliminary-pilot`; it is not an
+  official CLaD Stage 2 result. A rollout-success claim requires a separate
+  environment evaluation and will not be inferred from offline loss.
+- A matched-arm analyzer was added to serialize graph-minus-semantic DDPM loss
+  and foresight-sensitivity differences only after both runtime manifests pass
+  the shared manifest/base/seed/update/batch checks.
