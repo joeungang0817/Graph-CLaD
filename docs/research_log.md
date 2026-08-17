@@ -1700,3 +1700,17 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   post-cache wall-clock selector confirms it fits. Phase 3C remains an offline
   oracle-graph architecture screen: its result prioritizes representations for
   Stage 2, but cannot establish downstream policy or rollout improvement.
+
+## 2026-08-17 — Deadline Base three-fold screen completed
+
+- The reduced Base CLaD screen completed all three held-out-task folds at 500
+  updates, batch 64, seed 0. Every fold selected the final update 500 as its
+  validation-best checkpoint and produced both `best.pt` and `last.pt`.
+- Validation Stage-1 losses were 0.02430744 (`test_task0`), 0.02501204
+  (`test_task1`), and 0.03052484 (`test_task2`). Trainer times were 19.96,
+  21.60, and 20.70 minutes, totaling 62.27 minutes. Reported throughput ranged
+  from 24.686 to 26.714 samples/s, and peak CUDA allocation was stable at about
+  5.18 GiB for every fold.
+- The Base screen therefore passes the completion/resource gate for the Core
+  pilot. These losses select fold-specific frozen Base checkpoints; they are
+  not downstream relation-change or policy-success metrics.
