@@ -185,6 +185,29 @@ class ControlledCLaD(nn.Module):
             raise RuntimeError("CLaD core does not expose update_ema")
         update()
 
+    def ema_initialization_state(self) -> bool | None:
+        """Return non-parameter EMA state omitted by the original state_dict."""
+
+        if not hasattr(self.core, "_ema_initialized"):
+            return None
+        return bool(getattr(self.core, "_ema_initialized"))
+
+    def restore_ema_initialization_state(self, value: bool | None) -> None:
+        """Restore the original CLaD EMA guard after loading a resume state.
+
+        ``LatentDynamics._ema_initialized`` is a Python boolean, so PyTorch
+        does not serialize it in ``state_dict``.  Without this explicit step,
+        the first optimizer update after resume replaces the restored target
+        encoder with the online encoder before applying momentum.
+        """
+
+        if hasattr(self.core, "_ema_initialized"):
+            if not isinstance(value, bool):
+                raise ValueError("resume checkpoint is missing boolean ema_initialized state")
+            setattr(self.core, "_ema_initialized", value)
+        elif value is not None:
+            raise ValueError("resume checkpoint contains EMA state for a core without an EMA guard")
+
     @property
     def foresight_dim(self) -> int:
         return 2 * self.hidden_dim

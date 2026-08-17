@@ -84,27 +84,36 @@ def _average_precision(y_true: np.ndarray, score: np.ndarray) -> float | None:
         return None
     order = np.argsort(-score, kind="mergesort")
     labels = y_true[order]
+    sorted_score = score[order]
     positives = labels == 1
     total_positive = int(positives.sum())
     if total_positive == 0:
         return None
-    cumulative = np.cumsum(positives)
-    precision = cumulative / np.arange(1, len(labels) + 1)
-    return float((precision * positives).sum() / total_positive)
+    # Evaluate precision only after each complete equal-score group.  Ranking
+    # tied examples by their input order would make AP depend on JSONL order.
+    group_ends = np.r_[np.flatnonzero(np.diff(sorted_score)), len(sorted_score) - 1]
+    cumulative_positive = np.cumsum(positives)
+    true_positive = cumulative_positive[group_ends]
+    precision = true_positive / (group_ends + 1)
+    recall = true_positive / total_positive
+    return float(np.sum(np.diff(np.r_[0.0, recall]) * precision))
 
 
 def _best_f1(y_true: np.ndarray, score: np.ndarray, thresholds: Sequence[float]) -> tuple[float | None, float | None]:
     if y_true.size == 0 or np.unique(y_true).size < 2:
         return None, None
-    best = (0.0, float(thresholds[0]))
-    for threshold in thresholds:
+    ordered_thresholds = sorted(float(value) for value in thresholds)
+    best = (0.0, ordered_thresholds[0])
+    for threshold in ordered_thresholds:
         prediction = score >= float(threshold)
         tp = int(np.logical_and(prediction, y_true == 1).sum())
         fp = int(np.logical_and(prediction, y_true == 0).sum())
         fn = int(np.logical_and(~prediction, y_true == 1).sum())
         denominator = 2 * tp + fp + fn
         value = float(2 * tp / denominator) if denominator else 0.0
-        if value > best[0]:
+        # A conservative, deterministic tie break: choose the highest
+        # threshold among equally good validation F1 values.
+        if value > best[0] or (value == best[0] and float(threshold) > best[1]):
             best = (value, float(threshold))
     return best
 
@@ -197,15 +206,40 @@ def evaluate_relation_predictions(
     return result
 
 
-def evaluate_motion(prediction: Any, target: Any) -> dict[str, float | None]:
+def evaluate_motion(
+    prediction: Any,
+    target: Any,
+    *,
+    moving_threshold: float = 0.01,
+) -> dict[str, float | int | None]:
     prediction = np.asarray(prediction, dtype=np.float64).reshape(-1)
     target = np.asarray(target, dtype=np.float64).reshape(-1)
     if prediction.shape != target.shape:
         raise ValueError("motion prediction and target lengths differ")
+    if not np.isfinite(prediction).all() or not np.isfinite(target).all():
+        raise ValueError("motion prediction and target must be finite")
+    if float(moving_threshold) < 0.0:
+        raise ValueError("moving_threshold must be non-negative")
     if prediction.size == 0:
-        return {"mae": None, "rmse": None}
+        return {
+            "mae": None,
+            "rmse": None,
+            "moving_count": 0,
+            "moving_mae": None,
+            "moving_rmse": None,
+            "moving_threshold": float(moving_threshold),
+        }
     error = prediction - target
-    return {"mae": float(np.mean(np.abs(error))), "rmse": float(np.sqrt(np.mean(error**2)))}
+    moving = np.abs(target) > float(moving_threshold)
+    moving_error = error[moving]
+    return {
+        "mae": float(np.mean(np.abs(error))),
+        "rmse": float(np.sqrt(np.mean(error**2))),
+        "moving_count": int(moving.sum()),
+        "moving_mae": float(np.mean(np.abs(moving_error))) if moving_error.size else None,
+        "moving_rmse": float(np.sqrt(np.mean(moving_error**2))) if moving_error.size else None,
+        "moving_threshold": float(moving_threshold),
+    }
 
 
 def no_change_fpr(logits: Any, targets: Any, masks: Any, thresholds: Sequence[float]) -> dict[str, float | None]:

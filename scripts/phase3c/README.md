@@ -63,6 +63,18 @@ Inspect `semantic_store/qa/orientation_contact_sheet.png` and
 create a new semantic-store version with both camera `vertical_flip` flags set
 to `true`; do not overwrite the completed store.
 
+After visual review, persist the human choice rather than relying only on a
+research-log sentence:
+
+```bash
+python -m scripts.phase3c.attest_camera_orientation \
+  --qa "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store/qa/determinism.json" \
+  --output "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store/qa/orientation_human_attestation.json" \
+  --reviewer phase3c-owner \
+  --external-choice configured \
+  --wrist-choice configured
+```
+
 ## Milestone 3: controlled CLaD
 
 `models/semantic_clad.py` wraps the original `baseline_code.LatentDynamics`
@@ -74,15 +86,18 @@ rejects dimension or non-finite-value mismatches.
 
 ## Milestone 5: training and analysis commands
 
-After the semantic store smoke passes, fill the paths in the three example
-configs and run them in this order on SSH:
+After the semantic store and manifest gates pass, run the versioned Base smoke,
+then the six-model Core smoke, before either full screen:
 
 ```bash
 python -m scripts.phase3c.run_base_clad \
-  --config configs/phase3c_base_screen_example_v1.json
+  --config configs/phase3c_base_smoke_example_v1.json
 
-python -m scripts.phase3c.train_core \
+python -m scripts.phase3c.run_core \
   --config configs/phase3c_core_smoke_example_v1.json
+
+python -m scripts.phase3c.run_base_clad \
+  --config configs/phase3c_base_screen_example_v1.json
 
 python -m scripts.phase3c.run_core \
   --config configs/phase3c_core_screen_example_v1.json
@@ -106,3 +121,7 @@ Metrics retain per-relation macros and additionally report horizontal
 (`left/right`), depth (`front/behind`), vertical (`above/below`), contact, and
 support family macros so inverse pairs are not presented as independent
 families of evidence.
+CUDA Core runs select bf16 when supported and otherwise fp16 with GradScaler;
+runtime manifests record the actual mode, deterministic settings, peak CUDA
+memory, and observed training throughput. Each orchestrated run also keeps one
+atomic `RUNNING.json`, `COMPLETED.json`, or `FAILED.json` marker.

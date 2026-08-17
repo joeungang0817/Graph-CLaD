@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+import json
 from unittest.mock import patch
 
 import numpy as np
@@ -37,6 +38,33 @@ class _FakeDecisionNCE:
 
 
 class Phase3CFeatureStoreTest(unittest.TestCase):
+    def test_human_orientation_attestation_requires_passing_qa(self):
+        import tempfile
+        from pathlib import Path
+        from scripts.phase3c.attest_camera_orientation import attest
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            qa = root / "qa.json"
+            output = root / "attestation.json"
+            qa.write_text(
+                json.dumps({
+                    "schema": "phase3c-camera-orientation-qa.v1",
+                    "status": "pass",
+                    "contact_sheet": "sheet.png",
+                }),
+                encoding="utf-8",
+            )
+            result = attest(
+                qa,
+                output,
+                reviewer="owner",
+                external_choice="configured",
+                wrist_choice="configured",
+            )
+            self.assertTrue(result["accepted_existing_semantic_store"])
+            self.assertTrue(output.exists())
+
     def test_camera_normalization_is_explicit_and_deterministic(self):
         image = np.arange(2 * 3 * 3, dtype=np.uint8).reshape(2, 3, 3)
         normalized = normalize_camera_image(image, channel_order="bgr", vertical_flip=True)

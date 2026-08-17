@@ -295,6 +295,8 @@ CLaD Stage 1 foresight residual로 다시 통합하고 원 latent prediction obj
 - mixed precision: CUDA에서 bf16 가능 여부를 검사하고, 불가능하면 fp16 + GradScaler;
   metric과 prediction 저장은 float32
 - seed별 deterministic flags와 실제 CUDA deterministic 상태를 runtime manifest에 기록
+- 모든 run은 원자적으로 `RUNNING.json`, `COMPLETED.json`, `FAILED.json` 중
+  하나만 유지하고, 실제 precision mode, peak CUDA memory, samples/sec를 기록한다.
 
 ---
 
@@ -319,6 +321,11 @@ CLaD Stage 1 foresight residual로 다시 통합하고 원 latent prediction obj
 - moving-scene(`max displacement > 0.01 m`) subset MAE
 - graph model에 한해 edge-level relation localization과 per-object displacement diagnostic
 - node/edge/action permutation sensitivity
+
+Test prediction artifact는 sample/relation당 한 행으로 저장하며 validation에서 고정한
+threshold, probability, prediction, target/valid/eligible, model/fold/seed와 episode identity를
+포함한다. 분석기는 candidate와 comparator의 sample/task/episode 집합이 정확히 같지 않으면
+중단하고 task outer, episode inner paired cluster bootstrap을 수행한다.
 
 ### 6.3 확대 gate
 

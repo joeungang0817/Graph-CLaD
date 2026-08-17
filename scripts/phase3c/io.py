@@ -6,6 +6,7 @@ import gzip
 import json
 import os
 import tempfile
+from datetime import datetime, timezone
 from collections.abc import Iterable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
@@ -161,3 +162,28 @@ def write_json(path: Path, value: Mapping[str, Any]) -> None:
     with atomic_json(path) as handle:
         json.dump(value, handle, ensure_ascii=False, indent=2, allow_nan=False)
         handle.write("\n")
+
+
+def set_run_state(root: Path, status: str, details: Mapping[str, Any]) -> Path:
+    """Atomically expose one unambiguous RUNNING/COMPLETED/FAILED marker."""
+
+    normalized = str(status).upper()
+    allowed = ("RUNNING", "COMPLETED", "FAILED")
+    if normalized not in allowed:
+        raise ValueError(f"unsupported run state: {status}")
+    root = Path(root)
+    root.mkdir(parents=True, exist_ok=True)
+    for name in allowed:
+        if name != normalized:
+            (root / f"{name}.json").unlink(missing_ok=True)
+    target = root / f"{normalized}.json"
+    write_json(
+        target,
+        {
+            "schema": "phase3c-run-state.v1",
+            "status": normalized.lower(),
+            "updated_at_utc": datetime.now(timezone.utc).isoformat(),
+            **dict(details),
+        },
+    )
+    return target

@@ -97,6 +97,36 @@ class Phase3CSemanticCLaDTest(unittest.TestCase):
         self.assertEqual(tuple(model.encode_foresight(batch).shape), (1, 8))
         self.assertEqual(model.core.last_kwargs, {"action_mask_ratio": 0.0})
 
+    def test_ema_initialization_guard_is_explicitly_restored(self):
+        if self.torch is None:
+            self.skipTest("torch is not installed in the local CPU environment")
+        import torch
+        import torch.nn as nn
+
+        from scripts.phase3c.models.semantic_clad import ControlledCLaD
+
+        class EmaCore(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.weight = nn.Parameter(torch.tensor(1.0))
+                self._ema_initialized = False
+
+            def update_ema(self):
+                self._ema_initialized = True
+
+        model = ControlledCLaD(
+            proprio_dim=16, vl_dim=4, hidden_dim=4, action_dim=42, core=EmaCore()
+        )
+        model.update_ema_after_optimizer_step()
+        state = model.state_dict()
+        restored = ControlledCLaD(
+            proprio_dim=16, vl_dim=4, hidden_dim=4, action_dim=42, core=EmaCore()
+        )
+        restored.load_state_dict(state)
+        self.assertFalse(restored.core._ema_initialized)
+        restored.restore_ema_initialization_state(model.ema_initialization_state())
+        self.assertTrue(restored.core._ema_initialized)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

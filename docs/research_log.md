@@ -1253,3 +1253,128 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   row SHA-256 (not gzip container bytes), records both raw hashes and row counts,
   and permits reuse of the existing semantic store only when they are exactly
   equivalent. A mismatch fails and requires investigation/rebuild.
+- Camera-orientation QA executed on SSH after the Phase3C hardening merge. The
+  automated report (`phase3c-camera-orientation-qa.v1`) returned `status=pass`:
+  all 9 sampled task/frame rows (3 tasks x 3 frames) reproduced identical
+  SHA-256 values for both external and wrist camera frames, and runtime plus all
+  recorded image conventions were `opengl`. The evaluated semantic-store
+  configuration used RGB order with `vertical_flip=false` for both cameras.
+  This establishes deterministic rendering and convention consistency, but the
+  report correctly remains `review_status=pending_human_orientation_choice`.
+  The generated `semantic_store/qa/orientation_contact_sheet.png` must be
+  visually checked before accepting the existing store for performance
+  training; if configured frames are upside down, change the flip convention
+  and regenerate the store before Base CLaD.
+- Human review of the orientation contact sheet subsequently passed. Across all
+  three tasks and sampled early/middle/late frames, the configured external
+  view consistently places the robot entering from the lower image boundary,
+  and the configured wrist view places the gripper/camera mount at the upper
+  boundary with the workspace below. Their vertically flipped alternatives
+  invert these stable scene cues. Freeze `vertical_flip=false` for both cameras
+  and reuse the existing 150-shard semantic store; no re-extraction is needed
+  for camera orientation.
+- The formal Phase3C builder-v2 candidate completed successfully on SSH. It
+  emitted 15,857 joined samples from 51,471 source samples with 900 boundary
+  drops, zero missing-right samples, zero hash mismatches, zero duplicates, and
+  zero invalid samples. All 16,757 candidate-left samples required the explicit
+  blank-demo-key repair policy (`explicit_else_demo_id_else_episode_suffix`),
+  confirming why the old one-off fixed manifest had to be provenance-checked.
+  The candidate output SHA-256 was
+  `4aa42bbd16afe7c446a1cf5ca78d1588329246f896f68f2d3d29d72fe2ed97d7`.
+  Relation support remained eligible for left/right, front/behind,
+  above/below, and contact; `on` had no positives and remained excluded.
+  Migration attestation against the existing fixed manifest is the next gate.
+- Migration attestation completed with `status=pass` and
+  `equivalent_ordered_canonical_rows=true`. The legacy fixed manifest and the
+  builder-v2 candidate both contain 15,857 rows with the same first sample
+  (`task0_demo0_prev0_cur6_next12_tau6`), last sample
+  (`task2_demo49_prev122_cur128_next134_tau6`), and canonical-row SHA-256
+  `31d127ee98bfde4404221a889b5b417aa5ee5c5f97e8cd71fe5f9d15e788feb2`.
+  Their raw gzip hashes differ because they are separate serialized artifacts,
+  but the ordered sample content is identical. The attestation decision permits
+  the existing immutable fixed manifest to remain the semantic-store source;
+  no semantic-store rebuild is required.
+- Pre-training re-audit with approximately 12 hours remaining found that the
+  data-side gates are now reusable (formal causal join, canonical-row
+  attestation, deterministic/upright two-camera semantic store), but the
+  performance-training code still has blockers. Base resume reloads EMA target
+  weights without restoring the non-state-dict `_ema_initialized` flag, so the
+  first post-resume update can overwrite the restored EMA history. The custom
+  AP implementation is rank-based and does not match the specified
+  sklearn-style tie grouping, while F1 threshold ties retain the lowest rather
+  than the specified highest threshold. The paired analyzer resamples samples
+  directly instead of episodes inside task and silently intersects unequal
+  sample sets. The current core smoke config exercises only RelMPNN, not all six
+  candidates. Train-only graph normalization also includes invalid continuous
+  values represented as zeros when fitting moments. These issues must be fixed
+  and regression-tested before Core performance results are interpreted.
+- Remaining protocol gaps include an overall-fail action-timing report (one
+  frozen-tolerance test outlier), timing probes restricted to the first three
+  transitions of every demo, absent mixed-precision/deterministic-runtime
+  reporting, and a prediction artifact that is sample-vector/logit based rather
+  than the preregistered per-sample-per-relation probability rows. Latest local
+  Phase3C tests report 43 collected, 24 passed and 19 torch-dependent skipped;
+  the merged SSH environment still needs the full suite. Given one GPU, the
+  original 3 x 25,000-update Base budget plus 18 Core runs of up to 10,000
+  updates is not credible within 12 hours. A versioned deadline-constrained
+  budget and prioritized seed-0 contrast are required after representative
+  throughput smoke; any incomplete controls must be reported as pending rather
+  than implied complete.
+
+## 2026-08-17 — Base v3 smoke result and pre-full-training hardening
+
+- The validation-selecting Base v3 smoke completed for `test_task0`, seed 0,
+  100 updates. It selected update 100 with validation Stage-1 loss
+  `0.05363930849027464` over 1,542 validation rows and wrote independently
+  hashed `best.pt` and `last.pt` checkpoints. Runtime was 236.548 seconds and
+  mean train loss over the 100 updates was `0.2123573961108923`. This confirms
+  the v3 validation/checkpoint path executes on the SSH GPU.
+- That v3 checkpoint is now classified as **pre-hardening smoke evidence only**.
+  The subsequent audit found that invalid node/edge fill values entered the
+  train normalization moments and that the original CLaD EMA initialization
+  guard is not part of a PyTorch `state_dict`. Because the input normalization
+  contract and resume semantics changed, Base must be rerun under the new v4
+  output root before Core smoke or performance training. The v3 checkpoint
+  must not be resumed or presented as the final Base checkpoint.
+- Base resume now stores and restores the original CLaD
+  `_ema_initialized` guard explicitly, preventing the first update after a
+  resume from overwriting restored EMA target encoders. Train-only graph
+  normalization now fits position moments only on `position_valid=1` nodes and
+  geometry moments only on `distance_valid=1` edges; validity/type channels
+  remain unnormalized.
+- Metric hardening now groups equal-score examples before calculating average
+  precision, selects the highest validation threshold on equal F1, reports
+  moving-scene MAE/RMSE for target displacement strictly greater than 0.01 m,
+  and retains relation-family macro reporting. Test prediction artifacts are
+  now one row per sample/relation with probability, validation-fixed threshold,
+  prediction, eligibility, validity, model/fold/seed identity, and motion
+  values. The analyzer pivots these rows without re-optimizing test thresholds.
+- Paired analysis now requires exactly equal sample-ID sets and matching task
+  and episode identity. Its hierarchical bootstrap samples tasks first and
+  episodes within each sampled task, retaining all transitions of the sampled
+  episode; it no longer silently intersects artifacts or resamples individual
+  transitions as if independent.
+- The formal Core smoke config now runs all six candidates on `test_task0`,
+  seed 0, for 100 updates with explicit parameter matching against RelMPNN-128.
+  Base and Core smoke outputs moved to v4 roots. CUDA Core training chooses bf16
+  when available and otherwise fp16 with GradScaler; runtime artifacts record
+  deterministic settings, peak allocated CUDA memory, throughput, and actual
+  precision mode. Orchestrators keep mutually exclusive RUNNING, COMPLETED, or
+  FAILED markers for each run.
+- Action-timing QA now defaults to uniform early/middle/late transition probes
+  instead of only transitions 0, 1, and 2, and separately counts initial-step
+  versus non-initial tolerance failures. The prior 1.835 test outlier remains
+  recorded; it is not deleted or silently relaxed. A v2 uniform-probe rerun is
+  required as a sensitivity report before final interpretation.
+- The automated camera QA still remains distinct from the human decision. A
+  versioned camera-orientation attestation command now hashes the passing QA
+  JSON and records the configured-versus-flipped choice for external and wrist
+  cameras. The already reviewed contact sheet supports `configured` for both,
+  which accepts the existing semantic store without re-extraction once the
+  attestation JSON is emitted on SSH.
+- Post-hardening local verification collected 53 Phase3C tests: 32 passed and
+  21 torch-dependent tests were skipped because the Windows runtime has no
+  PyTorch. All Phase3C Python files compiled, both screen configs parsed as
+  JSON, and `git diff --check` reported no patch errors. The next mandatory
+  gate is the complete torch-enabled suite on SSH; only after it passes should
+  Base v4 smoke and then the six-model Core v4 smoke run.

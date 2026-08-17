@@ -1,9 +1,18 @@
 import unittest
 
-from scripts.phase3c.validate_action_timing import action_timing_status, max_abs_state_error
+from scripts.phase3c.validate_action_timing import (
+    _probe_steps,
+    action_timing_status,
+    max_abs_state_error,
+)
 
 
 class Phase3CActionTimingTest(unittest.TestCase):
+    def test_uniform_probe_spans_trajectory(self):
+        self.assertEqual(_probe_steps(101, 3), [0, 50, 99])
+        self.assertEqual(_probe_steps(4, 10), [0, 1, 2])
+        self.assertEqual(_probe_steps(101, 3, "head"), [0, 1, 2])
+
     def test_max_abs_state_error(self):
         self.assertAlmostEqual(max_abs_state_error([1.0, 2.0], [1.25, 1.5]), 0.5)
 
