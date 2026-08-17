@@ -4,7 +4,12 @@ import unittest
 
 import numpy as np
 
-from scripts.phase3c.metrics import evaluate_motion, evaluate_relation_predictions, no_change_fpr
+from scripts.phase3c.metrics import (
+    aggregate_relation_families,
+    evaluate_motion,
+    evaluate_relation_predictions,
+    no_change_fpr,
+)
 
 
 class Phase3CMetricsTest(unittest.TestCase):
@@ -37,6 +42,18 @@ class Phase3CMetricsTest(unittest.TestCase):
         self.assertEqual(result["threshold_source"], "validation_fixed")
         self.assertEqual(result["per_relation"]["left"]["threshold"], 0.9)
         self.assertEqual(no_change_fpr([[0.0], [2.0]], [[0], [0]], [[1], [1]], [0.5])["mean"], 1.0)
+
+    def test_inverse_relations_are_reported_once_per_family(self):
+        report = aggregate_relation_families(
+            {
+                "left": {"valid_count": 10, "pr_auc": 1.0, "f1": 0.8, "brier": 0.1, "ece_10bin": 0.2},
+                "right": {"valid_count": 10, "pr_auc": 0.0, "f1": 0.4, "brier": 0.3, "ece_10bin": 0.4},
+                "contact": {"valid_count": 5, "pr_auc": 0.75, "f1": 0.5, "brier": 0.2, "ece_10bin": 0.1},
+            }
+        )
+        self.assertAlmostEqual(report["per_family"]["horizontal"]["pr_auc"], 0.5)
+        self.assertAlmostEqual(report["family_macro_pr_auc"], 0.625)
+        self.assertEqual(report["per_family"]["horizontal"]["relations"], ["left", "right"])
 
 
 if __name__ == "__main__":

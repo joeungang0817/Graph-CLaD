@@ -8,6 +8,66 @@ from typing import Any
 import numpy as np
 
 
+RELATION_FAMILIES = {
+    "horizontal": ("left", "right"),
+    "depth": ("front", "behind"),
+    "vertical": ("above", "below"),
+    "contact": ("contact",),
+    "support": ("on",),
+}
+
+
+def aggregate_relation_families(per_relation: dict[str, Any]) -> dict[str, Any]:
+    """Average inverse relations once per semantic family.
+
+    The ordinary relation macro is retained for compatibility.  This report
+    prevents left/right, front/behind, and above/below from being presented as
+    six independent families of evidence.
+    """
+
+    per_family: dict[str, Any] = {}
+    metric_names = ("pr_auc", "f1", "brier", "ece_10bin")
+    for family, members in RELATION_FAMILIES.items():
+        present = [name for name in members if name in per_relation]
+        if not present:
+            continue
+        entry: dict[str, Any] = {
+            "relations": present,
+            "evaluable_relations": [],
+            "relation_valid_count_sum": int(
+                sum(int(per_relation[name].get("valid_count", 0)) for name in present)
+            ),
+        }
+        for metric in metric_names:
+            values = [
+                float(per_relation[name][metric])
+                for name in present
+                if per_relation[name].get(metric) is not None
+            ]
+            entry[metric] = float(np.mean(values)) if values else None
+        entry["evaluable_relations"] = [
+            name for name in present if per_relation[name].get("pr_auc") is not None
+        ]
+        per_family[family] = entry
+
+    def family_macro(metric: str) -> float | None:
+        values = [
+            float(entry[metric])
+            for entry in per_family.values()
+            if entry.get(metric) is not None
+        ]
+        return float(np.mean(values)) if values else None
+
+    return {
+        "per_family": per_family,
+        "family_macro_pr_auc": family_macro("pr_auc"),
+        "family_macro_f1": family_macro("f1"),
+        "family_macro_brier": family_macro("brier"),
+        "family_macro_ece_10bin": family_macro("ece_10bin"),
+        "family_policy": "inverse-pair-mean-then-family-macro",
+    }
+
+
 def _sigmoid(value: Any) -> np.ndarray:
     logits = np.asarray(value, dtype=np.float64)
     if not np.isfinite(logits).all():
@@ -124,7 +184,7 @@ def evaluate_relation_predictions(
             brier_values.append(brier)
         if ece is not None:
             ece_values.append(ece)
-    return {
+    result = {
         "per_relation": per_relation,
         "macro_pr_auc": float(np.mean(pr_values)) if pr_values else None,
         "macro_f1": float(np.mean(f1_values)) if f1_values else None,
@@ -133,6 +193,8 @@ def evaluate_relation_predictions(
         "valid_rows": int(mask.sum()),
         "threshold_source": "validation_fixed" if fixed_thresholds is not None else "optimized_on_rows",
     }
+    result.update(aggregate_relation_families(per_relation))
+    return result
 
 
 def evaluate_motion(prediction: Any, target: Any) -> dict[str, float | None]:

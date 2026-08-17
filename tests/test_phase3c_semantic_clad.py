@@ -67,6 +67,8 @@ class Phase3CSemanticCLaDTest(unittest.TestCase):
         self.assertEqual(tuple(features.shape), (2, 16))
         model.update_ema_after_optimizer_step()
         self.assertEqual(model.core.update_calls, 1)
+        with self.assertRaises(ValueError):
+            model.training_loss(batch, action_mask_ratio=1.1)
 
     def test_future_targets_are_not_required_for_foresight(self):
         if self.torch is None:

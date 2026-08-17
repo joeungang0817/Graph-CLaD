@@ -144,15 +144,22 @@ def analyze(config: dict[str, Any]) -> dict[str, Any]:
     baseline_model = str(config.get("baseline_model", "C3-Sem-PastAct"))
     comparison = None
     if primary_model in loaded and baseline_model in loaded:
+        relation_difference = hierarchical_bootstrap_difference(
+            loaded[primary_model], loaded[baseline_model],
+            metric="macro_pr_auc", replicates=int(config.get("replicates", 2000)), seed=int(config.get("seed", 0)),
+        )
+        family_difference = hierarchical_bootstrap_difference(
+            loaded[primary_model], loaded[baseline_model],
+            metric="family_macro_pr_auc", replicates=int(config.get("replicates", 2000)), seed=int(config.get("seed", 0)),
+        )
         comparison = {
             "candidate": primary_model,
             "baseline": baseline_model,
-            "relation": hierarchical_bootstrap_difference(
-                loaded[primary_model], loaded[baseline_model],
-                metric="macro_pr_auc", replicates=int(config.get("replicates", 2000)), seed=int(config.get("seed", 0)),
-            ),
+            "relation": relation_difference,
+            "relation_macro": relation_difference,
+            "family_macro": family_difference,
         }
-    result = {"schema": "phase3c-core-analysis.v1", "status": "completed", "models": scored, "comparison": comparison}
+    result = {"schema": "phase3c-core-analysis.v2", "status": "completed", "models": scored, "comparison": comparison}
     output = config.get("output")
     if output:
         write_json(Path(os.path.expandvars(str(output))).expanduser(), result)

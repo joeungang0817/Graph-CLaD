@@ -1,6 +1,6 @@
 {
   "semantic_feature_store": {
-    "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz",
+    "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
     "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
     "hdf5_by_task": {
       "0": "/absolute/path/to/task0/demo.hdf5"

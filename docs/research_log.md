@@ -965,3 +965,291 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   17 passed and 14 torch-dependent tests skipped locally; compilation and
   `git diff --check` passed. The new loader test must run in SSH PyTorch after
   the correction is pulled.
+- On SSH, both editable install commands completed and the pre-install pip
+  snapshot was written, but the immediate import check still raised
+  `ModuleNotFoundError: No module named 'libero'`. This indicates an editable
+  package path/installation visibility issue rather than a joined-manifest
+  failure; installed torch remained in the environment while DecisionNCE
+  dependencies changed `timm` to 0.9.12 and installed its runtime packages.
+- The follow-up import check showed `import libero` resolving as a namespace
+  package (`__file__ is None`), which is not itself a failure; the nested
+  `libero.libero` package must be checked. DecisionNCE import reached the
+  official `clip` module but failed because the current setuptools removed the
+  legacy `pkg_resources` module. The immediate compatibility fix is a
+  setuptools version below 81, followed by nested LIBERO and DecisionNCE import
+  checks.
+- The SSH compatibility checks then passed: `DecisionNCE` imports after pinning
+  setuptools below 81, and `from libero.libero import get_libero_path` resolves
+  BDDL to `/home/ubuntu/external-src/LIBERO/libero/libero/bddl_files`. The
+  `pkg_resources` deprecation warning is emitted by the pinned legacy CLIP
+  dependency and is non-fatal. LIBERO initialized its config at
+  `/home/ubuntu/.libero/config.yaml`; its default dataset directory is still
+  empty, so the official `libero_spatial` HDF5 download is the next gate.
+- The official `libero_spatial` dataset download then completed and produced
+  ten demo HDF5 files under
+  `/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets`.
+  The task-id-to-file mapping is not inferred from alphabetical order; it will
+  be obtained from LIBERO's benchmark task metadata before the semantic config
+  is written.
+- LIBERO benchmark metadata was queried successfully with the pinned source.
+  The first three task IDs are now fixed: task 0 is
+  `pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate`,
+  task 1 is `pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate`,
+  and task 2 is `pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate`.
+  These names match the corresponding downloaded HDF5 demo filenames exactly;
+  this removes the task-order ambiguity for the Phase 3C semantic-store config.
+- The first Phase 3C action/state timing smoke was blocked before data access by
+  `ModuleNotFoundError: No module named 'h5py'` in the SSH virtual environment.
+  This is an environment dependency gap for reading the already-downloaded HDF5
+  files, not a protocol or dataset failure; install `h5py` in `.venv` and rerun
+  the unchanged smoke command.
+- After adding `h5py`, the timing smoke reached LIBERO environment construction
+  and exposed the next omitted runtime dependency: `ModuleNotFoundError: No
+  module named 'robosuite'`. The LIBERO dependency manifest pins
+  `robosuite==1.4.0`; install that package in the existing SSH `.venv` without
+  reinstalling the full legacy requirements (which would risk replacing the
+  working Torch environment), then rerun the same smoke command.
+- `robosuite==1.4.0` installed successfully, but its import now stops in the
+  OpenCV renderer because the Ubuntu host lacks the system library
+  `libGL.so.1`. The preceding `macros_private` message is handled by
+  robosuite's fallback import; the actionable failure is the final OpenCV
+  `ImportError`. Install the host `libgl1` package (or use headless OpenCV if
+  sudo is unavailable) and rerun the import check.
+- After `libgl1` was added, the import progressed to MuJoCo's headless EGL
+  backend and failed with `OpenGL.EGL` reporting a null platform. This is an
+  EGL initialization/configuration issue, not a missing Python module. Set
+  `MUJOCO_GL=egl` and `PYOPENGL_PLATFORM=egl` before importing LIBERO and
+  ensure the host has the runtime EGL/GLES libraries (`libegl1`, `libgles2`);
+  retain OSMesa only as a slower fallback if the NVIDIA EGL path is unavailable.
+- With the EGL environment active, the timing validator reached HDF5 opening
+  and failed because the configured task-0 demo file was absent at
+  `/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets`.
+  This confirms the Python/simulator imports are now past the previous gates;
+  the next action is to locate or redownload the official `libero_spatial`
+  HDF5 files into that exact artifact directory. Installing the full legacy
+  LIBERO requirements is not a substitute and risks changing the working
+  Torch environment.
+- The subsequent Hugging Face download completed all 10 `libero_spatial` files
+  successfully. LIBERO's downloader stores them one level deeper than the
+  parent download directory, at
+  `/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial`;
+  the validator's previous paths omitted this `libero_spatial` component. The
+  consolidated dependency command also hit an optional `robomimic` build failure
+  because `egl_probe` requires system `cmake`; this is separate from the HDF5
+  download and is not needed for the immediate state-replay validator unless a
+  later import explicitly requires `robomimic`.
+- The shell subsequently showed an empty `libero_spatial` directory despite the
+  downloader having just reported 10 files and a complete dataset. Treat this as
+  a path/persistence discrepancy: verify the canonical path with `pwd -P`,
+  `readlink -f`, recursive `find`, and disk usage before downloading again.
+- The canonical path check confirmed the discrepancy is real: the directory is
+  `/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial`
+  and occupies only 4.0K, with zero HDF5 files anywhere under the Phase 3C
+  artifact root. The next recovery is a targeted Hugging Face download of only
+  task 0/1/2 HDF5 files, followed by an immediate count and size check, rather
+  than another unverified full-suite download.
+- The targeted download produced the three required HDF5 files (approximately
+  509MB, 590MB, and 672MB). The timing smoke now reaches LIBERO simulator reset,
+  but EGL cannot open `/dev/dri/renderD129` because the SSH user lacks render
+  device permission. This is an OS group/ACL issue; add the user to the
+  `render` group and start a new group session before retrying GPU EGL.
+- After the render-group change, the device permission error disappeared, but
+  Mesa EGL still failed to create the required `EGL_PLATFORM_DEVICE_EXT` display
+  (`egl: failed to create dri2 screen`). This is a driver/backend limitation,
+  not a dataset problem. For the no-image timing smoke, use MuJoCo's OSMesa
+  software backend; reserve GPU EGL troubleshooting for the later semantic
+  image feature extraction stage.
+- OSMesa initialization then succeeded, exposing a separate simulator API
+  mismatch: `robosuite==1.4.0` calls the legacy `mujoco.MjData.qM` field, while
+  the unconstrained install had selected `mujoco==3.11.0`, where that field is
+  absent. Pin MuJoCo to the 2.3.x line (use `mujoco==2.3.7`) without changing
+  the Torch stack, then rerun the same OSMesa timing smoke.
+- The SSH environment was corrected to `mujoco==2.3.7` and the timing smoke was
+  relaunched with `MUJOCO_GL=osmesa` and `PYOPENGL_PLATFORM=osmesa`. The run has
+  reached active validation without a traceback; remaining robosuite private-
+  macro and Gym notices are non-fatal warnings. Await the final JSON report.
+- The OSMesa action-timing smoke completed with no runtime errors over 150
+  transitions (`errors=[]`, execution `status=pass`). Because no tolerance was
+  supplied, `within_tolerance` is correctly `null`; the measured mean
+  max-absolute state error is `0.0349203188` and the worst transition is
+  `0.3311892104`. These values are diagnostic only until task/demo-level error
+  quantiles and the train/validation-only freeze rule are inspected; do not set
+  the semantic-store tolerance directly to the global maximum yet.
+- The detailed report shows the first HDF5/task has substantially larger
+  outliers: mean `0.0450849717`, maximum `1.8350234838` at `demo_45` step 0,
+  followed by `0.9970277089` at `demo_18` step 0. The second task peaks at
+  `0.2457675948` (mean `0.0151608390`) and the third at `0.3311892104` (mean
+  `0.0349203188`). These outliers require split-aware train/validation
+  quantiles and should not be silently absorbed by a global max tolerance.
+- Split-aware aggregation gives train `n=339`, mean `0.0286199658`, p95
+  `0.2236581006`, p99 `0.3019911628`, max `0.9970277089`; validation `n=57`,
+  mean `0.0297684994`, p95 `0.1828297597`, p99 `0.2224259152`, max
+  `0.2267141653`; test `n=54`, mean `0.0532582699`, p95 `0.1197738957`, p99
+  `0.1233433740`, max `1.8350234838`. Thus a frozen tolerance near `1.05`
+  would cover all observed train/validation transitions while flagging the
+  isolated test outlier; this is a candidate pending the explicit tolerance
+  rerun, not yet a final config value.
+- Interpretation note: timing QA restores recorded `state[t]`, executes the
+  recorded `action[t]` once, and compares the resulting simulator flattened
+  state against recorded `state[t+1]`. The reported error is the maximum
+  absolute difference over mixed state coordinates (time, joint positions,
+  velocities, and related simulator state), not a model metric. `tolerance`
+  is the allowed maximum for this QA gate; `1.05` is a conservative candidate
+  driven by a train outlier near `0.997`, not evidence of high simulator
+  fidelity. Large errors indicate possible action/state indexing, controller
+  internal-state, action scaling, or simulator-version mismatch. They do not
+  directly invalidate labels created by direct state restoration, but they
+  weaken confidence in action-conditioned temporal alignment.
+- Frozen-tolerance rerun (`1.05`) passed all 150 transitions for task 1 and all
+  150 for task 2. Task 0 had 149/150 within tolerance and one test transition
+  outside (`demo_45`, error `1.8350234838`); its report and the batch report are
+  therefore `fail` by design. Train/validation remain covered by the frozen
+  threshold, while the isolated test outlier is retained as an explicit QA
+  finding rather than used to inflate tolerance.
+- Terminology clarification: a DecisionNCE semantic feature-store **smoke** is
+  a small, non-training preflight. It restores a few official LIBERO states,
+  renders the two configured camera views, applies DecisionNCE-P image and task
+  language encoding, and checks camera keys/orientation, embedding shape,
+  finite values, checkpoint provenance, deterministic repeatability, and frozen
+  state-restore tolerance. It creates a tiny artifact only to validate the
+  preprocessing contract; the full feature store later processes every unique
+  `(task, demo, step)` required by the joined manifest. This is needed because
+  Phase 2D graph/action artifacts do not themselves contain the semantic image
+  embeddings expected by the controlled CLaD input path.
+- Restore rationale clarification: earlier geometric/action graph experiments
+  consumed already-materialized Phase 2D graph tensors, so no simulator render
+  or state restore was needed at model-input time. The semantic CLaD control now
+  needs image/text embeddings aligned to the exact graph timestamps; because
+  Phase 2D JSONL contains no RGB frames or DecisionNCE features, the official
+  HDF5 state must be restored to render the matching `t-6`, `t`, and `t+6`
+  observations. This is an input-alignment/data-preparation step, not a change
+  to the original CLaD loss or backbone.
+- Camera-input distinction: raw RGB is not an intrinsic requirement of the
+  CLaD temporal-dynamics core. In the current C3-Sem-PastAct control, RGB is an
+  upstream source for frozen DecisionNCE visual-language embeddings, so the
+  semantic branch must render the two configured camera views from official
+  HDF5 states. C3-SceneSet-PastAct, C3-Pair-PastAct,
+  C3-GeomMPNN-PastAct, C3-RelPool-PastAct, and C3-RelMPNN-PastAct operate on
+  graph/proprioceptive/action features and remain camera-free. Thus
+  the camera requirement belongs to the chosen semantic input path and its
+  provenance/alignment check, not to every CLaD or graph model.
+- Semantic feature-store smoke attempt stopped before rendering with
+  `joined manifest contains no frame keys`. The preceding filter explicitly
+  reported `smoke records: 0`, so this is an empty derived-manifest failure,
+  not a DecisionNCE, camera, or CLaD model failure. The likely cause is a demo
+  key spelling mismatch such as `demo0` versus the HDF5/manifest convention
+  `demo_0`. Rebuild the smoke manifest by selecting the first actual task-0
+  `demo_key` from the full joined manifest and require a nonzero count before
+  rerunning extraction.
+- Follow-up: the rebuilt filter printed a blank `selected demo` and 4,468
+  records, indicating that the joined records may carry an empty `demo_key`;
+  this is not a valid one-demo smoke selection. Do not run extraction on this
+  file. Inspect `episode_id`/`demo_key` first, then derive a single HDF5 group
+  key (for example `demo_0`) from a valid episode if the upstream field is
+  missing, and preserve the corrected key in the smoke manifest.
+- Code correction: `scripts/phase3c/build_joined_manifest.py` now resolves a
+  missing/blank `demo_key` from `demo_id` or an episode suffix such as
+  `task0_demo0 -> demo_0`, and emits the repaired key in the joined record.
+  A regression test was added. The already-existing joined artifact must be
+  rebuilt after this patch; the old artifact remains invalid for semantic
+  feature extraction because its demo keys are blank.
+- Semantic feature-store smoke completed successfully for the corrected
+  `task0_demo0 -> demo_0` one-episode manifest. Output status was `completed`,
+  with one shard and DecisionNCE feature dimension `1024`. This confirms the
+  HDF5 state restore, two configured camera views, DecisionNCE-P image/text
+  encoding, shard writing, and provenance path are operational for the smoke
+  case; it is not yet a full-dataset extraction or model-training result.
+- Full-store check after the smoke reported that
+  `phase3c_oracle_graph_clad_v1/semantic_store/manifest.json` or
+  `semantic_store/0/demo_0.npz` is absent. Therefore only the one-shard smoke
+  artifact is confirmed so far; existing full shards, if any, must be located
+  and their manifest/source checked before C3 training.
+- Operational clarification: generating `semantic_store_full_config.json` does
+  not validate or read the fixed joined manifest; it only writes configuration
+  paths. Therefore step 2 can report success even when step 1 has not created
+  `joined_manifest_full_demo_fixed.jsonl.gz`. Full extraction remains pending
+  until the manifest-repair step and the semantic-store command both complete.
+- Full semantic feature-store extraction was started on SSH using the repaired
+  full joined manifest and `semantic_store_full_config.json`. DecisionNCE RN50
+  loaded successfully; repeated LIBERO task-order and Gym/robosuite warnings
+  observed during environment creation are non-fatal so far. Final completion
+  status and shard count are pending.
+- The SSH terminal output for the full extraction was not retained in the
+  visible scrollback; final status is therefore to be recovered from the
+  immutable output `semantic_store/manifest.json` and shard inventory rather
+  than rerunning the extraction blindly.
+- Full semantic feature-store extraction completed successfully. Artifact
+  verification reported `status=completed`, `manifest shards=150`,
+  `actual npz files=150`, `feature_dim=1024`, and the expected
+  `0/demo_0.npz` shard exists. The full two-camera DecisionNCE store is now
+  available for the controlled CLaD baseline and core model screen.
+- Pre-training audit conclusion: the 100-update technical smoke may be used to
+  test executability, but full performance training is not yet protocol-ready.
+  Blocking discrepancies are (1) semantic extraction wrote camera inventory
+  only, while the design requires an orientation contact sheet and determinism
+  report; (2) action-timing QA remains overall `fail` because task-0 test
+  `demo_45@0` exceeded the frozen tolerance; (3) the corrected demo-key
+  manifest/config is an ad-hoc SSH artifact while the builder fix and regression
+  test remain local/unverified; and (4) base CLaD training currently saves only
+  `last.pt`, whereas the frozen plan specifies selection by minimum validation
+  Stage-1 loss.
+- Additional audit findings: core budget is inconsistent across plan/config
+  (10,000 versus 3,000 updates), planned AMP/deterministic/runtime reporting and
+  artifact/end-to-end tests are absent, example configs still point to the old
+  blank-demo manifest, and environment commits/package pins are not enforced
+  by code. Scientifically, oracle graph versus RGB semantic CLaD is not an
+  information-matched architecture-only contrast; inverse relation pairs
+  should not be treated as independent evidence, `on` is unsupported, and a
+  final action ablation plus more than seed 0 is required for strong claims.
+- Camera-orientation audit: vertical image flipping is a real upstream
+  convention issue, not merely a hypothetical wrapper bug. Official robosuite
+  1.4.0 defaults to `IMAGE_CONVENTION="opengl"`, while the OpenCV convention
+  is the explicitly selected unflipped alternative. The current Phase3C
+  config sets `vertical_flip=false`, but the extractor does not inspect or
+  override robosuite's upstream convention and therefore this flag alone does
+  not prove that stored frames are upright. The completed semantic-store
+  extraction is consequently an extraction-success result, not yet a visual
+  orientation-QA pass. Before performance training, inspect HDF5 convention
+  metadata and runtime macro values and generate a representative contact
+  sheet/determinism check; regenerate the store only if that check finds a
+  mismatch.
+- Camera-convention metadata check on SSH: robosuite runtime reported
+  `IMAGE_CONVENTION=opengl`, and all three Phase3C LIBERO-Spatial HDF5 files
+  reported `macros_image_convention=opengl`. Thus there is no recording-versus-
+  replay convention mismatch for these files. This does not establish that the
+  arrays are upright for a conventional vision encoder: both sides use the
+  native OpenGL convention, while the current extractor applies no corrective
+  flip (`vertical_flip=false`). A rendered contact sheet remains the decisive
+  gate. The accompanying `libEGL` DRI2/KMS software-renderer fallback warnings
+  did not prevent the metadata check and are treated as non-fatal.
+- The pre-fix Base CLaD 100-update three-fold smoke completed on SSH under
+  schema `phase3c-base-clad-run.v2`. All losses were finite and runtimes were
+  approximately 74.1s, 36.9s, and 38.2s for held-out tasks 0, 1, and 2. These
+  runs reported mean-last-100 losses 0.212357, 0.202391, and 0.194557,
+  respectively. The fixed joined-manifest SHA-256 was
+  `3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd`.
+  These
+  artifacts are retained only as GPU executability evidence because they save
+  `last.pt` and perform no validation checkpoint selection; they are not valid
+  base checkpoints for the Phase3C core screen.
+- Phase3C pipeline hardening implemented locally pending SSH verification:
+  the canonical builder now repairs blank demo keys and emits causal-join v2
+  provenance; all Phase3C example configs point to
+  `joined_manifest_full_demo_fixed.jsonl.gz`; camera QA renders configured and
+  vertically flipped contact-sheet alternatives plus repeat-render hashes;
+  Base CLaD selects `best.pt` by minimum validation Stage-1 loss while keeping
+  `last.pt` for resume; Core uses the frozen 10,000-update maximum with its own
+  best/resume split; completed runners verify artifact hashes; and metrics now
+  report inverse-pair-aware relation-family macros alongside per-relation
+  macros. Dependency-light local tests pass, while torch-dependent trainer and
+  resume tests remain to be executed on the SSH environment.
+- New Base/Core smoke and full-screen configs use `*_v3` output roots, so the
+  old v2 `last.pt` smoke artifacts cannot be mistaken for resumable v3 runs or
+  overwritten by the new trainers. Core rejects any base checkpoint that is
+  not explicitly schema v3 and `kind=validation_best`.
+- To avoid silently relabeling the one-off fixed gzip as builder output, a
+  streaming migration-attestation command was added. It compares the existing
+  fixed manifest with a fresh builder-v2 candidate using ordered canonical JSON
+  row SHA-256 (not gzip container bytes), records both raw hashes and row counts,
+  and permits reuse of the existing semantic store only when they are exactly
+  equivalent. A mismatch fails and requires investigation/rebuild.

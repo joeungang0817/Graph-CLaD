@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import gzip
+import hashlib
 import json
 import tempfile
 import unittest
@@ -160,6 +161,53 @@ class Phase3CJoinContractTest(unittest.TestCase):
         self.assertEqual(report["status"], "pass")
         self.assertEqual(report["counters"]["ignored_other_tau_samples"], 4)
         self.assertEqual(report["counters"]["joined_samples"], 1)
+
+    def test_join_repairs_blank_demo_key_from_episode_id(self):
+        graph0 = _graph(0, on=False)
+        graph6 = _graph(6, on=False)
+        graph12 = _graph(12, on=True)
+        samples = [
+            _sample(0, graph0, graph6, action_offset=10.0),
+            _sample(6, graph6, graph12, action_offset=20.0),
+        ]
+        for sample in samples:
+            sample.pop("demo_key")
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "task.jsonl.gz"
+            output = root / "joined.jsonl.gz"
+            qa = root / "qa.json"
+            _write_demo(source, samples)
+            report = build_joined_manifest([source], output, qa)
+            with gzip.open(output, "rt", encoding="utf-8") as handle:
+                joined = [json.loads(line) for line in handle if line.strip()]
+
+        self.assertEqual(report["status"], "pass")
+        self.assertEqual(report["contract"], "phase3c-causal-join.v2")
+        self.assertEqual(report["counters"]["repaired_blank_demo_keys"], 2)
+        self.assertEqual(len(joined), 1)
+        self.assertEqual(joined[0]["demo_key"], "demo_0")
+
+    def test_completed_join_artifact_is_immutable(self):
+        graph0 = _graph(0, on=False)
+        graph6 = _graph(6, on=False)
+        graph12 = _graph(12, on=True)
+        samples = [
+            _sample(0, graph0, graph6, action_offset=10.0),
+            _sample(6, graph6, graph12, action_offset=20.0),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "task.jsonl.gz"
+            output = root / "joined.jsonl.gz"
+            qa = root / "qa.json"
+            _write_demo(source, samples)
+            first = build_joined_manifest([source], output, qa)
+            before = output.read_bytes()
+            with self.assertRaises(FileExistsError):
+                build_joined_manifest([source], output, qa)
+            self.assertEqual(output.read_bytes(), before)
+            self.assertEqual(first["output_sha256"], hashlib.sha256(before).hexdigest())
 
     def test_future_action_poison_does_not_change_model_input_view(self):
         graph0 = _graph(0, on=False)
