@@ -168,7 +168,6 @@ class _StructuredBase(nn.Module):
         )
         self.action_film = ActionFiLM(action_dim, hidden_dim)
         self.readout = nn.Sequential(nn.Linear(hidden_dim, output_dim), nn.LayerNorm(output_dim), nn.GELU())
-        self.node_pool = MaskedAttentionPool(hidden_dim)
 
     def _prepare(self, batch: Any) -> tuple[GraphBatch, GraphBatch, torch.Tensor, torch.Tensor, torch.Tensor]:
         previous = _graph(_field(batch, "graph_prev"))
@@ -202,6 +201,10 @@ class _StructuredBase(nn.Module):
 
 class SceneSetPastAct(_StructuredBase):
     """Full-scene temporal set control with no pairwise edge messages."""
+
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.node_pool = MaskedAttentionPool(self.hidden_dim)
 
     def forward(self, batch: Any) -> torch.Tensor:
         _, _, _, node_hidden, node_mask = self._prepare(batch)
@@ -252,6 +255,7 @@ class _EdgeModel(_StructuredBase):
         self.message_layers = nn.ModuleList()
         self.node_update_layers = nn.ModuleList()
         if self.message_passing:
+            self.node_pool = MaskedAttentionPool(self.hidden_dim)
             for _ in range(int(layers)):
                 self.message_layers.append(
                     nn.Sequential(
@@ -265,7 +269,6 @@ class _EdgeModel(_StructuredBase):
                         nn.GELU(),
                     )
                 )
-            self.edge_pool = None
         else:
             self.edge_pool = MaskedAttentionPool(self.hidden_dim)
 
