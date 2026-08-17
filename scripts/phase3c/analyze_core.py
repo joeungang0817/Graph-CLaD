@@ -250,6 +250,44 @@ def hierarchical_bootstrap_difference(
             raise ValueError(f"paired prediction seed mismatch for sample_id={sample_id}")
     aligned_left = [left[key] for key in paired_ids]
     aligned_right = [right[key] for key in paired_ids]
+
+    def fold_key(row: dict[str, Any]) -> str:
+        value = row.get("fold")
+        if value is None or str(value) == "":
+            return f"test_task{row.get('task_id')}"
+        return str(value)
+
+    folds = sorted(set(fold_key(row) for row in aligned_left))
+    per_fold: dict[str, Any] = {}
+    positive_folds: list[str] = []
+    for fold in folds:
+        fold_left = [row for row in aligned_left if fold_key(row) == fold]
+        fold_right = [row for row in aligned_right if fold_key(row) == fold]
+        candidate_score = score_rows(
+            fold_left, include_baselines=False
+        )["relation"].get(metric)
+        baseline_score = score_rows(
+            fold_right, include_baselines=False
+        )["relation"].get(metric)
+        difference = (
+            float(candidate_score) - float(baseline_score)
+            if candidate_score is not None and baseline_score is not None
+            else None
+        )
+        per_fold[fold] = {
+            "candidate_score": (
+                float(candidate_score) if candidate_score is not None else None
+            ),
+            "baseline_score": (
+                float(baseline_score) if baseline_score is not None else None
+            ),
+            "difference": difference,
+            "paired_rows": len(fold_left),
+            "task_ids": sorted(set(str(row.get("task_id")) for row in fold_left)),
+        }
+        if difference is not None and difference > 0.0:
+            positive_folds.append(fold)
+
     tasks = sorted(set(str(row.get("task_id")) for row in aligned_left))
     rows_left = _task_episode_groups(aligned_left)
     rows_right = _task_episode_groups(aligned_right)
@@ -302,6 +340,12 @@ def hierarchical_bootstrap_difference(
         "replicates": int(replicates),
         "paired_rows": len(paired_ids),
         "common_rows": len(paired_ids),
+        "per_fold": per_fold,
+        "positive_folds": positive_folds,
+        "positive_fold_count": len(positive_folds),
+        "evaluable_fold_count": sum(
+            value["difference"] is not None for value in per_fold.values()
+        ),
         "tasks": tasks,
         "episodes_per_task": {task: len(rows_left[task]) for task in tasks},
         "resampling_units": ["task", "episode"],

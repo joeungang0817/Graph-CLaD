@@ -1678,3 +1678,25 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   not by itself isolate the semantic-shard cache speedup because the earlier
   Base smoke used batch 8; the preregistered 100-update Core benchmark remains
   the same-model/batch wall-clock measurement used for formal Core scope.
+
+## 2026-08-17 — Phase 3C per-fold gate serialization
+
+- Before formal Core analysis, the paired bootstrap report was extended to
+  serialize the candidate score, comparator score, difference, paired row
+  count, and task IDs separately for every fold. It also records sorted
+  `positive_folds`, `positive_fold_count`, and `evaluable_fold_count` for both
+  relation macro PR-AUC and inverse-relation-family macro PR-AUC. This makes the
+  preregistered “positive in at least 2/3 folds” gate directly auditable from
+  the immutable analysis JSON rather than requiring a one-off calculation.
+- Synthetic multi-fold tests cover distinct fold-specific validation
+  thresholds and verify that genuinely uninformative tied PR-AUC scores are
+  not mistaken for a lower-confidence version of the same ranking. The full
+  local Phase 3C suite remains 63 collected tests, zero failures, with 28
+  expected skips only because the local Windows runtime lacks PyTorch.
+- This analysis-only change is outside both Base and Core transitive training
+  code hashes and does not alter an in-flight checkpoint. It should be pulled
+  on SSH only after the current Base runner finishes and before final analysis.
+- The user intends to run the six-model 200-update Core tier if the frozen
+  post-cache wall-clock selector confirms it fits. Phase 3C remains an offline
+  oracle-graph architecture screen: its result prioritizes representations for
+  Stage 2, but cannot establish downstream policy or rollout improvement.
