@@ -1714,3 +1714,26 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
 - The Base screen therefore passes the completion/resource gate for the Core
   pilot. These losses select fold-specific frozen Base checkpoints; they are
   not downstream relation-change or policy-success metrics.
+
+## 2026-08-17 — Stage 2 controlled one-task pilot implementation
+
+- Because the remaining deadline does not support a full official CLaD Stage 2
+  reproduction and LIBERO rollout evaluation, a deliberately narrower pilot was
+  implemented. It compares a semantic-only arm against one selected Phase 3C
+  structured-graph arm on task 0, seed 0, using the same frozen Base checkpoint,
+  action statistics, diffusion policy, batch schedule, and validation rows.
+- The policy manifest is built from the fixed Phase 3C joined manifest plus the
+  authoritative Phase 2D action window at `current_step`. It emits
+  `action_target_window` only as a supervised label and omits the future graph,
+  future action from model inputs, and all target metadata from the causal view.
+- The graph arm uses the selected Phase 3C structured encoder frozen and trains
+  only a residual foresight adapter plus the shared policy. The semantic arm
+  uses the frozen semantic CLaD foresight interface. Both arms use the same
+  small epsilon-prediction DDPM policy and report validation DDPM loss and
+  adapter sensitivity, not LIBERO success.
+- This artifact is explicitly `stage2-one-task-preliminary-pilot`; it is not an
+  official CLaD Stage 2 result. A rollout-success claim requires a separate
+  environment evaluation and will not be inferred from offline loss.
+- A matched-arm analyzer was added to serialize graph-minus-semantic DDPM loss
+  and foresight-sensitivity differences only after both runtime manifests pass
+  the shared manifest/base/seed/update/batch checks.
