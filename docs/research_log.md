@@ -1936,3 +1936,69 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
 - 다음 단계는 RelPool−Sem bootstrap을 완료해 oracle relation pooling package의 효과를
   별도로 기록한 뒤, Phase 4 equivalence 및 RelMPNN one-task Stage 2 pilot로 진행한다.
   Stage 2에서 RelMPNN을 사용하더라도 message-passing 고유 우월성은 주장하지 않는다.
+
+## 2026-08-17 — RelPool−Sem bootstrap 완료와 Core 분석 종료
+
+- `C3-RelPool-PastAct − C3-Sem-PastAct` task-macro relation PR-AUC 차이는
+  `+0.08755`, hierarchical bootstrap 95% CI `[+0.03692, +0.13906]`였고 세 fold
+  모두 양수였다.
+- inverse-relation family-macro PR-AUC 차이는 `+0.08992`, 95% CI
+  `[+0.03111, +0.15620]`였으며 역시 3/3 fold 양수였다. `prev_step=0` 18개 row를
+  제외한 sensitivity에서도 estimate, CI와 fold 방향이 동일했다.
+- 따라서 explicit oracle relation을 포함하는 pooling package의 semantic baseline 대비
+  효과는 seed-0 pilot에서 지지된다. 다만 RelPool과 Sem은 oracle graph 대 semantic input
+  차이를 함께 포함하므로 이를 relation-token 하나의 순수 인과효과로 표현하지 않는다.
+- RelMPNN−RelPool CI가 0을 포함하고 1/3 fold만 양수인 결과와 함께 보면, 현재 관측된
+  Graph-CLaD 이득은 message passing보다 oracle relation representation의 도입으로
+  설명하는 것이 가장 보수적이다.
+- Stage 2 graph arm은 사전등록 primary인 RelMPNN을 유지한다. 이는 test 결과를 보고
+  task0 최적 모델을 재선택하지 않기 위한 결정이며, RelMPNN 고유 우월성 주장은 하지
+  않는다. Core analysis gate를 닫고 Phase 4 equivalence gate로 이동한다.
+
+### Relation-target 해석 경계 정정
+
+- Phase 3C graph 모델은 `G[t-6]`, `G[t]`의 oracle relation token을 입력으로 받고
+  `G[t]→G[t+6]` relation any-change를 예측한다. `G[t+6]`이나 future action은 입력에
+  없으므로 직접적인 target leakage는 아니지만, semantic baseline에는 없는
+  target-aligned modality를 graph 모델에 제공한다.
+- 따라서 RelPool/RelMPNN−Sem relation PR-AUC 향상은 “oracle current/past relation이
+  future relation change 예측에 유용하다”는 representation/probe 결과다. 이를 원 CLaD
+  대비 최종 task performance 또는 일반적인 foresight 우월성으로 표현하지 않는다.
+- Graph-CLaD의 최종 성능 비교는 같은 action target, policy architecture, demonstration,
+  update budget을 사용하는 Stage 2 semantic-vs-graph 비교에서 해야 한다. Offline DDPM
+  validation loss는 preliminary evidence이며, 최종 task-performance 주장은 동일 LIBERO
+  rollout success 평가가 필요하다.
+- RelMPNN−RelPool은 동일 relation input을 사용하므로 message passing의 추가 효과를
+  상대적으로 직접 비교하지만, 현재 CI가 0을 포함하므로 그 효과는 미확립이다.
+
+## 2026-08-17 — Phase 4 equivalence 및 Phase 5 계약 gate 통과
+
+- SSH torch 환경에서 Phase 4 foresight adapter, Phase 5 graph config, policy manifest와
+  matched-arm analysis 관련 테스트가 모두 통과했다고 확인했다.
+- zero-alpha semantic equivalence, adapter-off structured-encoder bypass, nonzero causal
+  structured response와 Stage 2 future-target exclusion 계약이 통과했으므로 controlled
+  one-task Stage 2 pilot gate를 연다.
+- 다음 단계는 task0의 train/validation action target policy manifest를 생성한 뒤,
+  semantic arm과 RelMPNN graph arm의 20-update smoke를 순차 실행하는 것이다.
+
+## 2026-08-17 — Phase 5 policy manifest v1 카운터 오류와 v2 migration
+
+- task0 Stage 2 policy manifest v1 생성은 `selected_rows=4012`였지만 QA counter가
+  `train=0`, `validation=0`, `test=4012`로 보고됐다. 설정은 train/validation만
+  선택하므로 이 결과를 정상으로 승인하지 않고 Stage 2 실행을 중단했다.
+- 원인은 manifest emission 단계의 split counter가 emitted row의 split 대신 source
+  scan에서 마지막으로 남은 loop variable을 참조한 구현 오류였다. row selection과
+  emitted `split` 자체는 별도 코드 경로라 v1 데이터가 오염됐다는 증거는 없지만,
+  QA report가 무효이므로 v1 artifact는 공식 입력에서 제외하고 보존만 한다.
+- counter를 emitted row의 실제 `split`을 기준으로 집계하도록 수정했다. 마지막 source
+  row가 제외 대상 test row인 회귀 사례를 추가해 `train=1`, `validation=0`, `test=0`을
+  검증했으며 Phase 5 manifest/config/analysis 관련 로컬 테스트 4개가 통과했다.
+- 재실행 산출물은 immutable `stage2_pilot_v2` root를 사용한다. semantic/graph smoke와
+  pilot 및 matched-arm analysis config를 모두 같은 v2 manifest에 연결했고, graph arm은
+  완료된 seed-0 `C3-RelMPNN-PastAct` checkpoint를 사용한다.
+- v2 manifest acceptance 조건은 `train_rows>0`, `validation_rows>0`, `test_rows=0`,
+  `future_action_in_model_input=false`, `target_graph_emitted=false`다. v2 결과 확인 전에는
+  Stage 2 smoke 또는 pilot을 시작하지 않는다.
+- 제출 마감 제약 아래 matched task0 pilot 예산은 두 arm 모두 200 updates, batch size 64,
+  validation interval 50으로 동일하게 고정한다. 결과 표기는 계속 seed-0 one-task
+  preliminary offline comparison으로 제한하며 rollout success 근거로 사용하지 않는다.

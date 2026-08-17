@@ -39,6 +39,15 @@ class Phase5PolicyManifestTest(unittest.TestCase):
             }
             with gzip.open(joined, "wt", encoding="utf-8") as handle:
                 handle.write(json.dumps(row) + "\n")
+                # Keep an excluded row last to catch stale loop-variable use in
+                # the emitted split counters.
+                excluded = dict(row)
+                excluded["sample_id"] = "task0_ep_prev1_cur7_next13_tau6"
+                excluded["split"] = "test"
+                excluded["prev_step"] = 1
+                excluded["current_step"] = 7
+                excluded["target_step"] = 13
+                handle.write(json.dumps(excluded) + "\n")
             source_row = {
                 "split": "train",
                 "task_id": 0,
@@ -62,6 +71,9 @@ class Phase5PolicyManifestTest(unittest.TestCase):
                 }
             )
             self.assertEqual(report["counters"]["selected_rows"], 1)
+            self.assertEqual(report["counters"]["train_rows"], 1)
+            self.assertEqual(report["counters"]["validation_rows"], 0)
+            self.assertEqual(report["counters"]["test_rows"], 0)
             self.assertFalse(report["future_action_in_model_input"])
             with gzip.open(output, "rt", encoding="utf-8") as handle:
                 emitted = json.loads(handle.readline())

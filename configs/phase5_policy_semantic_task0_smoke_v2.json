@@ -1,0 +1,19 @@
+{
+  "stage2_policy": {
+    "policy_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_pilot_v2/policy_manifest_task0.jsonl.gz",
+    "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
+    "base_checkpoint": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_deadline_threefold_seed0_v1/test_task0/seed0/checkpoints/best.pt",
+    "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_pilot_v2/semantic_task0_seed0_smoke",
+    "arm": "semantic",
+    "seed": 0,
+    "device": "cuda",
+    "updates": 20,
+    "batch_size": 64,
+    "validation_interval": 20,
+    "max_nodes": 32,
+    "policy_hidden_dim": 256,
+    "diffusion_steps": 1000,
+    "learning_rate": 0.0003,
+    "weight_decay": 0.0001
+  }
+}

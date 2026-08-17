@@ -152,7 +152,7 @@ def build_policy_manifest(config: dict[str, Any]) -> dict[str, Any]:
             }
             write_json_line(handle, emitted)
             counters["selected_rows"] += 1
-            counters[f"{row_split}_rows"] += 1
+            counters[f"{emitted['split']}_rows"] += 1
     report = {
         "schema": "phase5-policy-manifest.v1",
         "status": "completed",

@@ -11,6 +11,8 @@ class Phase5PolicyConfigTest(unittest.TestCase):
         for filename in (
             "phase5_policy_graph_task0_smoke_v1.json",
             "phase5_policy_graph_task0_pilot_v1.json",
+            "phase5_policy_graph_task0_smoke_v2.json",
+            "phase5_policy_graph_task0_pilot_v2.json",
         ):
             config = json.loads((root / "configs" / filename).read_text(encoding="utf-8"))
             section = config["stage2_policy"]
@@ -23,6 +25,27 @@ class Phase5PolicyConfigTest(unittest.TestCase):
                     "/C3-RelMPNN-PastAct/test_task0/seed0/checkpoints/best.pt"
                 )
             )
+
+    def test_v2_configs_share_the_immutable_v2_manifest_root(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        for filename in (
+            "phase5_policy_semantic_task0_smoke_v2.json",
+            "phase5_policy_graph_task0_smoke_v2.json",
+            "phase5_policy_semantic_task0_pilot_v2.json",
+            "phase5_policy_graph_task0_pilot_v2.json",
+        ):
+            config = json.loads((root / "configs" / filename).read_text(encoding="utf-8"))
+            section = config["stage2_policy"]
+            self.assertIn("/stage2_pilot_v2/", section["policy_manifest"])
+            self.assertIn("/stage2_pilot_v2/", section["output_root"])
+
+        manifest_config = json.loads(
+            (root / "configs" / "phase5_policy_manifest_task0_v2.json").read_text(
+                encoding="utf-8"
+            )
+        )["stage2_policy_manifest"]
+        self.assertIn("/stage2_pilot_v2/", manifest_config["output"])
+        self.assertIn("/stage2_pilot_v2/", manifest_config["qa_output"])
 
 
 if __name__ == "__main__":
