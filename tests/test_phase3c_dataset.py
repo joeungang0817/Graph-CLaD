@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import gzip
+import copy
 import tempfile
 import unittest
 from pathlib import Path
@@ -122,6 +123,49 @@ class Phase3CDatasetTest(unittest.TestCase):
         self.assertEqual(tuple(batch.v_history.shape), (1, 2, 2, 4))
         self.assertEqual(tuple(batch.target_v.shape), (1, 2, 4))
         self.assertEqual(tuple(batch.graph_prev.node_features.shape), (1, 2, 8))
+
+    def test_normalization_ignores_invalid_position_and_geometry_fill_values(self):
+        if self.torch is None:
+            self.skipTest("torch is not installed in the local CPU environment")
+        from scripts.phase3c.dataset import fit_normalization
+
+        def node(node_id, node_type, position, valid):
+            return {
+                "node_id": node_id,
+                "node_type": node_type,
+                "feature_vector": [0.0] * 24,
+                "features": {
+                    "position": list(position), "position_valid": int(valid),
+                    "joint_pos": [0.0] * 7, "joint_pos_valid": 1,
+                    "joint_vel": [0.0] * 7, "joint_vel_valid": 1,
+                    "gripper_qpos": [0.0] * 2, "gripper_qpos_valid": 1,
+                },
+            }
+
+        def graph(fill):
+            return {
+                "nodes": [
+                    node("robot0", "robot", (1.0, 2.0, 3.0), True),
+                    node("obj", "object", (fill, fill, fill), False),
+                ],
+                "edges": [{
+                    "source": "robot0", "target": "obj",
+                    "features": {
+                        "relative_position": [fill, fill, fill],
+                        "distance": fill,
+                        "distance_valid": 0,
+                    },
+                }],
+            }
+
+        first = {"graph_prev": graph(0.0), "graph_t": graph(0.0)}
+        second = copy.deepcopy(first)
+        second["graph_prev"] = graph(1e9)
+        second["graph_t"] = graph(-1e9)
+        stats_first = fit_normalization([first])
+        stats_second = fit_normalization([second])
+        self.assertEqual(stats_first.node_mean, stats_second.node_mean)
+        self.assertEqual(stats_first.edge_geometry_mean, stats_second.edge_geometry_mean)
 
 
 if __name__ == "__main__":

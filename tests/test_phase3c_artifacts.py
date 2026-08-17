@@ -22,6 +22,44 @@ class Phase3CArtifactTest(unittest.TestCase):
             return
         cls.torch = torch
 
+    def test_run_state_marker_is_mutually_exclusive(self):
+        from scripts.phase3c.io import set_run_state
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            set_run_state(root, "RUNNING", {"fold": "test_task0"})
+            self.assertTrue((root / "RUNNING.json").exists())
+            set_run_state(root, "FAILED", {"error": "synthetic"})
+            self.assertFalse((root / "RUNNING.json").exists())
+            self.assertTrue((root / "FAILED.json").exists())
+            set_run_state(root, "COMPLETED", {"runtime_manifest": "runtime.json"})
+            self.assertEqual(
+                sorted(path.name for path in root.glob("*.json")),
+                ["COMPLETED.json"],
+            )
+
+    def test_core_smoke_config_covers_all_six_models(self):
+        root = Path(__file__).resolve().parents[1]
+        config = json.loads(
+            (root / "configs" / "phase3c_core_smoke_example_v1.json").read_text(
+                encoding="utf-8-sig"
+            )
+        )
+        self.assertEqual(
+            config["models"],
+            [
+                "C3-Sem-PastAct",
+                "C3-SceneSet-PastAct",
+                "C3-Pair-PastAct",
+                "C3-GeomMPNN-PastAct",
+                "C3-RelPool-PastAct",
+                "C3-RelMPNN-PastAct",
+            ],
+        )
+        self.assertEqual(config["folds"], ["test_task0"])
+        self.assertEqual(config["seeds"], [0])
+        self.assertEqual(config["updates"], 100)
+
     def test_completed_base_runtime_checks_artifact_hashes(self):
         if self.torch is None:
             self.skipTest("torch is unavailable")
@@ -148,6 +186,12 @@ class Phase3CArtifactTest(unittest.TestCase):
 
             def update_ema_after_optimizer_step(self):
                 pass
+
+            def ema_initialization_state(self):
+                return None
+
+            def restore_ema_initialization_state(self, value):
+                self.restored_ema_state = value
 
         def infinite_batches(*args, **kwargs):
             while True:

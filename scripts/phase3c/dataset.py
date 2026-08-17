@@ -324,23 +324,43 @@ def fit_normalization(records: Iterable[Mapping[str, Any]]) -> NormalizationStat
             std[std < 1e-8] = 1.0
             return self.mean, std
 
-    node_values = Moments(NODE_FEATURE_DIM)
+    position_values = Moments(3)
     proprio_values = Moments(PROPRIO_DIM)
-    geometry_values = Moments(GEOMETRY_DIM)
+    geometry_values = Moments(4)
     for record in records:
         for graph in (record["graph_prev"], record["graph_t"]):
             for node in _node_map(graph).values():
-                node_values.add(_node_vector(node))
+                node_vector = _node_vector(node)
+                if node_vector[7] > 0.5:
+                    position_values.add(node_vector[4:7])
             proprio_values.add(_proprio(graph))
             for edge in _edge_map(graph).values():
                 features = edge.get("features") or {}
+                if features.get("distance_valid") != 1:
+                    continue
                 relative = features.get("relative_position", [0.0, 0.0, 0.0])
-                if isinstance(relative, Sequence) and len(relative) == 3:
-                    geometry_values.add([float(relative[0]), float(relative[1]), float(relative[2]), float(features.get("distance", 0.0) or 0.0), float(bool(features.get("distance_valid", 0)))])
-    node_mean, node_std = node_values.finish()
+                distance = features.get("distance")
+                if not isinstance(relative, Sequence) or isinstance(relative, (str, bytes)) or len(relative) != 3:
+                    raise ValueError("valid edge geometry requires a length-3 relative_position")
+                geometry_values.add([
+                    float(relative[0]),
+                    float(relative[1]),
+                    float(relative[2]),
+                    float(distance),
+                ])
+    node_mean = np.zeros(NODE_FEATURE_DIM, dtype=np.float64)
+    node_std = np.ones(NODE_FEATURE_DIM, dtype=np.float64)
+    if position_values.count:
+        position_mean, position_std = position_values.finish()
+        node_mean[4:7] = position_mean
+        node_std[4:7] = position_std
     proprio_mean, proprio_std = proprio_values.finish()
     if geometry_values.count:
-        geometry_mean, geometry_std = geometry_values.finish()
+        valid_geometry_mean, valid_geometry_std = geometry_values.finish()
+        geometry_mean = np.zeros(GEOMETRY_DIM, dtype=np.float64)
+        geometry_std = np.ones(GEOMETRY_DIM, dtype=np.float64)
+        geometry_mean[:4] = valid_geometry_mean
+        geometry_std[:4] = valid_geometry_std
     else:
         geometry_mean = np.zeros(5, dtype=np.float64)
         geometry_std = np.ones(5, dtype=np.float64)

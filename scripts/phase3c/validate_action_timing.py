@@ -61,10 +61,18 @@ def _action_row(value: Any, dimension: int = 7) -> list[float]:
     return row
 
 
-def _probe_steps(frame_count: int, max_steps: int) -> list[int]:
+def _probe_steps(frame_count: int, max_steps: int, policy: str = "uniform") -> list[int]:
     if frame_count < 2 or max_steps <= 0:
         return []
-    return list(range(min(frame_count - 1, max_steps)))
+    available = frame_count - 1
+    count = min(available, max_steps)
+    if policy == "head":
+        return list(range(count))
+    if policy != "uniform":
+        raise ValueError(f"unsupported probe policy: {policy}")
+    if count == 1:
+        return [0]
+    return [round(index * (available - 1) / (count - 1)) for index in range(count)]
 
 
 def action_timing_status(
@@ -85,6 +93,7 @@ def validate_hdf5_action_timing(
     *,
     task_id: int | None = None,
     max_steps_per_demo: int = 3,
+    probe_policy: str = "uniform",
     tolerance: float | None = None,
     render: bool = False,
 ) -> dict[str, Any]:
@@ -112,7 +121,9 @@ def validate_hdf5_action_timing(
                 if len(states) < 2 or len(actions) < 1:
                     errors.append(f"{demo_key}: requires at least two states and one action")
                     continue
-                for step in _probe_steps(min(len(states), len(actions) + 1), max_steps_per_demo):
+                for step in _probe_steps(
+                    min(len(states), len(actions) + 1), max_steps_per_demo, probe_policy
+                ):
                     try:
                         _restore_observation(environment, states[step])
                         environment.step(_action_row(actions[step]))
@@ -138,13 +149,14 @@ def validate_hdf5_action_timing(
         else None
     )
     report = {
-        "contract": "phase3c-action-timing.v1",
+        "contract": "phase3c-action-timing.v2",
         "source_hdf5": str(hdf5_path),
         "source_sha256": _sha256_file(hdf5_path),
         "task_id": task_id,
         "bddl_path": str(bddl_path),
         "render": bool(render),
         "max_steps_per_demo": max_steps_per_demo,
+        "probe_policy": probe_policy,
         "frozen_tolerance": tolerance,
         "rows": rows,
         "summary": {
@@ -153,6 +165,14 @@ def validate_hdf5_action_timing(
             "max_max_abs_state_error": max(measured) if measured else None,
             "within_tolerance": within_count,
             "outside_tolerance": len(rows) - within_count if within_count is not None else None,
+            "initial_step_outside_tolerance": (
+                sum(int(row["step"] == 0 and row["within_tolerance"] is False) for row in rows)
+                if tolerance is not None else None
+            ),
+            "non_initial_step_outside_tolerance": (
+                sum(int(row["step"] != 0 and row["within_tolerance"] is False) for row in rows)
+                if tolerance is not None else None
+            ),
         },
         "errors": errors,
         "status": action_timing_status(rows, errors, tolerance),
@@ -178,6 +198,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--task-id", type=int)
     parser.add_argument("--max-steps-per-demo", type=int, default=3)
+    parser.add_argument("--probe-policy", choices=("uniform", "head"), default="uniform")
     parser.add_argument("--tolerance", type=float)
     parser.add_argument("--render", action="store_true")
     return parser.parse_args()
@@ -196,13 +217,14 @@ def main() -> int:
             bddl_roots,
             task_id=args.task_id,
             max_steps_per_demo=int(config.get("max_steps_per_demo", args.max_steps_per_demo)),
+            probe_policy=str(config.get("probe_policy", args.probe_policy)),
             tolerance=args.tolerance if args.tolerance is not None else config.get("tolerance"),
             render=bool(args.render or config.get("render", False)),
         )
         for path in hdf5_paths
     ]
     result = {
-        "contract": "phase3c-action-timing-batch.v1",
+        "contract": "phase3c-action-timing-batch.v2",
         "reports": reports,
         "status": "pass" if all(report["status"] == "pass" for report in reports) else "fail",
     }

@@ -5,6 +5,8 @@ import unittest
 import numpy as np
 
 from scripts.phase3c.metrics import (
+    _average_precision,
+    _best_f1,
     aggregate_relation_families,
     evaluate_motion,
     evaluate_relation_predictions,
@@ -31,6 +33,23 @@ class Phase3CMetricsTest(unittest.TestCase):
         result = evaluate_motion([1.0, 3.0], [0.0, 1.0])
         self.assertAlmostEqual(result["mae"], 1.5)
         self.assertAlmostEqual(result["rmse"], np.sqrt(2.5))
+        self.assertEqual(result["moving_count"], 1)
+        self.assertAlmostEqual(result["moving_mae"], 2.0)
+
+    def test_average_precision_groups_tied_scores(self):
+        first = _average_precision(np.asarray([1, 0]), np.asarray([0.5, 0.5]))
+        reversed_rows = _average_precision(np.asarray([0, 1]), np.asarray([0.5, 0.5]))
+        self.assertAlmostEqual(first, 0.5)
+        self.assertAlmostEqual(reversed_rows, 0.5)
+
+    def test_best_f1_uses_highest_threshold_on_tie(self):
+        value, threshold = _best_f1(
+            np.asarray([0, 1]),
+            np.asarray([0.1, 0.9]),
+            [0.2, 0.8],
+        )
+        self.assertEqual(value, 1.0)
+        self.assertEqual(threshold, 0.8)
 
     def test_fixed_thresholds_are_not_reoptimized_on_test(self):
         result = evaluate_relation_predictions(

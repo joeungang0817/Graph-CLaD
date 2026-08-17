@@ -76,12 +76,46 @@ def _path(value: Any) -> Path:
     return Path(raw).expanduser()
 
 
-def _seed(seed: int) -> None:
+def _configure_determinism(seed: int) -> dict[str, Any]:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    try:
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        warn_only = True
+    except TypeError:  # older torch without warn_only
+        torch.use_deterministic_algorithms(True)
+        warn_only = False
+    return {
+        "seed": seed,
+        "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
+        "cudnn_benchmark": bool(torch.backends.cudnn.benchmark),
+        "deterministic_algorithms": True,
+        "deterministic_warn_only": warn_only,
+    }
+
+
+def _amp_setup(device: torch.device, requested: bool):
+    if not requested or device.type != "cuda":
+        return "disabled", None
+    if bool(getattr(torch.cuda, "is_bf16_supported", lambda: False)()):
+        return "bf16", None
+    try:
+        scaler = torch.amp.GradScaler("cuda", enabled=True)
+    except (AttributeError, TypeError):  # older torch
+        scaler = torch.cuda.amp.GradScaler(enabled=True)
+    return "fp16", scaler
+
+
+def _autocast_context(device: torch.device, amp_mode: str):
+    if amp_mode == "disabled":
+        return nullcontext()
+    dtype = torch.bfloat16 if amp_mode == "bf16" else torch.float16
+    return torch.autocast(device_type=device.type, dtype=dtype)
 
 
 def _atomic_torch_save(path: Path, payload: Any) -> None:
@@ -230,9 +264,12 @@ def _evaluate_adapter(
     include_task_id: int | None = None,
     fixed_thresholds: Sequence[float] | None = None,
     prediction_path: Path | None = None,
+    prediction_metadata: dict[str, Any] | None = None,
     motion_scale: float = 1.0,
     eligible_relations: Sequence[bool] | None = None,
 ) -> dict[str, Any]:
+    if prediction_path is not None and fixed_thresholds is None:
+        raise ValueError("persisted test predictions require validation-fixed thresholds")
     adapter.eval()
     relation_logits: list[np.ndarray] = []
     relation_targets: list[np.ndarray] = []
@@ -264,7 +301,8 @@ def _evaluate_adapter(
                 prediction["scene_motion"] * float(motion_scale)
             ).detach().cpu().numpy().reshape(-1)
             target_relation = batch.target_relation_change.detach().cpu().numpy()
-            relation_mask = batch.target_relation_mask.detach().cpu().numpy()
+            raw_relation_mask = batch.target_relation_mask.detach().cpu().numpy()
+            relation_mask = raw_relation_mask.copy()
             if eligible_relations is not None:
                 relation_mask = relation_mask * np.asarray(
                     eligible_relations, dtype=np.float32
@@ -278,16 +316,37 @@ def _evaluate_adapter(
             evaluated_rows += len(batch_records)
             if handle is not None:
                 for row, record in enumerate(batch_records):
-                    write_json_line(handle, {
-                        "sample_id": str(record["sample_id"]),
-                        "task_id": int(record["task_id"]),
-                        "episode_id": str(record["episode_id"]),
-                        "relation_logits": logits[row].tolist(),
-                        "scene_motion": float(predicted_motion[row]),
-                        "target_relation_change": target_relation[row].tolist(),
-                        "target_relation_mask": relation_mask[row].tolist(),
-                        "target_scene_motion": float(target_motion[row]),
-                    })
+                    for relation_index, relation in enumerate(PRIMARY_RELATIONS):
+                        threshold = float(fixed_thresholds[relation_index])
+                        logit = float(logits[row, relation_index])
+                        probability = float(1.0 / (1.0 + np.exp(-np.clip(logit, -700.0, 700.0))))
+                        eligible = (
+                            True
+                            if eligible_relations is None
+                            else bool(eligible_relations[relation_index])
+                        )
+                        valid = bool(raw_relation_mask[row, relation_index])
+                        payload = {
+                            "schema": "phase3c-core-prediction.v2",
+                            **(prediction_metadata or {}),
+                            "sample_id": str(record["sample_id"]),
+                            "task_id": int(record["task_id"]),
+                            "episode_id": str(record["episode_id"]),
+                            "current_step": int(record["current_step"]),
+                            "target_step": int(record["target_step"]),
+                            "relation": relation,
+                            "eligible": eligible,
+                            "valid": valid,
+                            "evaluated": bool(eligible and valid),
+                            "target": int(target_relation[row, relation_index]) if valid else None,
+                            "logit": logit,
+                            "probability": probability,
+                            "threshold": threshold,
+                            "prediction": int(probability >= threshold),
+                            "scene_motion": float(predicted_motion[row]),
+                            "target_scene_motion": float(target_motion[row]),
+                        }
+                        write_json_line(handle, payload)
     if not evaluated_rows:
         raise ValueError(
             f"joined manifest has no evaluation records for split={split}, "
@@ -357,12 +416,16 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     early_stopping_patience = int(_get(config, "early_stopping_patience", 5))
     minimum_updates = int(_get(config, "minimum_updates", min(3_000, updates)))
     resume = bool(_get(config, "resume", True))
+    amp_requested = bool(_get(config, "amp", True))
     device = torch.device(str(_get(config, "device", "cuda" if torch.cuda.is_available() else "cpu")))
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("config requested CUDA but CUDA is unavailable")
     if not base_checkpoint.exists():
         raise FileNotFoundError(base_checkpoint)
-    _seed(seed)
+    determinism = _configure_determinism(seed)
+    amp_mode, grad_scaler = _amp_setup(device, amp_requested)
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     if updates <= 0 or batch_size <= 0 or validation_interval <= 0:
         raise ValueError("updates, batch_size, and validation_interval must be positive")
     if shuffle_buffer < batch_size:
@@ -490,11 +553,18 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         for name, value in expected.items():
             if resumed.get(name) != value:
                 raise ValueError(f"core resume checkpoint {name} mismatch")
+        if resumed.get("amp_mode") != amp_mode:
+            raise ValueError("core resume checkpoint amp_mode mismatch")
         start_update = int(resumed.get("update", 0))
         if start_update < 0 or start_update > updates:
             raise ValueError("core resume checkpoint update is outside requested budget")
         adapter.load_state_dict(resumed["model_state"])
         optimizer.load_state_dict(resumed["optimizer_state"])
+        if grad_scaler is not None:
+            scaler_state = resumed.get("grad_scaler_state")
+            if not isinstance(scaler_state, dict):
+                raise ValueError("fp16 resume checkpoint is missing grad_scaler_state")
+            grad_scaler.load_state_dict(scaler_state)
         best_validation_pr_auc = float(
             resumed.get("best_validation_macro_pr_auc", -float("inf"))
         )
@@ -524,25 +594,34 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     for update in range(start_update + 1, updates + 1):
         batch_records = next(training_batches)
         batch = collate_phase3c(batch_records, store, max_nodes=max_nodes, normalization=normalization, device=device)
-        with torch.no_grad():
-            semantic = clad.encode_foresight(batch)
         optimizer.zero_grad(set_to_none=True)
-        prediction = adapter(batch, semantic)
-        losses_dict = relation_motion_loss(
-            prediction,
-            batch,
-            relation_weight=relation_weight,
-            motion_weight=motion_weight,
-            motion_scale=motion_scale,
-            pos_weight=pos_weight,
-            relation_eligibility=relation_eligibility,
-        )
+        with _autocast_context(device, amp_mode):
+            with torch.no_grad():
+                semantic = clad.encode_foresight(batch)
+            prediction = adapter(batch, semantic)
+            losses_dict = relation_motion_loss(
+                prediction,
+                batch,
+                relation_weight=relation_weight,
+                motion_weight=motion_weight,
+                motion_scale=motion_scale,
+                pos_weight=pos_weight,
+                relation_eligibility=relation_eligibility,
+            )
         total = losses_dict["loss"]
         if not torch.isfinite(total):
             raise FloatingPointError(f"non-finite core loss at update {update}")
-        total.backward()
+        if grad_scaler is None:
+            total.backward()
+        else:
+            grad_scaler.scale(total).backward()
+            grad_scaler.unscale_(optimizer)
         torch.nn.utils.clip_grad_norm_(adapter.parameters(), 1.0)
-        optimizer.step()
+        if grad_scaler is None:
+            optimizer.step()
+        else:
+            grad_scaler.step(optimizer)
+            grad_scaler.update()
         losses.append(float(total.detach().cpu()))
         completed_updates = update
         should_validate = update % validation_interval == 0 or update == updates
@@ -619,6 +698,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                     "seed": seed,
                     "model_state": adapter.state_dict(),
                     "optimizer_state": optimizer.state_dict(),
+                    "amp_mode": amp_mode,
+                    "grad_scaler_state": grad_scaler.state_dict() if grad_scaler is not None else None,
                     "update": update,
                     "best_update": best_update,
                     "best_validation_macro_pr_auc": best_validation_pr_auc,
@@ -675,6 +756,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         include_task_id=held_out_task_id,
         fixed_thresholds=validation_thresholds,
         prediction_path=prediction_path,
+        prediction_metadata={"model_id": model_id, "fold": fold, "seed": seed},
         motion_scale=motion_scale,
         eligible_relations=eligible_relations,
     )
@@ -684,6 +766,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "thresholds": dict(zip(PRIMARY_RELATIONS, validation_thresholds)),
     }
     write_json(metrics_path, metrics)
+    elapsed_seconds = time.time() - start
+    updates_this_process = max(0, completed_updates - start_update)
     runtime = {
         "schema": "phase3c-core-run.v3",
         "status": "completed",
@@ -705,7 +789,22 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "trainable_parameters": trainable_parameters,
         "shuffle_buffer": shuffle_buffer,
         "device": str(device),
-        "elapsed_seconds": time.time() - start,
+        "elapsed_seconds": elapsed_seconds,
+        "training_samples_this_process": updates_this_process * batch_size,
+        "training_samples_per_second": (
+            updates_this_process * batch_size / elapsed_seconds if elapsed_seconds > 0 else None
+        ),
+        "peak_cuda_memory_bytes": (
+            int(torch.cuda.max_memory_allocated(device)) if device.type == "cuda" else None
+        ),
+        "runtime_environment": {
+            "torch_version": str(torch.__version__),
+            "cuda_version": str(torch.version.cuda) if torch.version.cuda else None,
+            "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
+            "determinism": determinism,
+            "amp_requested": amp_requested,
+            "amp_mode": amp_mode,
+        },
         "mean_last_100_loss": float(np.mean(losses[-100:])),
         "checkpoint": str(checkpoint_path),
         "checkpoint_sha256": _sha256_file(checkpoint_path),

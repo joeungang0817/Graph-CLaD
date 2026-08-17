@@ -65,12 +65,29 @@ def _path(value: Any) -> Path:
     return Path(raw).expanduser()
 
 
-def _seed(seed: int) -> None:
+def _configure_determinism(seed: int) -> dict[str, Any]:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    try:
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        deterministic_algorithms = True
+        warn_only = True
+    except TypeError:  # older torch without warn_only
+        torch.use_deterministic_algorithms(True)
+        deterministic_algorithms = True
+        warn_only = False
+    return {
+        "seed": seed,
+        "cudnn_deterministic": bool(torch.backends.cudnn.deterministic),
+        "cudnn_benchmark": bool(torch.backends.cudnn.benchmark),
+        "deterministic_algorithms": deterministic_algorithms,
+        "deterministic_warn_only": warn_only,
+    }
 
 
 def _atomic_torch_save(path: Path, payload: Any) -> None:
@@ -240,7 +257,9 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("hidden_dim, vl_dim, and max_nodes must be positive")
     if learning_rate <= 0.0 or weight_decay < 0.0 or recon_weight < 0.0:
         raise ValueError("optimizer values must be non-negative and learning_rate positive")
-    _seed(seed)
+    determinism = _configure_determinism(seed)
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     if not joined_path.exists():
         raise FileNotFoundError(joined_path)
     joined_sha256 = _sha256_file(joined_path)
@@ -290,6 +309,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         if start_update < 0 or start_update > updates:
             raise ValueError("base resume checkpoint update is outside requested budget")
         model.load_state_dict(resumed["model_state"])
+        model.restore_ema_initialization_state(resumed.get("ema_initialized"))
         optimizer.load_state_dict(resumed["optimizer_state"])
         best_update = int(resumed.get("best_update", 0))
         best_validation_loss = float(resumed.get("best_validation_loss", float("inf")))
@@ -361,6 +381,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                         "semantic_store_manifest_sha256": store_manifest_sha256,
                         "code_sha256": code_sha256,
                         "normalization": normalization.to_dict(),
+                        "ema_initialized": model.ema_initialization_state(),
                     },
                 )
             _atomic_torch_save(
@@ -369,6 +390,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                     "schema": "phase3c-base-clad-resume.v3",
                     "kind": "resume_last",
                     "model_state": model.state_dict(),
+                    "ema_initialized": model.ema_initialization_state(),
                     "optimizer_state": optimizer.state_dict(),
                     "update": update,
                     "best_update": best_update,
@@ -387,6 +409,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             )
     if not best_checkpoint.exists() or best_update <= 0:
         raise RuntimeError("base CLaD completed without a validation-best checkpoint")
+    elapsed_seconds = time.time() - start
+    updates_this_process = max(0, updates - start_update)
     runtime = {
         "schema": "phase3c-base-clad-run.v3",
         "status": "completed",
@@ -404,7 +428,21 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "batch_size": batch_size,
         "shuffle_buffer": shuffle_buffer,
         "device": str(device),
-        "elapsed_seconds": time.time() - start,
+        "elapsed_seconds": elapsed_seconds,
+        "training_samples_this_process": updates_this_process * batch_size,
+        "training_samples_per_second": (
+            updates_this_process * batch_size / elapsed_seconds if elapsed_seconds > 0 else None
+        ),
+        "peak_cuda_memory_bytes": (
+            int(torch.cuda.max_memory_allocated(device)) if device.type == "cuda" else None
+        ),
+        "runtime_environment": {
+            "torch_version": str(torch.__version__),
+            "cuda_version": str(torch.version.cuda) if torch.version.cuda else None,
+            "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
+            "determinism": determinism,
+            "amp_mode": "disabled",
+        },
         "mean_last_100_loss": float(np.mean(losses[-100:])),
         "checkpoint": str(best_checkpoint),
         "checkpoint_sha256": _sha256_file(best_checkpoint),

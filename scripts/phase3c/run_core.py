@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .io import load_json_config, write_json
+from .io import load_json_config, set_run_state, write_json
 from .contracts import canonical_sha256
 from .models.adapters import Phase3CAdapter, SemanticPastActEncoder
 from .models.structured import build_structured_model
@@ -157,15 +157,37 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                 if match:
                     run_config["held_out_task_id"] = int(match.group(1))
                 runtime_path = Path(run_config["output_root"]) / "runtime_manifest.json"
+                run_root = Path(run_config["output_root"])
+                identity = {
+                    "model_id": model_id,
+                    "fold": fold,
+                    "seed": seed,
+                    "config_sha256": canonical_sha256(run_config),
+                }
                 result = _completed_runtime(
                     runtime_path,
                     model_id=model_id,
                     fold=fold,
                     seed=seed,
-                    config_sha256=canonical_sha256(run_config),
+                    config_sha256=identity["config_sha256"],
                 )
                 if result is None:
-                    result = train(run_config)
+                    write_json(run_root / "run_config.json", run_config)
+                    set_run_state(run_root, "RUNNING", identity)
+                    try:
+                        result = train(run_config)
+                    except Exception as exc:
+                        set_run_state(
+                            run_root,
+                            "FAILED",
+                            {**identity, "error_type": type(exc).__name__, "error": str(exc)},
+                        )
+                        raise
+                set_run_state(
+                    run_root,
+                    "COMPLETED",
+                    {**identity, "runtime_manifest": str(runtime_path)},
+                )
                 results.append(result)
     summary = {
         "schema": "phase3c-core-screen.v3",
