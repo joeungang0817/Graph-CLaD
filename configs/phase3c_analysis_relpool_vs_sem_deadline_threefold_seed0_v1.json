@@ -1,0 +1,30 @@
+{
+  "protocol": "phase3c-deadline-threefold-seed0-v1",
+  "claim_scope": "deadline-constrained-pilot",
+  "prediction_files": {
+    "C3-Sem-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-Sem-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-Sem-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-Sem-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ],
+    "C3-RelPool-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-RelPool-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-RelPool-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-RelPool-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ]
+  },
+  "expected_folds": [
+    "test_task0",
+    "test_task1",
+    "test_task2"
+  ],
+  "expected_seeds": [0],
+  "primary_model": "C3-RelPool-PastAct",
+  "baseline_model": "C3-Sem-PastAct",
+  "comparators": [
+    "C3-Sem-PastAct"
+  ],
+  "replicates": 2000,
+  "seed": 0,
+  "output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/analysis/core_deadline_relpool_vs_sem_threefold_seed0_v1.json"
+}

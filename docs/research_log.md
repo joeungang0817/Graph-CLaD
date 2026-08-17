@@ -1737,3 +1737,202 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
 - A matched-arm analyzer was added to serialize graph-minus-semantic DDPM loss
   and foresight-sensitivity differences only after both runtime manifests pass
   the shared manifest/base/seed/update/batch checks.
+
+## 2026-08-17 — Post-cache Core throughput benchmark completed
+
+- The preregistered technical benchmark completed `C3-Sem-PastAct`,
+  `test_task0`, seed 0, 100 updates, batch 64. Its complete wall time was
+  918.4 seconds (15.31 minutes). It used validation for technical evaluation;
+  no performance field is eligible for the deadline scope decision.
+- Applying the frozen `100-update wall time × 2` projection gives 1,836.8
+  seconds (30.61 minutes) per formal 200-update run. The three-model,
+  three-fold scope projects to 4.59 hours for nine runs; the six-model,
+  three-fold scope projects to 9.18 hours for eighteen runs. The required
+  one-hour analysis/artifact reserve raises the minimum remaining-time gates
+  to 5.59 and 10.18 hours respectively.
+- The older Core v4/v5 smoke manifests report zero for the newly introduced
+  complete-wall-time field and are therefore ineligible for scope selection.
+  Their performance values remain technical-smoke evidence only.
+
+## 2026-08-17 — Deadline Core scope fixed to three models
+
+- At the immutable scope decision, 7.0 hours remained and 1.0 hour was
+  reserved, leaving 6.0 hours for formal Core runs. The throughput-only
+  selector projected 4.5918 hours for the three-model tier and 9.1835 hours
+  for the six-model tier, so it selected `three-model` without consulting any
+  performance field.
+- The benchmark runtime SHA-256 was
+  `a192d6d059c99275cc134144bd119c751e104295e8eb65ae44a4e5b03dfe0b00`.
+  The selected immutable configs are
+  `configs/phase3c_core_deadline_threefold_seed0_v1.json` and
+  `configs/phase3c_analysis_deadline_threefold_seed0_v1.json`.
+- The formal screen therefore consists of `C3-Sem-PastAct`,
+  `C3-RelMPNN-PastAct`, and `C3-RelPool-PastAct`, each on all three held-out
+  task folds at seed 0 and 200 updates. The six-model tier is excluded from
+  the deadline claim rather than partially executed.
+
+## 2026-08-17 — 교수 진행 보고용 발표자료 계획 v0.2
+
+- 원 CLaD 논문의 transition-level cross-modal dynamics, two-stage grounded
+  foresight와 Section 7의 object-centric/spatially structured foresight 제안을
+  Graph-CLaD의 직접 동기로 연결한 발표 계획을 작성했다.
+- 발표 본문은 17장으로 계획했다. H3부터 시작하지 않고 Phase 0 baseline contract,
+  Phase 1A state/API audit, Phase 2A GraphSpec, Phase 2R scripted diagnostic,
+  Phase 2D official replay, Phase 3A label QA, legacy/reduced/corrected GNN,
+  H0-H3, H3 alignment gate, Phase 3C와 Stage 2 preliminary pilot의 계보를 두 장에
+  나누어 설명한다.
+- 과거 실험은 `Foundation`, `Diagnostic only`, `Superseded protocol`,
+  `Formal current evidence`, `Implemented, not yet evaluated`로 구분한다. 오래된
+  run을 현재 최종 성능처럼 합산하거나 동일 prediction의 후속 분석을 새 training
+  run으로 중복 계산하지 않는다.
+- 코드 설명은 source screenshot 대신 `LIBERO HDF5 + Phase 2D graph JSONL → causal
+  join → DecisionNCE semantic store → fold-specific Base → Core → predictions →
+  paired analysis`의 editable pipeline으로 제시한다. Appendix에는 실제
+  `build/run/train/analyze` module, 입력·출력 artifact, QA/hash/resume 책임을 연결한다.
+- 계획 문서는
+  `docs/01-plan/features/graph-clad-progress-presentation.plan.md`, 새 세션 실행용
+  인계는 `docs/NEXT_PRESENTATION_SESSION_PROMPT.md`에 저장했다. Core가 완료되기 전에는
+  smoke/benchmark 성능을 정식 결과로 사용하지 않고, 완료 후에만 per-fold difference,
+  positive folds와 hierarchical bootstrap CI로 결과 슬라이드를 교체한다.
+
+## 2026-08-17 — 발표자료 계획 교수 관점 재검토 v0.3
+
+- v0.2의 17장 구성은 연구 질문이 늦게 등장하고 Base runtime, deadline projection,
+  file-level reproducibility가 본문을 과도하게 차지한다는 문제가 있다고 판단했다.
+- 본문을 14장으로 줄이고 Slide 4에서 현재 primary question과
+  `RelPool−Sem`, `RelMPNN−RelPool`, `RelMPNN−Sem` contrast를 먼저 제시하도록 바꿨다.
+- Phase 0부터 Phase 3A까지의 foundation과 legacy GNN부터 H3까지의 falsification path는
+  각각 한 장으로 유지하되, 상세 run/metric inventory는 appendix로 이동했다.
+- 코드 설명은 raw trajectory에서 prediction/analysis까지의 validity pipeline 한 장만
+  본문에 남겼다. file map, formal run lifecycle, clean-git/hash/resume, Base fold별 runtime,
+  GPU memory와 wall-clock-only scope selection은 appendix로 이동했다.
+- 동적 Slide 12는 Core 미완료 시 compact progress, 완료 시 formal result와 CI를 표시한다.
+  마지막 Slide 14는 `확립됨 / 미확립 / 교수 결정 요청`으로 끝내며 단순한 진행 요약이나
+  일반적인 future work 목록으로 마무리하지 않는다.
+- 교수 검토에서 `RelPool−Sem`을 pure relation-token effect로 해석할 수 없다는 점도
+  명시적으로 수정했다. 두 모델은 DecisionNCE semantic input과 oracle relation input으로
+  정보원이 다르므로 이 contrast는 overall oracle-relation package의 차이를 포함한다.
+  동일 graph 정보를 쓰는 `RelMPNN−RelPool`만 message-passing increment를 상대적으로
+  직접 분리한다. 발표의 질문, outcome matrix와 새 세션 prompt에 이 claim boundary를
+  반영했다.
+
+## 2026-08-17 — 발표자료 Core 상태 정정 v0.4
+
+- 현재 정식 Core 본 학습은 진행 중이 아니라 **미실행 0/9 runs**다. 완료된 것은
+  data/QA, three-fold reduced Base와 Core protocol/scope 고정까지다.
+- 발표 계획의 Slide 12를 `protocol frozen / execution pending / formal result not
+  available` 상태로 바꿨다. smoke 또는 throughput benchmark performance는 formal Core
+  결과로 사용하지 않으며 빈 결과 영역을 임시 숫자로 채우지 않는다.
+- formal 9-run과 analysis JSON이 나중에 완료되면 Slide 12만 formal result chart,
+  per-fold difference, positive folds와 bootstrap CI로 교체한다. 현재 생성할 PPTX는
+  결과 추가가 쉬운 구조만 확보한다.
+
+## 2026-08-17 — Oracle Graph-CLaD Phase 3C 발표용 구조도 생성
+
+- 발표 본문용 16:9 architecture diagram을
+  `docs/assets/oracle_graph_clad_phase3c_architecture_v1.png`에 저장했다.
+- Blue branch는 visual/language를 frozen DecisionNCE로 encode한 뒤 proprioception과 past
+  action을 Base CLaD latent dynamics에서 결합해 `z_sem`을 만든다. Orange branch는
+  `G[t-6]`, `G[t]`, proprioception과 past action을 RelPool 또는 RelMPNN으로 encode해
+  `z_graph` residual을 만든다.
+- `C3-Sem`은 graph encoder variant가 아니라 `z_graph=0`인 semantic-only baseline으로
+  분리했다. Future semantic/graph는 training target으로만 표시하고, future action 또는
+  graph가 model input에 들어가지 않는 causal boundary를 명시했다.
+- Stage 2 diffusion policy는 회색 점선의 `planned; not yet evaluated` 영역으로 표시해
+  현재 Phase 3C 결과나 rollout 완료를 암시하지 않도록 했다.
+
+## 2026-08-17 — 구조도 시각 정리 v2
+
+- 발표 피드백을 반영해 원 CLaD branch 전체를 무채색으로 통일하고, Graph-CLaD가 추가한
+  graph inputs, graph encoder, graph residual, fusion, relation-change head만 파란색으로
+  강조했다.
+- Proprioception과 past action을 graph branch에 중복 표시하지 않고 shared input에서 Base
+  CLaD와 Graph encoder로 각각 분기시켰다. Visual/language는 Frozen DecisionNCE로만,
+  proprioception/past action은 Base dynamics로 직접 들어가는 구조를 유지했다.
+- 정리된 자산은 `docs/assets/oracle_graph_clad_phase3c_architecture_v2.png`이며, v1은
+  이전 시각안으로 보존한다.
+
+## 2026-08-17 — 구조도 Python 재현 경로 추가
+
+- Graphviz 의존성 없이 재생성할 수 있도록 표준 Python 라이브러리만 사용하는
+  `scripts/render_oracle_graph_clad_svg.py`를 추가했다.
+- 실행 결과는 `docs/assets/oracle_graph_clad_phase3c_architecture_python.svg`이며,
+  XML 파싱 검증까지 통과했다. 발표용 PNG v2를 대체하지 않고, 확대 가능한 SVG
+  재현 자산으로 병행 보존한다.
+- Graphviz가 설치된 환경에서는 별도 `scripts/render_oracle_graph_clad_diagram.py`로
+  PNG/SVG/PDF를 생성할 수 있지만, 현재 Windows 세션에는 `dot` 실행 파일이 없어
+  dependency-free SVG 경로를 기본 실행 경로로 사용한다.
+
+## 2026-08-17 — 구조도 v3 정리
+
+- v2를 기준으로 캔버스를 넓히고 입력, 원 CLaD 경로, Graph-CLaD 확장, 학습 target,
+  Stage 2 계획 영역을 더 균일한 열로 정리했다.
+- 요청에 따라 하단의 빨간 causal 경고 배너와 `no future action` 문구를 제거했다.
+  미래 semantic/graph는 계속 점선의 training target로만 남겼다.
+- 이미지 자산은 `docs/assets/oracle_graph_clad_phase3c_architecture_v3.png`로 보존했고,
+  표준 라이브러리 SVG 생성기와 출력도 같은 변경을 반영했다.
+
+## 2026-08-17 — Phase 3C deadline Core 9-run 완료 및 기술통계
+
+- `phase3c-deadline-threefold-seed0-v1`의 세 모델 × 세 held-out task, 총 9개 run이
+  모두 완료됐다. 모든 run은 200 updates, seed 0, validation 고정 threshold를 사용했고,
+  clean git commit `a8ec44dc92f8c515aefbee23595ca537ca6ebe3a`, 동일 joined-manifest 및
+  semantic-store hash를 기록했다. 이 결과의 claim scope는 정식 다중 seed 결론이 아니라
+  `deadline-constrained-pilot`이다.
+- 세 fold 평균 family-macro PR-AUC는 `C3-Sem-PastAct 0.4789`,
+  `C3-RelPool-PastAct 0.5688`, `C3-RelMPNN-PastAct 0.5808`이었다.
+  RelPool−Sem은 `+0.0899`, RelMPNN−Sem은 `+0.1019`이며 두 graph 모델 모두 세 fold
+  전부에서 semantic baseline보다 높았다.
+- family-macro F1 평균은 Sem `0.4032`, RelPool `0.5066`, RelMPNN `0.5070`이었다.
+  graph 입력을 포함한 두 모델의 향상은 세 fold 모두 같은 방향이었다.
+- RelMPNN−RelPool의 family-macro PR-AUC 평균 차이는 `+0.0120`이지만 fold별 차이는
+  `-0.0539, -0.0024, +0.0922`로 한 fold에서만 양수였다. family-macro F1 차이도
+  평균 `+0.0003`으로 사실상 동일했다. 따라서 현재 결과로 message passing의 독립적
+  우월성을 주장할 수 없다.
+- graph 모델의 Sem 대비 향상은 관계 family별로 vertical에서 RelPool `+0.2400`,
+  RelMPNN `+0.2771`, contact에서 각각 `+0.1065`, `+0.1311`로 집중됐다.
+  horizontal과 depth의 평균 차이는 거의 없거나 fold 간 방향이 달랐다. LIBERO spatial
+  pick-and-place task 구성과 정합적인 결과지만, 이 해석은 bootstrap 전 기술통계다.
+- 다음 gate는 SSH에 남아 있는 9개 prediction JSONL을 사용해 hierarchical bootstrap과
+  initial-transition sensitivity를 실행하는 것이다. 현재 분석 config는 RelMPNN−Sem과
+  RelMPNN−RelPool만 산출하므로, 핵심 graph-package contrast인 RelPool−Sem도 별도로
+  계산해야 한다. CI 확인 전에는 RelPool/RelMPNN winner를 확정하지 않는다.
+
+## 2026-08-17 — 다중 seed 확장 waiver와 Stage 2 경로 수정
+
+- 사용자 결정에 따라 deadline-constrained pilot에서는 seeds 1/2 확장을 생략한다.
+  다음 순서는 seed-0 prediction의 paired hierarchical bootstrap 및 initial-transition
+  sensitivity, Phase 4 adapter-off/zero-alpha equivalence, matched one-task Stage 2 pilot이다.
+- 따라서 이후 결과는 계속 `seed-0`, `one-task preliminary`, `no rollout-success claim`으로
+  제한한다. 다중 seed 안정성과 일반화는 미확립 상태로 보고하며, 이를 정식 효과 확정으로
+  표현하지 않는다.
+- Phase 5 graph smoke/pilot config가 실행되지 않은 six-model Core root를 가리키던 오류를
+  수정했다. 두 config 모두 완료된
+  `core_deadline_threefold_seed0_v1/C3-RelMPNN-PastAct/test_task0/seed0/checkpoints/best.pt`
+  를 사용한다.
+- 동일 오류의 재발을 막기 위해 두 graph config의 model identity, Core root와 checkpoint
+  suffix를 고정하는 dependency-light regression test를 추가했다. RelMPNN은 사전등록된
+  primary graph arm으로 유지하되, RelMPNN−RelPool 결과가 지지되지 않으면 message-passing
+  고유 효과는 주장하지 않는다.
+
+## 2026-08-17 — Phase 3C primary bootstrap gate 통과
+
+- `core_deadline_threefold_seed0_v1.json` 분석이 완료됐다. 사전등록 primary
+  `C3-RelMPNN-PastAct − C3-Sem-PastAct`의 task-macro relation PR-AUC 차이는
+  `+0.09774`, hierarchical bootstrap 95% CI `[+0.03523, +0.15498]`였고 세 fold 모두
+  양수였다.
+- inverse-relation family-macro PR-AUC 차이는 `+0.10191`, 95% CI
+  `[+0.05101, +0.15590]`였으며 역시 3/3 fold 양수였다. 따라서 seed-0
+  deadline-constrained pilot의 primary oracle-graph gate는 통과했다.
+- `RelMPNN − RelPool`은 relation-macro `+0.01019`, CI
+  `[-0.04733, +0.07828]`, family-macro `+0.01199`, CI
+  `[-0.04531, +0.08324]`였고 양수 fold는 task2 하나뿐이었다. message passing의 pooling
+  대비 독립적 추가 효과 gate는 실패했다.
+- `prev_step=0` 18개 row를 제외한 sensitivity에서도 위 estimate, CI와 positive-fold
+  판정이 동일했다. 알려진 초기-transition replay 오차가 primary 결론을 설명하지 않는다.
+- 분석 JSON 상단의 pooled model score와 primary task-macro estimate는 집계 방식이 다르다.
+  논문/발표의 주 효과값은 task를 동일 가중한 bootstrap estimate와 per-fold 결과를 사용하며,
+  pooled row score를 task-macro로 잘못 표기하지 않는다.
+- 다음 단계는 RelPool−Sem bootstrap을 완료해 oracle relation pooling package의 효과를
+  별도로 기록한 뒤, Phase 4 equivalence 및 RelMPNN one-task Stage 2 pilot로 진행한다.
+  Stage 2에서 RelMPNN을 사용하더라도 message-passing 고유 우월성은 주장하지 않는다.

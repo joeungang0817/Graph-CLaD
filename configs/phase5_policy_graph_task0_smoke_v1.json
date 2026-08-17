@@ -6,7 +6,7 @@
     "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_pilot_v1/graph_task0_seed0_smoke",
     "arm": "graph",
     "structured_model_id": "C3-RelMPNN-PastAct",
-    "structured_checkpoint": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_sixmodel_threefold_seed0_v1/C3-RelMPNN-PastAct/test_task0/seed0/checkpoints/best.pt",
+    "structured_checkpoint": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-RelMPNN-PastAct/test_task0/seed0/checkpoints/best.pt",
     "seed": 0,
     "device": "cuda",
     "updates": 20,
