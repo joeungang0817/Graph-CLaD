@@ -1,7 +1,7 @@
 # Graph-CLaD 현재 상태와 실행 인계
 
 기준 시각: 2026-08-17 (Asia/Seoul)
-공식 현재 단계: **Phase 3B action-alignment gate 실패 확정, Phase 3C post-integrity smoke 검증 대기**
+공식 현재 단계: **Phase 3B action-alignment gate 실패 확정, Phase 3C Core v5 technical smoke 완료·post-integrity SSH gate 대기**
 이 문서는 다음 세션에서 가장 먼저 읽는 단일 현재상태 문서다. 공식 연구 질문과 단계별
 gate는 `01-plan/features/graph-clad-integrated-research-v4.plan.md`, 시간순 근거는
 `research_log.md`를 따른다. `revised_research_roadmap_v3.md`는 v4 이전의 단계 개정
@@ -14,9 +14,10 @@ gate는 `01-plan/features/graph-clad-integrated-research-v4.plan.md`, 시간순 
   150 shards, 1024-D이며 camera repeat-render QA와 사람의 configured/configured 판정도
   끝났다.
 - 수정 전 Base v4-path smoke와 Core v4-path six-model smoke는 실행 가능성 근거로만
-  보존한다. Dead trainable parameters를 제거한 Core v5-path smoke는 사용자가 SSH에서
-  실행했으나 이 문서 갱신 시점에는 최종 결과가 전달되지 않았다. 실행 중인 process는
-  중단하지 않는다.
+  보존한다. Dead trainable parameters를 제거한 Core v5-path smoke는 SSH에서 6/6
+  models, 각 20 updates, test_task0/seed 0으로 완료됐다. 모든 run은 finite loss,
+  5% 이내 parameter match, checkpoint/metric/prediction hash 필드를 갖췄다. 이 결과는
+  technical executability evidence일 뿐 성능 선택이나 formal-run resume에 쓰지 않는다.
 - 이후 정식 입력 계약은 runtime/checkpoint schema v4다. Base는
   `base_clad_smoke_v5`/`base_clad_v5`, Core는 `core_smoke_v6`/`core_screen_v6`의 새
   경로만 사용한다. 예전 Base checkpoint는 새 Core가 거부한다.
@@ -293,10 +294,11 @@ fits the actual remaining time after a one-hour reporting reserve. The selector
 uses no performance field and writes an immutable decision artifact. This is a
 200-update deadline tier, not the deferred 10K six-model screen.
 
-Local config/contract verification passes; the mandatory next external gates
-are completion and preservation of the already-running six-model Core v5
-technical smoke, the post-integrity 63+3 SSH test suite, and the human camera
-attestation. Only then may the new Base and Core deadline output roots start.
+Local config/contract verification passes, and the six-model Core v5 technical
+smoke is complete and preserved. The mandatory next external gate is the
+post-integrity 63+3 SSH test suite on the clean updated checkout. The human
+camera attestation is already complete. Only then may the new Base and Core
+deadline output roots start.
 
 The corrected real join subsequently passed on SSH. It emitted 15,857 joined
 `tau=6` samples from 51,471 source samples, ignored 34,714 other-horizon rows,
