@@ -7,6 +7,7 @@ import tempfile
 import unittest
 import hashlib
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 
@@ -70,13 +71,24 @@ class Phase3CDatasetTest(unittest.TestCase):
             manifest = {
                 "schema": "phase3c-semantic-feature-store.v2",
                 "decisionnce": {"feature_dim": 4},
-                "index": {},
+                "index": {
+                    "0/demo_0/0/view0": {"shard": "0/demo_0.npz", "row": 0},
+                    "0/demo_0/0/view1": {"shard": "0/demo_0.npz", "row": 0},
+                    "0/demo_0/language": {"shard": "0/demo_0.npz"},
+                },
                 "shards": 1,
                 "shard_sha256": {"0/demo_0.npz": shard_sha},
             }
             (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
             store = SemanticFeatureStore(root)
             self.assertEqual(store.verify_integrity()["verified_shards"], 1)
+            self.assertEqual(len(store._shards), 0)
+            with patch("scripts.phase3c.dataset.np.load", wraps=np.load) as loader:
+                np.testing.assert_array_equal(store.image(0, "demo_0", 0, 0), np.zeros(4))
+                np.testing.assert_array_equal(store.image(0, "demo_0", 0, 1), np.zeros(4))
+                np.testing.assert_array_equal(store.language(0, "demo_0"), np.zeros(4))
+                self.assertEqual(loader.call_count, 1)
+            self.assertIsInstance(store._shards["0/demo_0.npz"], dict)
             store.close()
             shard.write_bytes(shard.read_bytes() + b"corrupt")
             with self.assertRaisesRegex(ValueError, "SHA-256 mismatch"):

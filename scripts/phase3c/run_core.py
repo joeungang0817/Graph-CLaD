@@ -225,6 +225,8 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
     summary = {
         "schema": "phase3c-core-screen.v4",
         "status": "completed",
+        "protocol": config.get("protocol"),
+        "claim_scope": config.get("claim_scope"),
         "models": list(models),
         "folds": list(folds),
         "seeds": list(seeds),

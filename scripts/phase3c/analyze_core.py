@@ -409,6 +409,8 @@ def analyze(config: dict[str, Any]) -> dict[str, Any]:
     result = {
         "schema": "phase3c-core-analysis.v3",
         "status": "completed",
+        "protocol": config.get("protocol"),
+        "claim_scope": config.get("claim_scope"),
         "config_sha256": canonical_sha256(config),
         "analyzer_source_sha256": _sha256_file(Path(__file__)),
         "runtime_provenance": runtime_provenance(),

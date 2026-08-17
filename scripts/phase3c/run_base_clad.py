@@ -135,7 +135,15 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                 {**identity, "runtime_manifest": str(runtime_path)},
             )
             results.append(result)
-    summary = {"schema": "phase3c-base-clad-screen.v4", "status": "completed", "folds": list(folds), "seeds": list(seeds), "runs": results}
+    summary = {
+        "schema": "phase3c-base-clad-screen.v4",
+        "status": "completed",
+        "protocol": config.get("protocol"),
+        "claim_scope": config.get("claim_scope"),
+        "folds": list(folds),
+        "seeds": list(seeds),
+        "runs": results,
+    }
     write_json(output_root / "screen_manifest.json", summary)
     return summary
 

@@ -137,7 +137,11 @@ class SemanticFeatureStore:
         if int(max_open_shards) <= 0:
             raise ValueError("max_open_shards must be positive")
         self.max_open_shards = int(max_open_shards)
-        self._shards: OrderedDict[str, Any] = OrderedDict()
+        # NPZ members are compressed. Keeping an ``NpzFile`` open does not
+        # cache the inflated arrays: every ``archive[member]`` access inflates
+        # that member again. Training requests several frames from the same
+        # demo, so cache the materialized arrays per shard instead.
+        self._shards: OrderedDict[str, dict[str, np.ndarray]] = OrderedDict()
         declared_hashes = self.manifest.get("shard_sha256")
         if not isinstance(declared_hashes, Mapping) or not declared_hashes:
             raise ValueError("semantic feature-store manifest has no shard SHA-256 map")
@@ -156,32 +160,38 @@ class SemanticFeatureStore:
             raise KeyError(f"semantic feature is absent: {key}")
         return value
 
-    def _shard(self, name: str) -> Any:
+    def _verify_shard_file(self, name: str) -> Path:
+        shard = (self.root / name).resolve()
+        if self.root.resolve() not in shard.parents:
+            raise ValueError(f"feature-store shard escapes root: {name}")
+        if not shard.exists():
+            raise FileNotFoundError(shard)
+        expected_sha = self.shard_sha256.get(name)
+        if expected_sha is None:
+            raise ValueError(f"semantic shard is absent from manifest hash map: {name}")
+        if name not in self._verified_shards:
+            digest = hashlib.sha256()
+            with shard.open("rb") as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            if digest.hexdigest() != expected_sha:
+                raise ValueError(f"semantic shard SHA-256 mismatch: {name}")
+            self._verified_shards.add(name)
+        return shard
+
+    def _shard(self, name: str) -> dict[str, np.ndarray]:
         if name in self._shards:
             value = self._shards.pop(name)
             self._shards[name] = value
             return value
         if name not in self._shards:
-            shard = (self.root / name).resolve()
-            if self.root.resolve() not in shard.parents:
-                raise ValueError(f"feature-store shard escapes root: {name}")
-            if not shard.exists():
-                raise FileNotFoundError(shard)
-            expected_sha = self.shard_sha256.get(name)
-            if expected_sha is None:
-                raise ValueError(f"semantic shard is absent from manifest hash map: {name}")
-            if name not in self._verified_shards:
-                digest = hashlib.sha256()
-                with shard.open("rb") as handle:
-                    for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                        digest.update(chunk)
-                if digest.hexdigest() != expected_sha:
-                    raise ValueError(f"semantic shard SHA-256 mismatch: {name}")
-                self._verified_shards.add(name)
-            self._shards[name] = np.load(shard, allow_pickle=False)
+            shard = self._verify_shard_file(name)
+            with np.load(shard, allow_pickle=False) as archive:
+                self._shards[name] = {
+                    key: np.asarray(archive[key]) for key in archive.files
+                }
             while len(self._shards) > self.max_open_shards:
-                _, old = self._shards.popitem(last=False)
-                old.close()
+                self._shards.popitem(last=False)
         return self._shards[name]
 
     def verify_integrity(self, *, require_orientation_attestation: bool = True) -> dict[str, Any]:
@@ -198,7 +208,9 @@ class SemanticFeatureStore:
                 f"missing={sorted(declared - actual)[:5]}, extra={sorted(actual - declared)[:5]}"
             )
         for name in sorted(self.shard_sha256):
-            self._shard(name)
+            # Integrity verification hashes every compressed shard without
+            # needlessly inflating all feature arrays at process startup.
+            self._verify_shard_file(name)
         attestation_path = self.root / "qa" / "orientation_human_attestation.json"
         attestation_sha = None
         if require_orientation_attestation:
@@ -243,8 +255,6 @@ class SemanticFeatureStore:
         }
 
     def close(self) -> None:
-        for shard in self._shards.values():
-            shard.close()
         self._shards.clear()
 
     def __enter__(self) -> "SemanticFeatureStore":

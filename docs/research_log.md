@@ -1554,3 +1554,68 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   are not resumed into formal training, and formal Base/Core runs still use
   the new schema-v4 code, semantic-store attestation, and versioned full-run
   output roots.
+
+## 2026-08-17 — Deadline-constrained three-fold pilot preregistration
+
+- With approximately ten hours remaining, Stage 2 was explicitly deferred
+  rather than trading away the validity of both Stage 1 and rollout evidence.
+  Stage 2 is a separate policy/environment/rollout validation phase, not a
+  smaller setting of the Phase 3C trainer. It will be reported as future work
+  and not as completed or partially reproduced.
+- Before formal performance results were observed, protocol
+  `phase3c-deadline-threefold-seed0-v1` froze Base at 500 updates/batch 64 and
+  Core at 100 updates/batch 64 for seed 0 and all three held-out-task folds.
+  The formal candidate subset is semantic, RelMPNN, and exact-token RelPool.
+  Full 25K/10K training, the other three Core candidates, additional seeds,
+  Phase 4 training, and Stage 2 rollout are outside this pilot claim.
+- Core execution order is semantic, RelMPNN, RelPool. This ensures the primary
+  `RelMPNN - semantic` three-fold contrast is completed before the secondary
+  no-message fairness control if wall-clock time becomes binding. An incomplete
+  RelPool subset remains incomplete and is not silently omitted from the frozen
+  protocol.
+- Three versioned configs and a runbook were added. A regression assertion was
+  folded into the existing 63-test Phase 3C suite to freeze model order, folds,
+  seed, update/batch budget, validation intervals, trainer key names, Base
+  checkpoint paths, prediction paths, and 2,000 bootstrap replicates. This
+  caught and corrected draft-only key drift (`reconstruction_weight`,
+  `test_split`, nested support/parameter settings, and wrong prediction paths)
+  before SSH execution.
+- Local dependency-light verification after the correction ran all 63 Phase 3C
+  tests: 35 passed, 28 were skipped only because this Windows runtime has no
+  PyTorch, and none failed. The 3 Phase 4 tests were collected and skipped for
+  the same local dependency reason. The authoritative gate remains 63+3 on SSH
+  with no missing-PyTorch skips.
+- The observed Core smoke was CPU-bound despite CUDA allocation. A code audit
+  found that cached `NpzFile` handles still decompressed an entire semantic
+  view member on every sample access. The store now hashes compressed shards
+  without inflating them at startup and materializes each cached shard's arrays
+  once on first use. Cache bounds and numeric arrays are unchanged; this is an
+  I/O/decompression optimization, not a model or data transformation. The
+  existing semantic-store test now asserts that repeated image/language reads
+  trigger one NPZ load. This change must pass the SSH torch suite before any
+  formal deadline run begins.
+- At the latest observed Core v5 smoke checkpoint, four of six models had
+  completed 20 updates with batch 64 on CUDA: GeomMPNN 562.54 s, Pair 552.60 s,
+  SceneSet 543.94 s, and Semantic 548.73 s. RelPool and RelMPNN were still
+  running or pending, so the six-model technical smoke was not yet declared
+  complete.
+
+### Conditional six-model deadline extension
+
+- After the NPZ materialization fix was identified, the user requested that
+  all six models be retained if the speed problem is genuinely resolved. This
+  extension is conditioned only on a preregistered wall-clock calculation, not
+  on model validation or test scores.
+- A new technical-only semantic 20-update/batch-64 benchmark runs after the
+  three Base folds. Its complete elapsed time is multiplied by five and by 18
+  formal runs. One hour is reserved for analysis and artifact capture. If that
+  conservative projection fits the actual remaining time, the selected formal
+  scope is six models; if only nine runs fit, it remains the three-model tier;
+  otherwise the formal Core run is declared incomplete rather than changing
+  folds or updates after observing data.
+- The six-model order is semantic, RelMPNN, RelPool, SceneSet, Pair, GeomMPNN,
+  each across all three folds before the next model. Thus the primary contrast
+  and exact-token fairness control remain ahead of broader architecture
+  baselines. The selector writes its benchmark hash, remaining-time input,
+  projections, selected config, and an explicit empty list of consulted
+  performance fields.

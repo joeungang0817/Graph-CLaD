@@ -40,7 +40,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 ["COMPLETED.json"],
             )
 
-    def test_core_smoke_config_covers_all_six_models(self):
+    def test_versioned_run_configs_have_frozen_scope(self):
         root = Path(__file__).resolve().parents[1]
         config = json.loads(
             (root / "configs" / "phase3c_core_smoke_example_v1.json").read_text(
@@ -62,6 +62,159 @@ class Phase3CArtifactTest(unittest.TestCase):
         self.assertEqual(config["seeds"], [0])
         self.assertEqual(config["updates"], 20)
         self.assertEqual(config["batch_size"], 64)
+
+        base_deadline = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_base_deadline_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(
+            base_deadline["protocol"], "phase3c-deadline-threefold-seed0-v1"
+        )
+        self.assertEqual(base_deadline["claim_scope"], "deadline-constrained-pilot")
+        self.assertEqual(
+            base_deadline["folds"],
+            ["test_task0", "test_task1", "test_task2"],
+        )
+        self.assertEqual(base_deadline["seeds"], [0])
+        self.assertEqual(base_deadline["updates"], 500)
+        self.assertEqual(base_deadline["batch_size"], 64)
+        self.assertEqual(base_deadline["validation_interval"], 250)
+        self.assertEqual(base_deadline["recon_weight"], 0.1)
+        self.assertNotIn("reconstruction_weight", base_deadline)
+
+        core_deadline = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_core_deadline_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(core_deadline["protocol"], base_deadline["protocol"])
+        self.assertEqual(
+            core_deadline["models"],
+            [
+                "C3-Sem-PastAct",
+                "C3-RelMPNN-PastAct",
+                "C3-RelPool-PastAct",
+            ],
+        )
+        self.assertEqual(core_deadline["folds"], base_deadline["folds"])
+        self.assertEqual(core_deadline["seeds"], [0])
+        self.assertEqual(core_deadline["updates"], 100)
+        self.assertEqual(core_deadline["batch_size"], 64)
+        self.assertEqual(core_deadline["validation_interval"], 100)
+        self.assertEqual(core_deadline["minimum_updates"], 100)
+        self.assertEqual(core_deadline["evaluation_split"], "test")
+        self.assertEqual(core_deadline["motion_weight"], 0.1)
+        self.assertNotIn("test_split", core_deadline)
+        self.assertNotIn("parameter_matching", core_deadline)
+        self.assertEqual(
+            set(core_deadline["base_checkpoints"]), set(base_deadline["folds"])
+        )
+
+        analysis_deadline = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_analysis_deadline_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(analysis_deadline["protocol"], base_deadline["protocol"])
+        self.assertEqual(
+            list(analysis_deadline["prediction_files"]), core_deadline["models"]
+        )
+        self.assertTrue(
+            all(
+                len(paths) == 3
+                and all(path.endswith("predictions/evaluation.jsonl.gz") for path in paths)
+                for paths in analysis_deadline["prediction_files"].values()
+            )
+        )
+        self.assertEqual(analysis_deadline["expected_folds"], base_deadline["folds"])
+        self.assertEqual(analysis_deadline["expected_seeds"], [0])
+        self.assertEqual(analysis_deadline["replicates"], 2000)
+
+        benchmark = json.loads(
+            (
+                root / "configs" / "phase3c_core_postcache_benchmark_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(
+            benchmark["protocol"], "phase3c-deadline-postcache-throughput-v1"
+        )
+        self.assertEqual(benchmark["claim_scope"], "technical-throughput-only")
+        self.assertEqual(benchmark["models"], ["C3-Sem-PastAct"])
+        self.assertEqual(benchmark["folds"], ["test_task0"])
+        self.assertEqual(benchmark["updates"], 20)
+        self.assertEqual(benchmark["batch_size"], 64)
+
+        six_model = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_core_deadline_sixmodel_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(
+            six_model["models"],
+            [
+                "C3-Sem-PastAct",
+                "C3-RelMPNN-PastAct",
+                "C3-RelPool-PastAct",
+                "C3-SceneSet-PastAct",
+                "C3-Pair-PastAct",
+                "C3-GeomMPNN-PastAct",
+            ],
+        )
+        self.assertEqual(six_model["folds"], base_deadline["folds"])
+        self.assertEqual(six_model["updates"], core_deadline["updates"])
+        self.assertEqual(six_model["batch_size"], core_deadline["batch_size"])
+
+        analysis_six = json.loads(
+            (
+                root
+                / "configs"
+                / "phase3c_analysis_deadline_sixmodel_threefold_seed0_v1.json"
+            ).read_text(encoding="utf-8-sig")
+        )
+        self.assertEqual(list(analysis_six["prediction_files"]), six_model["models"])
+        self.assertTrue(
+            all(len(paths) == 3 for paths in analysis_six["prediction_files"].values())
+        )
+
+        from scripts.phase3c.select_deadline_core_scope import select_scope
+
+        with tempfile.TemporaryDirectory() as directory:
+            runtime_path = Path(directory) / "runtime_manifest.json"
+            runtime = {
+                "status": "completed",
+                "protocol": "phase3c-deadline-postcache-throughput-v1",
+                "claim_scope": "technical-throughput-only",
+                "model_id": "C3-Sem-PastAct",
+                "fold": "test_task0",
+                "seed": 0,
+                "updates": 20,
+                "batch_size": 64,
+                "elapsed_seconds": 100.0,
+                "best_validation_macro_pr_auc": 0.99,
+            }
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            fast = select_scope(runtime_path, remaining_hours=10.0)
+            self.assertEqual(fast["selection"], "six-model")
+            self.assertEqual(fast["performance_fields_consulted"], [])
+
+            runtime["elapsed_seconds"] = 500.0
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            medium = select_scope(runtime_path, remaining_hours=10.0)
+            self.assertEqual(medium["selection"], "three-model")
+
+            runtime["elapsed_seconds"] = 800.0
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            slow = select_scope(runtime_path, remaining_hours=10.0)
+            self.assertEqual(slow["selection"], "insufficient-time")
 
     def test_completed_base_runtime_checks_artifact_hashes(self):
         if self.torch is None:

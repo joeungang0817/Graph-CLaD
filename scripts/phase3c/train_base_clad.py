@@ -432,6 +432,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     runtime = {
         "schema": "phase3c-base-clad-run.v4",
         "status": "completed",
+        "protocol": config.get("protocol"),
+        "claim_scope": config.get("claim_scope"),
         "config_sha256": config_sha256,
         "split": split,
         "fold": fold,

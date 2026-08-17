@@ -276,6 +276,28 @@ failed before reading data. Use `configs/phase3c_contract_v1.json` plus explicit
 Phase 2D input and output paths for the real join; this is a command-path issue,
 not a Phase 3C implementation failure.
 
+## 2026-08-17 deadline pilot status
+
+The submission-time Phase 3C scope is now frozen as
+`phase3c-deadline-threefold-seed0-v1`: reduced Base 500 updates and semantic,
+RelMPNN, and RelPool Core 100 updates, all at batch 64 over the three held-out
+tasks with seed 0. It is an offline, deadline-constrained pilot. It does not
+replace the full 25K/10K protocol and cannot support a Stage 2 or policy-success
+claim. The exact commands and reporting limits are in
+`docs/phase3c_deadline_pilot_runbook.md`.
+
+The deadline protocol has a pre-results conditional extension to the remaining
+SceneSet, Pair, and GeomMPNN candidates. It is selected only if a post-cache
+20-update technical benchmark, conservatively projected to 18 formal runs,
+fits the actual remaining time after a one-hour reporting reserve. The selector
+uses no performance field and writes an immutable decision artifact. This is a
+100-update deadline tier, not the deferred 10K six-model screen.
+
+Local config/contract verification passes; the mandatory next external gates
+are completion and preservation of the already-running six-model Core v5
+technical smoke, the post-integrity 63+3 SSH test suite, and the human camera
+attestation. Only then may the new Base and Core deadline output roots start.
+
 The corrected real join subsequently passed on SSH. It emitted 15,857 joined
 `tau=6` samples from 51,471 source samples, ignored 34,714 other-horizon rows,
 and reported zero boundary-invalid joins, missing-right samples, hash

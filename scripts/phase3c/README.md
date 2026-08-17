@@ -159,3 +159,21 @@ python -m scripts.phase3c.validate_action_timing \
   --config configs/phase3c_action_timing_uniform_example_v1.json \
   --output "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/action_timing_uniform_v2.json"
 ```
+
+## Deadline-constrained pilot
+
+The immutable reduced protocol used for the submission-time pilot is documented
+in `docs/phase3c_deadline_pilot_runbook.md`. Its three configs are:
+
+- `configs/phase3c_base_deadline_threefold_seed0_v1.json`;
+- `configs/phase3c_core_deadline_threefold_seed0_v1.json`;
+- `configs/phase3c_analysis_deadline_threefold_seed0_v1.json`.
+
+If the post-cache 20-update throughput gate fits the enlarged run inside the
+remaining time, use the separately versioned six-model Core and analysis
+configs. `scripts.phase3c.select_deadline_core_scope` records that decision
+from wall time only; it must be run before formal Core metrics are inspected.
+
+These configs are a separate claim scope. They do not replace or rename the
+25K Base and 10K six-model Core configs, and their output roots must never be
+used as if they were full-screen artifacts.
