@@ -1378,3 +1378,74 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   JSON, and `git diff --check` reported no patch errors. The next mandatory
   gate is the complete torch-enabled suite on SSH; only after it passes should
   Base v4 smoke and then the six-model Core v4 smoke run.
+- An attempted SSH Base smoke after this hardening printed the exact earlier
+  v3 runtime (`config_sha256=0faea125...`, output root
+  `base_clad_smoke_v3`, elapsed 236.548s) instead of creating a v4 artifact.
+  The absence of the new runtime-environment/throughput fields and the v3 path
+  prove that the orchestrator reused the already completed old run under a
+  stale config checkout. This is not a new experimental result. Core smoke
+  remains blocked until SSH visibly contains the v4 config/code and produces a
+  new `base_clad_smoke_v4` checkpoint.
+- During the actual Base v4 smoke, PyTorch reported that CUDA memory-efficient
+  attention backward is non-deterministic under the configured
+  `deterministic_algorithms=True, warn_only=True` policy. This is not a training
+  failure, label problem, or causal leak; it means repeated runs with the same
+  seed are not guaranteed to be bit-identical. The warning is accepted for the
+  deadline-constrained screen and is exposed by
+  `runtime_environment.determinism.deterministic_warn_only=true`. Forcing math
+  attention could materially slow the remaining experiments, so strict
+  bitwise determinism is not imposed; this limitation must be disclosed.
+- Base v4 smoke then completed successfully for `test_task0`, seed 0, at 100
+  updates with `resumed_from_update=0`. It selected update 100 at validation
+  Stage-1 loss `0.05363930849027464` over 1,542 validation rows and wrote new
+  v4 best/resume checkpoints with SHA-256 `deda2c503720...` and
+  `7e14a1a18cc5...`. Runtime was 237.941 seconds on an RTX 3090, peak allocated
+  CUDA memory was 5,542,446,592 bytes (about 5.16 GiB), and the reported
+  end-to-end effective rate was 3.362 training samples/s including the final
+  validation cost. The deterministic manifest correctly discloses
+  `warn_only=true`; AMP is disabled for Base. The exact match to the earlier
+  uninterrupted smoke loss is expected: the EMA change affects resume, while
+  the corrected graph-only normalization channels are not consumed by the
+  Base CLaD Stage-1 path. This v4 `best.pt` is accepted as the Base input for
+  the six-model Core structure smoke, but 100 updates are not sufficient for
+  final performance claims.
+- The full six-model Core v4 smoke subsequently completed on `test_task0`,
+  seed 0, using the Base v4 100-update checkpoint. All six runs reached 100
+  updates, selected update 100, wrote best/resume checkpoints, metrics, and
+  per-relation prediction artifacts, and used CUDA bf16 without non-finite or
+  artifact failures. Total summed run time was 3,148.824 seconds (52.48 min),
+  with individual runtimes from 505.8 to 542.6 seconds and peak allocated CUDA
+  memory only about 1.38--1.43 GiB at batch 8. The run was CPU/input-pipeline
+  limited, as confirmed by low intermittent GPU utilization; the formal Core
+  config's batch 64 is therefore both protocol-aligned and important for
+  amortizing graph/JSON preparation.
+- Parameter matching against RelMPNN width 128 / 848,908 trainable parameters
+  passed for every candidate: Sem width 376 / 849,370 (+0.054%), SceneSet 240 /
+  846,955 (-0.230%), Pair 176 / 839,596 (-1.097%), GeomMPNN 128 / 843,532
+  (-0.633%), RelPool 128 / 848,908, and RelMPNN 128 / 848,908. This validates
+  the expanded width search through 384; restricting widths to 256 would have
+  made the Sem match impossible.
+- For completeness only, the 100-update test macro PR-AUC values were Sem
+  0.3003, SceneSet 0.3885, Pair 0.3925, GeomMPNN 0.4310, RelPool 0.4256, and
+  RelMPNN 0.3041. Family-macro PR-AUC values were 0.3033, 0.3970, 0.4028,
+  0.4469, 0.4527, and 0.3090, respectively. These values are explicitly
+  classified as pipeline smoke diagnostics, not model-selection evidence:
+  both the shared Base and each adapter are only 100 updates old, and only one
+  held-out task/seed was evaluated. In particular, the weak RelMPNN smoke score
+  must not be interpreted as a failed graph hypothesis or used to drop it.
+- The v4 smoke parameter report also exposed an architecture-accounting defect
+  before full training: RelPool and RelMPNN both reported exactly 848,908
+  parameters because `_EdgeModel` instantiated two message/update layers even
+  when `message_passing=false`; those RelPool parameters never participated in
+  forward or received gradients. Conversely, the MPNN variants instantiated an
+  unused edge-pool scorer. This invalidates the v4 RelPool parameter match (but
+  demonstrates the value of the smoke gate). Conditional module construction
+  now removes both classes of dead parameter, and Core training aborts after
+  the first backward if any trainable adapter parameter has no gradient. A
+  regression test checks gradient coverage for all structured encoders.
+  Corrected Core smoke/full outputs are versioned v5.
+- The corrected v5 structure smoke is frozen at 20 updates, batch 64,
+  validation interval 20, and shuffle buffer 512. It processes 1,280 training
+  examples per model versus 800 in v4 while reducing synchronous graph/JSON
+  batch calls. Its purpose is gradient/capacity/artifact verification only;
+  v4/v5 smoke test metrics remain ineligible for model selection.

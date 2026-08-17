@@ -127,6 +127,29 @@ class Phase3CStructuredModelTest(unittest.TestCase):
             )
             self.assertTrue(report["within_tolerance"], (name, report))
 
+    def test_structured_models_have_no_dead_trainable_parameters(self):
+        if self.torch is None:
+            self.skipTest("torch is not installed in the local CPU environment")
+        names = (
+            "C3-SceneSet-PastAct",
+            "C3-Pair-PastAct",
+            "C3-GeomMPNN-PastAct",
+            "C3-RelPool-PastAct",
+            "C3-RelMPNN-PastAct",
+        )
+        from scripts.phase3c.models.structured import build_structured_model
+
+        batch = self._batch()
+        for name in names:
+            model = build_structured_model(name, hidden_dim=16, output_dim=32)
+            model(batch).sum().backward()
+            missing = [
+                parameter_name
+                for parameter_name, parameter in model.named_parameters()
+                if parameter.requires_grad and parameter.grad is None
+            ]
+            self.assertEqual(missing, [], (name, missing))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -2,11 +2,11 @@
   "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
   "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
   "base_checkpoints": {
-    "test_task0": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v3/test_task0/seed0/checkpoints/best.pt",
-    "test_task1": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v3/test_task1/seed0/checkpoints/best.pt",
-    "test_task2": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v3/test_task2/seed0/checkpoints/best.pt"
+    "test_task0": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v4/test_task0/seed0/checkpoints/best.pt",
+    "test_task1": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v4/test_task1/seed0/checkpoints/best.pt",
+    "test_task2": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/base_clad_v4/test_task2/seed0/checkpoints/best.pt"
   },
-  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v3",
+  "output_root": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v5",
   "models": [
     "C3-Sem-PastAct",
     "C3-SceneSet-PastAct",

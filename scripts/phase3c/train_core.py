@@ -616,6 +616,17 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         else:
             grad_scaler.scale(total).backward()
             grad_scaler.unscale_(optimizer)
+        if update == start_update + 1:
+            missing_gradients = [
+                name
+                for name, parameter in adapter.named_parameters()
+                if parameter.requires_grad and parameter.grad is None
+            ]
+            if missing_gradients:
+                raise RuntimeError(
+                    "core adapter contains trainable parameters unused by the loss: "
+                    + ", ".join(missing_gradients[:20])
+                )
         torch.nn.utils.clip_grad_norm_(adapter.parameters(), 1.0)
         if grad_scaler is None:
             optimizer.step()

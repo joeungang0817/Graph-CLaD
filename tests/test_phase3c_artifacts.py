@@ -58,7 +58,8 @@ class Phase3CArtifactTest(unittest.TestCase):
         )
         self.assertEqual(config["folds"], ["test_task0"])
         self.assertEqual(config["seeds"], [0])
-        self.assertEqual(config["updates"], 100)
+        self.assertEqual(config["updates"], 20)
+        self.assertEqual(config["batch_size"], 64)
 
     def test_completed_base_runtime_checks_artifact_hashes(self):
         if self.torch is None:
