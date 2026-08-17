@@ -2002,3 +2002,49 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
 - 제출 마감 제약 아래 matched task0 pilot 예산은 두 arm 모두 200 updates, batch size 64,
   validation interval 50으로 동일하게 고정한다. 결과 표기는 계속 seed-0 one-task
   preliminary offline comparison으로 제한하며 rollout success 근거로 사용하지 않는다.
+
+### Phase 5 policy manifest v2 acceptance
+
+- SSH에서 수정된 builder로 v2 manifest를 재생성했다. task0, tau 6, train/validation
+  selection에서 총 4,012 row가 생성됐으며 train 3,535, validation 477, test 0이었다.
+  세 split counter의 합이 selected row 수와 정확히 일치한다.
+- `future_action_in_model_input=false`, `target_graph_emitted=false`도 재확인됐다. 따라서
+  counter regression과 causal-input 계약을 모두 만족한 v2 manifest를 Stage 2의 immutable
+  공식 입력으로 승인하고 matched semantic/RelMPNN smoke gate로 이동한다.
+
+### Stage 2 semantic-arm smoke 통과
+
+- v2 manifest를 사용한 task0 semantic arm 20-update smoke가 완료됐다. batch size 64,
+  training 3,535 row, validation 477 row가 사용됐고 실행 시간은 10.46초였다.
+- selected update는 20, best validation DDPM loss는 `0.92147`, 마지막 20 update 평균
+  training loss는 `0.95659`였다. 이 수치는 smoke 성능 결론에 사용하지 않고 finite-loss와
+  checkpoint/validation 경로가 실제 동작했다는 실행성 검증으로만 사용한다.
+- base checkpoint hash와 150개 semantic-store shard, human orientation attestation이
+  검증됐다. causal input contract의 future action, future graph, target metadata 사용은
+  모두 false였다.
+- semantic foresight sensitivity는 zeroed mean absolute delta `0.00629`, shuffled delta
+  `0.00443`으로 기록됐다. 최종 해석은 동일 설정의 graph smoke 및 200-update matched
+  pilot과 함께 수행한다.
+
+### Stage 2 graph-arm smoke 통과
+
+- 동일 v2 manifest와 base checkpoint를 사용한 `C3-RelMPNN-PastAct` graph arm의
+  20-update smoke가 완료됐다. batch size 64, training 3,535 row, validation 477 row가
+  사용됐고 실행 시간은 11.18초였다.
+- selected update 20의 best validation DDPM loss는 `0.93281`, 마지막 20 update 평균
+  training loss는 `0.96392`였다. semantic smoke의 validation loss `0.92147`보다 약
+  `0.01135` 높지만, 단일 validation point의 smoke 결과이므로 우열 판단에는 사용하지 않는다.
+- 두 arm의 policy manifest hash와 base checkpoint hash가 동일하고 causal-input 세 누수
+  항목이 모두 false임을 확인했다. graph arm foresight sensitivity는 zeroed delta
+  `0.00587`, shuffled delta `0.00501`이었다.
+- 양쪽 smoke gate가 모두 통과했으므로 동일 seed, batch, 200-update 예산의 matched
+  task0 preliminary pilot을 순차 실행한다.
+
+### Stage 2 deadline budget adjustment
+
+- smoke runtime을 기준으로 semantic 20 updates는 10.46초, graph 20 updates는 11.18초였다.
+  10,000 updates를 양쪽에 적용하면 순차 실행만 약 180분으로 남은 제출 시간에 맞지 않는다.
+- 제출까지 약 90분인 상황에서 두 arm과 최종 분석을 모두 남기기 위해 v3 deadline config의
+  matched budget을 semantic/graph 각각 4,000 updates, batch 64, validation interval 500으로
+  고정했다. 예상 학습 시간은 양쪽 합계 약 72분이며 결과 해석은 여전히 one-task, seed-0,
+  offline preliminary로 제한한다.

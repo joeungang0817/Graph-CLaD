@@ -1,0 +1,4 @@
+{
+  "semantic_runtime": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_deadline_v3/semantic_task0_seed0/runtime_manifest.json",
+  "graph_runtime": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/stage2_deadline_v3/graph_task0_seed0/runtime_manifest.json"
+}
