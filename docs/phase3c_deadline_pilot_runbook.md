@@ -161,6 +161,15 @@ Expected output:
 lacks a fold or seed. The primary estimate is
 `C3-RelMPNN-PastAct - C3-Sem-PastAct`; the RelPool comparison isolates the
 effect of message passing while keeping the relation-token input family.
+Every relation-macro and family-macro comparison also records `per_fold`
+candidate/baseline scores and differences, `positive_folds`,
+`positive_fold_count`, and `evaluable_fold_count`. Use the relation-macro
+`positive_fold_count` for the preregistered 2/3-fold primary gate.
+
+Phase 3C is an offline oracle-graph architecture screen. A positive result
+selects representations that are eligible to be tested in the later Stage 2
+policy experiment; it does not establish that the representation improves
+policy learning or rollout success.
 
 ## 6. Final evidence to preserve
 

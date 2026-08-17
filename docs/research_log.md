@@ -1664,3 +1664,39 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   scores and checkpoints remain ineligible for formal model selection. It
   satisfies only the previously documented technical-smoke waiver; formal
   runs use the post-integrity schema-v4 code and new versioned output roots.
+
+## 2026-08-17 — Deadline Base fold `test_task0` completed
+
+- The first formal reduced-Base fold completed all 500 requested updates and
+  selected update 500 by validation Stage-1 loss. The best validation loss was
+  0.0243074396, elapsed trainer time was 1,197.86 s (19.96 min), reported
+  training throughput was 26.714 samples/s, and peak CUDA allocation was
+  5,561,317,888 bytes (about 5.18 GiB) on the RTX 3090.
+- This is a healthy completion signal: the loss is finite, the final
+  validation checkpoint was selected, batch 64 fits with substantial memory
+  headroom, and the remaining two Base folds may continue unchanged. It does
+  not by itself isolate the semantic-shard cache speedup because the earlier
+  Base smoke used batch 8; the preregistered 100-update Core benchmark remains
+  the same-model/batch wall-clock measurement used for formal Core scope.
+
+## 2026-08-17 — Phase 3C per-fold gate serialization
+
+- Before formal Core analysis, the paired bootstrap report was extended to
+  serialize the candidate score, comparator score, difference, paired row
+  count, and task IDs separately for every fold. It also records sorted
+  `positive_folds`, `positive_fold_count`, and `evaluable_fold_count` for both
+  relation macro PR-AUC and inverse-relation-family macro PR-AUC. This makes the
+  preregistered “positive in at least 2/3 folds” gate directly auditable from
+  the immutable analysis JSON rather than requiring a one-off calculation.
+- Synthetic multi-fold tests cover distinct fold-specific validation
+  thresholds and verify that genuinely uninformative tied PR-AUC scores are
+  not mistaken for a lower-confidence version of the same ranking. The full
+  local Phase 3C suite remains 63 collected tests, zero failures, with 28
+  expected skips only because the local Windows runtime lacks PyTorch.
+- This analysis-only change is outside both Base and Core transitive training
+  code hashes and does not alter an in-flight checkpoint. It should be pulled
+  on SSH only after the current Base runner finishes and before final analysis.
+- The user intends to run the six-model 200-update Core tier if the frozen
+  post-cache wall-clock selector confirms it fits. Phase 3C remains an offline
+  oracle-graph architecture screen: its result prioritizes representations for
+  Stage 2, but cannot establish downstream policy or rollout improvement.

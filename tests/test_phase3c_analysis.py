@@ -21,6 +21,8 @@ def _row(sample_id: str, task_id: int, strength: float, *, flip: bool) -> dict:
     return {
         "sample_id": sample_id,
         "task_id": task_id,
+        "fold": f"test_task{task_id}",
+        "seed": 0,
         "episode_id": f"task{task_id}_demo{ord(sample_id[0]) % 2}",
         "relation_logits": logits,
         "target_relation_change": target,
@@ -39,10 +41,10 @@ class Phase3CAnalysisTest(unittest.TestCase):
             _row("d", 1, 4.0, flip=True),
         ]
         baseline = [
-            _row("a", 0, 0.1, flip=False),
-            _row("b", 0, 0.1, flip=True),
-            _row("c", 1, 0.1, flip=False),
-            _row("d", 1, 0.1, flip=True),
+            _row("a", 0, 0.0, flip=False),
+            _row("b", 0, 0.0, flip=True),
+            _row("c", 1, 0.0, flip=False),
+            _row("d", 1, 0.0, flip=True),
         ]
         scored = score_rows(candidate)
         self.assertIn("family_macro_pr_auc", scored["relation"])
@@ -56,6 +58,14 @@ class Phase3CAnalysisTest(unittest.TestCase):
         self.assertEqual(difference["metric"], "family_macro_pr_auc")
         self.assertEqual(difference["common_rows"], 4)
         self.assertEqual(difference["resampling_units"], ["task", "episode"])
+        self.assertEqual(
+            sorted(difference["per_fold"]), ["test_task0", "test_task1"]
+        )
+        self.assertEqual(
+            difference["positive_folds"], ["test_task0", "test_task1"]
+        )
+        self.assertEqual(difference["positive_fold_count"], 2)
+        self.assertEqual(difference["evaluable_fold_count"], 2)
 
     def test_bootstrap_rejects_unpaired_sample_sets(self):
         candidate = [_row("a", 0, 4.0, flip=False), _row("b", 0, 4.0, flip=True)]
@@ -96,7 +106,7 @@ class Phase3CAnalysisTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             prediction_files = {"candidate": [], "baseline": []}
-            for model_id, strength in (("candidate", 4.0), ("baseline", 0.1)):
+            for model_id, strength in (("candidate", 4.0), ("baseline", 0.0)):
                 for task_id, threshold in ((0, 0.4), (1, 0.7)):
                     path = root / f"{model_id}_{task_id}.jsonl.gz"
                     prediction_files[model_id].append(str(path))
@@ -146,6 +156,16 @@ class Phase3CAnalysisTest(unittest.TestCase):
             result["models"]["candidate"]["trivial_baselines"]["train_prevalence"]["status"],
             "completed",
         )
+        relation_comparison = result["comparisons"]["baseline"]["relation_macro"]
+        self.assertEqual(
+            sorted(relation_comparison["per_fold"]),
+            ["test_task0", "test_task1"],
+        )
+        self.assertEqual(
+            relation_comparison["positive_folds"],
+            ["test_task0", "test_task1"],
+        )
+        self.assertEqual(relation_comparison["positive_fold_count"], 2)
 
 
 if __name__ == "__main__":
