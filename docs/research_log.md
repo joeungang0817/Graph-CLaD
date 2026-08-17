@@ -1564,7 +1564,7 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   and not as completed or partially reproduced.
 - Before formal performance results were observed, protocol
   `phase3c-deadline-threefold-seed0-v1` froze Base at 500 updates/batch 64 and
-  Core at 100 updates/batch 64 for seed 0 and all three held-out-task folds.
+  Core at 200 updates/batch 64 for seed 0 and all three held-out-task folds.
   The formal candidate subset is semantic, RelMPNN, and exact-token RelPool.
   Full 25K/10K training, the other three Core candidates, additional seeds,
   Phase 4 training, and Stage 2 rollout are outside this pilot claim.
@@ -1606,8 +1606,8 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   all six models be retained if the speed problem is genuinely resolved. This
   extension is conditioned only on a preregistered wall-clock calculation, not
   on model validation or test scores.
-- A new technical-only semantic 20-update/batch-64 benchmark runs after the
-  three Base folds. Its complete elapsed time is multiplied by five and by 18
+- A new technical-only semantic 100-update/batch-64 benchmark runs after the
+  three Base folds. Its complete elapsed time is multiplied by two and by 18
   formal runs. One hour is reserved for analysis and artifact capture. If that
   conservative projection fits the actual remaining time, the selected formal
   scope is six models; if only nine runs fit, it remains the three-model tier;
@@ -1619,3 +1619,16 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   baselines. The selector writes its benchmark hash, remaining-time input,
   projections, selected config, and an explicit empty list of consulted
   performance fields.
+
+### Pre-execution Core-depth amendment
+
+- Before any formal deadline Core run or score was produced, the user raised
+  the valid concern that 100 updates at batch 64 may not traverse one complete
+  held-out-fold training pool. Base and Core do not require equal update counts
+  because Base is the common frozen Stage-1 backbone, but every competing Core
+  adapter does require enough exposure for a meaningful architecture screen.
+- The formal Core budget was therefore amended uniformly from 100 to 200
+  updates for every selected model and every fold; Base remains 500 updates.
+  The benchmark was increased from 20 to 100 updates, and the wall-clock
+  selector now projects each formal run by multiplying the complete benchmark
+  runtime by two. No performance result was inspected in making this change.

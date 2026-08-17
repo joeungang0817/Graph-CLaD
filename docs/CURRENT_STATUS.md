@@ -280,7 +280,7 @@ not a Phase 3C implementation failure.
 
 The submission-time Phase 3C scope is now frozen as
 `phase3c-deadline-threefold-seed0-v1`: reduced Base 500 updates and semantic,
-RelMPNN, and RelPool Core 100 updates, all at batch 64 over the three held-out
+RelMPNN, and RelPool Core 200 updates, all at batch 64 over the three held-out
 tasks with seed 0. It is an offline, deadline-constrained pilot. It does not
 replace the full 25K/10K protocol and cannot support a Stage 2 or policy-success
 claim. The exact commands and reporting limits are in
@@ -288,10 +288,10 @@ claim. The exact commands and reporting limits are in
 
 The deadline protocol has a pre-results conditional extension to the remaining
 SceneSet, Pair, and GeomMPNN candidates. It is selected only if a post-cache
-20-update technical benchmark, conservatively projected to 18 formal runs,
+100-update technical benchmark, conservatively projected to 18 formal runs,
 fits the actual remaining time after a one-hour reporting reserve. The selector
 uses no performance field and writes an immutable decision artifact. This is a
-100-update deadline tier, not the deferred 10K six-model screen.
+200-update deadline tier, not the deferred 10K six-model screen.
 
 Local config/contract verification passes; the mandatory next external gates
 are completion and preservation of the already-running six-model Core v5

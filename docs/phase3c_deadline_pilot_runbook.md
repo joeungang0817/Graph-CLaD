@@ -9,7 +9,7 @@ This run is a deadline-constrained offline pilot, not the full preregistered
 scope is:
 
 - Base CLaD: 500 updates, batch 64, seed 0, three held-out-task folds;
-- mandatory Core tier: 100 updates, batch 64, seed 0, the same three folds for
+- mandatory Core tier: 200 updates, batch 64, seed 0, the same three folds for
   `C3-Sem-PastAct`, `C3-RelMPNN-PastAct`, then `C3-RelPool-PastAct`;
 - conditional expanded tier: all six Core models at the same budget only when
   the post-cache throughput rule selects it before any formal Core scores are
@@ -21,7 +21,7 @@ scope is:
   and the `prev_step=0` sensitivity exclusion;
 - additional seeds, Phase 4 training, Stage 2 policy training, and rollout
   evaluation are deferred. The original 10K six-model screen remains deferred
-  even if the 100-update six-model deadline tier is selected.
+  even if the 200-update six-model deadline tier is selected.
 
 The model order is deliberate. If wall-clock time is unexpectedly exhausted,
 the semantic-to-RelMPNN primary contrast finishes before the RelPool fairness
@@ -98,7 +98,7 @@ completed artifacts before skipping them.
 
 ## 4. Select and run the Core pilot scope
 
-First measure the post-cache code with one fixed, technical-only 20-update run:
+First measure the post-cache code with one fixed, technical-only 100-update run:
 
 ```bash
 python -m scripts.phase3c.run_core \
@@ -116,8 +116,8 @@ python -m scripts.phase3c.select_deadline_core_scope \
   --output "$ART_ROOT/analysis/deadline_core_scope_selection_v1.json"
 ```
 
-The selector multiplies the entire 20-update wall time by five for every
-formal run. This is conservative because it also multiplies validation and
+The selector multiplies the entire 100-update wall time by two for every
+formal 200-update run. This is conservative because it also duplicates final
 evaluation overhead. It never reads a performance field. Use exactly the
 config named in its `core_config` field:
 

@@ -169,7 +169,7 @@ in `docs/phase3c_deadline_pilot_runbook.md`. Its three configs are:
 - `configs/phase3c_core_deadline_threefold_seed0_v1.json`;
 - `configs/phase3c_analysis_deadline_threefold_seed0_v1.json`.
 
-If the post-cache 20-update throughput gate fits the enlarged run inside the
+If the post-cache 100-update throughput gate fits the enlarged run inside the
 remaining time, use the separately versioned six-model Core and analysis
 configs. `scripts.phase3c.select_deadline_core_scope` records that decision
 from wall time only; it must be run before formal Core metrics are inspected.

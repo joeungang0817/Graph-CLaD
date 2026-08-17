@@ -1,8 +1,8 @@
 """Select the deadline Core scope from a throughput-only benchmark.
 
 The decision is intentionally independent of validation/test scores.  It uses
-the completed wall time of a fixed 20-update, batch-64 technical run and a
-conservative linear projection for the formal 100-update runs.
+the completed wall time of a fixed 100-update, batch-64 technical run and a
+conservative linear projection for the formal 200-update runs.
 """
 
 from __future__ import annotations
@@ -18,7 +18,8 @@ from .io import write_json
 
 
 BENCHMARK_PROTOCOL = "phase3c-deadline-postcache-throughput-v1"
-FORMAL_UPDATES = 100
+BENCHMARK_UPDATES = 100
+FORMAL_UPDATES = 200
 THREE_MODEL_RUNS = 9
 SIX_MODEL_RUNS = 18
 
@@ -48,7 +49,7 @@ def select_scope(
         "model_id": "C3-Sem-PastAct",
         "fold": "test_task0",
         "seed": 0,
-        "updates": 20,
+        "updates": BENCHMARK_UPDATES,
         "batch_size": 64,
     }
     mismatches = {
@@ -71,10 +72,12 @@ def select_scope(
     ):
         raise ValueError("remaining_hours must be positive and reserve_hours non-negative")
 
-    # This deliberately multiplies the complete 20-update runtime—including
-    # validation and evaluation—by five. Formal runs evaluate once, not five
-    # times, so the estimate is conservative rather than optimistic.
-    projected_seconds_per_formal_run = elapsed_seconds * (FORMAL_UPDATES / 20.0)
+    # This deliberately multiplies the complete 100-update runtime—including
+    # validation and evaluation—by two. Formal 200-update runs evaluate once,
+    # not twice, so the estimate is conservative rather than optimistic.
+    projected_seconds_per_formal_run = elapsed_seconds * (
+        FORMAL_UPDATES / BENCHMARK_UPDATES
+    )
     projections = {
         "three_model_hours": projected_seconds_per_formal_run
         * THREE_MODEL_RUNS
@@ -106,7 +109,8 @@ def select_scope(
         "benchmark_runtime_sha256": _sha256(path),
         "benchmark_elapsed_seconds": elapsed_seconds,
         "formal_updates": FORMAL_UPDATES,
-        "projection_policy": "complete_20_update_runtime_times_five_per_formal_run",
+        "benchmark_updates": BENCHMARK_UPDATES,
+        "projection_policy": "complete_100_update_runtime_times_two_per_formal_run",
         "projected": projections,
         "remaining_hours_at_decision": remaining_hours,
         "reserved_hours": reserve_hours,

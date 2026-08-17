@@ -103,10 +103,10 @@ class Phase3CArtifactTest(unittest.TestCase):
         )
         self.assertEqual(core_deadline["folds"], base_deadline["folds"])
         self.assertEqual(core_deadline["seeds"], [0])
-        self.assertEqual(core_deadline["updates"], 100)
+        self.assertEqual(core_deadline["updates"], 200)
         self.assertEqual(core_deadline["batch_size"], 64)
         self.assertEqual(core_deadline["validation_interval"], 100)
-        self.assertEqual(core_deadline["minimum_updates"], 100)
+        self.assertEqual(core_deadline["minimum_updates"], 200)
         self.assertEqual(core_deadline["evaluation_split"], "test")
         self.assertEqual(core_deadline["motion_weight"], 0.1)
         self.assertNotIn("test_split", core_deadline)
@@ -148,7 +148,7 @@ class Phase3CArtifactTest(unittest.TestCase):
         self.assertEqual(benchmark["claim_scope"], "technical-throughput-only")
         self.assertEqual(benchmark["models"], ["C3-Sem-PastAct"])
         self.assertEqual(benchmark["folds"], ["test_task0"])
-        self.assertEqual(benchmark["updates"], 20)
+        self.assertEqual(benchmark["updates"], 100)
         self.assertEqual(benchmark["batch_size"], 64)
 
         six_model = json.loads(
@@ -196,7 +196,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 "model_id": "C3-Sem-PastAct",
                 "fold": "test_task0",
                 "seed": 0,
-                "updates": 20,
+                "updates": 100,
                 "batch_size": 64,
                 "elapsed_seconds": 100.0,
                 "best_validation_macro_pr_auc": 0.99,
@@ -206,12 +206,12 @@ class Phase3CArtifactTest(unittest.TestCase):
             self.assertEqual(fast["selection"], "six-model")
             self.assertEqual(fast["performance_fields_consulted"], [])
 
-            runtime["elapsed_seconds"] = 500.0
+            runtime["elapsed_seconds"] = 1200.0
             runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
             medium = select_scope(runtime_path, remaining_hours=10.0)
             self.assertEqual(medium["selection"], "three-model")
 
-            runtime["elapsed_seconds"] = 800.0
+            runtime["elapsed_seconds"] = 2000.0
             runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
             slow = select_scope(runtime_path, remaining_hours=10.0)
             self.assertEqual(slow["selection"], "insufficient-time")
