@@ -130,7 +130,11 @@ class ControlledCLaD(nn.Module):
             raise ValueError("CLaD batch tensors have inconsistent batch dimensions")
         return v_history, p_history, past_action, language
 
-    def training_loss(self, batch: Any) -> dict[str, torch.Tensor]:
+    def training_loss(
+        self, batch: Any, *, action_mask_ratio: float = 0.3
+    ) -> dict[str, torch.Tensor]:
+        if not 0.0 <= float(action_mask_ratio) <= 1.0:
+            raise ValueError("action_mask_ratio must be in [0, 1]")
         v_history, p_history, past_action, language = self._inputs(batch)
         target_p = _finite_tensor(_get(batch, "target_p"), "target_p")
         target_v = _finite_tensor(_get(batch, "target_v"), "target_v")
@@ -147,7 +151,7 @@ class ControlledCLaD(nn.Module):
             language,
             p_next=target_p,
             v_next=target_v,
-            action_mask_ratio=0.3,
+            action_mask_ratio=float(action_mask_ratio),
         )
         if not isinstance(outputs, Mapping):
             raise RuntimeError("CLaD core returned evaluation output while training")

@@ -53,6 +53,22 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _code_sha256() -> str:
+    repository = Path(__file__).resolve().parents[2]
+    paths = (
+        Path(__file__),
+        repository / "scripts" / "phase3c" / "dataset.py",
+        repository / "scripts" / "phase3c" / "losses.py",
+        repository / "scripts" / "phase3c" / "metrics.py",
+        repository / "scripts" / "phase3c" / "models" / "adapters.py",
+        repository / "scripts" / "phase3c" / "models" / "semantic_clad.py",
+        repository / "scripts" / "phase3c" / "models" / "structured.py",
+    )
+    return canonical_sha256(
+        {str(path.relative_to(repository)): _sha256_file(path) for path in paths}
+    )
+
+
 def _path(value: Any) -> Path:
     raw = os.path.expandvars(str(value))
     if "$" in raw:
@@ -79,6 +95,30 @@ def _atomic_torch_save(path: Path, payload: Any) -> None:
     except Exception:
         temporary.unlink(missing_ok=True)
         raise
+
+
+def _torch_load(path: Path, *, map_location: Any = "cpu") -> Any:
+    try:
+        return torch.load(path, map_location=map_location, weights_only=False)
+    except TypeError:  # PyTorch < 2.6
+        return torch.load(path, map_location=map_location)
+
+
+def _capture_rng_state() -> dict[str, Any]:
+    return {
+        "python": random.getstate(),
+        "numpy": np.random.get_state(),
+        "torch": torch.get_rng_state(),
+        "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None,
+    }
+
+
+def _restore_rng_state(value: dict[str, Any]) -> None:
+    random.setstate(value["python"])
+    np.random.set_state(value["numpy"])
+    torch.set_rng_state(value["torch"])
+    if torch.cuda.is_available() and value.get("cuda") is not None:
+        torch.cuda.set_rng_state_all(value["cuda"])
 
 
 def _filtered_batches(
@@ -296,7 +336,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     held_out_raw = _get(config, "held_out_task_id")
     held_out_task_id = int(held_out_raw) if held_out_raw is not None else None
     seed = int(_get(config, "seed", 0))
-    updates = int(_get(config, "updates", 3_000))
+    updates = int(_get(config, "updates", 10_000))
     batch_size = int(_get(config, "batch_size", 64))
     shuffle_buffer = int(_get(config, "shuffle_buffer", max(2048, batch_size * 8)))
     hidden_dim = int(_get(config, "hidden_dim", 128))
@@ -316,6 +356,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     validation_interval = int(_get(config, "validation_interval", 500))
     early_stopping_patience = int(_get(config, "early_stopping_patience", 5))
     minimum_updates = int(_get(config, "minimum_updates", min(3_000, updates)))
+    resume = bool(_get(config, "resume", True))
     device = torch.device(str(_get(config, "device", "cuda" if torch.cuda.is_available() else "cpu")))
     if device.type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("config requested CUDA but CUDA is unavailable")
@@ -348,7 +389,14 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("semantic store was not built from the configured joined manifest")
     if store.feature_dim != vl_dim:
         raise ValueError(f"semantic store feature_dim={store.feature_dim} does not match vl_dim={vl_dim}")
-    checkpoint = torch.load(base_checkpoint, map_location="cpu")
+    checkpoint = _torch_load(base_checkpoint, map_location="cpu")
+    if (
+        checkpoint.get("schema") != "phase3c-base-clad-checkpoint.v3"
+        or checkpoint.get("kind") != "validation_best"
+    ):
+        raise ValueError(
+            "core training requires a Phase3C v3 validation-best base checkpoint"
+        )
     if str(checkpoint.get("source_joined_manifest_sha256", "")) != joined_sha256:
         raise ValueError("base checkpoint was not trained from the configured joined manifest")
     if str(checkpoint.get("semantic_store_manifest_sha256", "")) != store_manifest_sha256:
@@ -383,6 +431,10 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     adapter = Phase3CAdapter(structured, semantic_dim=2 * checkpoint_hidden, structured_dim=structured_dim).to(device)
     trainable_parameters = trainable_parameter_count(adapter)
     optimizer = torch.optim.AdamW(adapter.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    config_sha256 = canonical_sha256(config)
+    trainer_source_sha256 = _sha256_file(Path(__file__))
+    code_sha256 = _code_sha256()
+    base_checkpoint_sha256 = _sha256_file(base_checkpoint)
     pos_weight_values, train_relation_support, motion_scale = _relation_pos_weights(
         joined_path,
         split=train_split,
@@ -415,9 +467,47 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     validation_history: list[dict[str, Any]] = []
     best_validation_pr_auc = -float("inf")
     best_update = 0
-    best_state: dict[str, torch.Tensor] | None = None
     stale_validations = 0
     completed_updates = 0
+    start_update = 0
+    resume_rng: dict[str, Any] | None = None
+    checkpoint_root = output_root / "checkpoints"
+    checkpoint_path = checkpoint_root / "best.pt"
+    last_checkpoint_path = checkpoint_root / "last.pt"
+    if resume and last_checkpoint_path.exists():
+        resumed = _torch_load(last_checkpoint_path, map_location="cpu")
+        expected = {
+            "config_sha256": config_sha256,
+            "trainer_source_sha256": trainer_source_sha256,
+            "code_sha256": code_sha256,
+            "base_checkpoint_sha256": base_checkpoint_sha256,
+            "source_joined_manifest_sha256": joined_sha256,
+            "semantic_store_manifest_sha256": store_manifest_sha256,
+            "model_id": model_id,
+            "fold": fold,
+            "seed": seed,
+        }
+        for name, value in expected.items():
+            if resumed.get(name) != value:
+                raise ValueError(f"core resume checkpoint {name} mismatch")
+        start_update = int(resumed.get("update", 0))
+        if start_update < 0 or start_update > updates:
+            raise ValueError("core resume checkpoint update is outside requested budget")
+        adapter.load_state_dict(resumed["model_state"])
+        optimizer.load_state_dict(resumed["optimizer_state"])
+        best_validation_pr_auc = float(
+            resumed.get("best_validation_macro_pr_auc", -float("inf"))
+        )
+        best_update = int(resumed.get("best_update", 0))
+        stale_validations = int(resumed.get("stale_validations", 0))
+        validation_history = list(resumed.get("validation_history", []))
+        losses = [float(value) for value in resumed.get("recent_losses", [])]
+        resume_rng = resumed.get("rng_state")
+        if best_update > 0 and not checkpoint_path.exists():
+            raise FileNotFoundError(
+                "core resume checkpoint references a missing validation-best checkpoint"
+            )
+        completed_updates = start_update
     adapter.train()
     training_batches = iter_shuffled_batches(
         joined_path,
@@ -427,7 +517,11 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         exclude_task_id=held_out_task_id,
         shuffle_buffer=shuffle_buffer,
     )
-    for update in range(1, updates + 1):
+    for _ in range(start_update):
+        next(training_batches)
+    if resume_rng is not None:
+        _restore_rng_state(resume_rng)
+    for update in range(start_update + 1, updates + 1):
         batch_records = next(training_batches)
         batch = collate_phase3c(batch_records, store, max_nodes=max_nodes, normalization=normalization, device=device)
         with torch.no_grad():
@@ -453,6 +547,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         completed_updates = update
         should_validate = update % validation_interval == 0 or update == updates
         if should_validate:
+            training_rng = _capture_rng_state()
             validation_snapshot = _evaluate_adapter(
                 adapter=adapter,
                 clad=clad,
@@ -467,60 +562,85 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                 motion_scale=motion_scale,
                 eligible_relations=eligible_relations,
             )
+            _restore_rng_state(training_rng)
             score = validation_snapshot["relation"]["macro_pr_auc"]
             if score is None:
                 raise ValueError("validation macro PR-AUC is unavailable after support gating")
             validation_history.append({
                 "update": update,
                 "macro_pr_auc": float(score),
+                "family_macro_pr_auc": validation_snapshot["relation"]["family_macro_pr_auc"],
                 "macro_f1": validation_snapshot["relation"]["macro_f1"],
+                "family_macro_f1": validation_snapshot["relation"]["family_macro_f1"],
                 "motion_mae": validation_snapshot["motion"]["mae"],
             })
             if float(score) > best_validation_pr_auc:
                 best_validation_pr_auc = float(score)
                 best_update = update
-                best_state = {
-                    name: value.detach().cpu().clone()
-                    for name, value in adapter.state_dict().items()
-                }
                 stale_validations = 0
+                _atomic_torch_save(
+                    checkpoint_path,
+                    {
+                        "schema": "phase3c-core-checkpoint.v3",
+                        "kind": "validation_best",
+                        "model_id": model_id,
+                        "fold": fold,
+                        "model_state": adapter.state_dict(),
+                        "requested_updates": updates,
+                        "selected_update": best_update,
+                        "best_validation_macro_pr_auc": best_validation_pr_auc,
+                        "seed": seed,
+                        "vl_dim": checkpoint_vl,
+                        "hidden_dim": checkpoint_hidden,
+                        "structured_hidden_dim": hidden_dim,
+                        "structured_dim": structured_dim,
+                        "base_checkpoint_sha256": base_checkpoint_sha256,
+                        "source_joined_manifest_sha256": joined_sha256,
+                        "semantic_store_manifest_sha256": store_manifest_sha256,
+                        "code_sha256": code_sha256,
+                        "trainable_parameters": trainable_parameters,
+                        "motion_scale_m": motion_scale,
+                        "eligible_relations": {
+                            name: bool(value)
+                            for name, value in zip(PRIMARY_RELATIONS, eligible_relations)
+                        },
+                        "relation_pos_weight": dict(zip(PRIMARY_RELATIONS, pos_weight_values)),
+                    },
+                )
             else:
                 stale_validations += 1
+            _atomic_torch_save(
+                last_checkpoint_path,
+                {
+                    "schema": "phase3c-core-resume.v3",
+                    "kind": "resume_last",
+                    "model_id": model_id,
+                    "fold": fold,
+                    "seed": seed,
+                    "model_state": adapter.state_dict(),
+                    "optimizer_state": optimizer.state_dict(),
+                    "update": update,
+                    "best_update": best_update,
+                    "best_validation_macro_pr_auc": best_validation_pr_auc,
+                    "stale_validations": stale_validations,
+                    "validation_history": validation_history,
+                    "recent_losses": losses[-100:],
+                    "rng_state": _capture_rng_state(),
+                    "config_sha256": config_sha256,
+                    "trainer_source_sha256": trainer_source_sha256,
+                    "code_sha256": code_sha256,
+                    "base_checkpoint_sha256": base_checkpoint_sha256,
+                    "source_joined_manifest_sha256": joined_sha256,
+                    "semantic_store_manifest_sha256": store_manifest_sha256,
+                },
+            )
             adapter.train()
             if update >= minimum_updates and stale_validations >= early_stopping_patience:
                 break
-    if best_state is None:
+    if not checkpoint_path.exists() or best_update <= 0:
         raise RuntimeError("core training completed without a validation checkpoint")
-    adapter.load_state_dict(best_state)
-    checkpoint_path = output_root / "checkpoints" / "best.pt"
-    _atomic_torch_save(
-        checkpoint_path,
-        {
-            "schema": "phase3c-core-checkpoint.v2",
-            "model_id": model_id,
-            "fold": fold,
-            "model_state": adapter.state_dict(),
-            "requested_updates": updates,
-            "completed_updates": completed_updates,
-            "selected_update": best_update,
-            "best_validation_macro_pr_auc": best_validation_pr_auc,
-            "seed": seed,
-            "vl_dim": checkpoint_vl,
-            "hidden_dim": checkpoint_hidden,
-            "structured_hidden_dim": hidden_dim,
-            "structured_dim": structured_dim,
-            "base_checkpoint_sha256": _sha256_file(base_checkpoint),
-            "source_joined_manifest_sha256": joined_sha256,
-            "semantic_store_manifest_sha256": store_manifest_sha256,
-            "trainable_parameters": trainable_parameters,
-            "motion_scale_m": motion_scale,
-            "eligible_relations": {
-                name: bool(value)
-                for name, value in zip(PRIMARY_RELATIONS, eligible_relations)
-            },
-            "relation_pos_weight": dict(zip(PRIMARY_RELATIONS, pos_weight_values)),
-        },
-    )
+    best_checkpoint = _torch_load(checkpoint_path, map_location="cpu")
+    adapter.load_state_dict(best_checkpoint["model_state"])
     prediction_path = output_root / "predictions" / "evaluation.jsonl.gz"
     metrics_path = output_root / "metrics.json"
     evaluation_split = str(_get(config, "evaluation_split", "test"))
@@ -565,15 +685,16 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     }
     write_json(metrics_path, metrics)
     runtime = {
-        "schema": "phase3c-core-run.v2",
+        "schema": "phase3c-core-run.v3",
         "status": "completed",
-        "config_sha256": canonical_sha256(config),
+        "config_sha256": config_sha256,
         "model_id": model_id,
         "fold": fold,
         "split": train_split,
         "seed": seed,
         "updates": updates,
         "completed_updates": completed_updates,
+        "resumed_from_update": start_update,
         "selected_update": best_update,
         "best_validation_macro_pr_auc": best_validation_pr_auc,
         "validation_interval": validation_interval,
@@ -588,8 +709,14 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "mean_last_100_loss": float(np.mean(losses[-100:])),
         "checkpoint": str(checkpoint_path),
         "checkpoint_sha256": _sha256_file(checkpoint_path),
+        "resume_checkpoint": str(last_checkpoint_path),
+        "resume_checkpoint_sha256": _sha256_file(last_checkpoint_path),
+        "metrics": str(metrics_path),
+        "metrics_sha256": _sha256_file(metrics_path),
+        "predictions": str(prediction_path),
+        "predictions_sha256": _sha256_file(prediction_path),
         "base_checkpoint": str(base_checkpoint),
-        "base_checkpoint_sha256": _sha256_file(base_checkpoint),
+        "base_checkpoint_sha256": base_checkpoint_sha256,
         "joined_manifest_sha256": joined_sha256,
         "semantic_store_manifest_sha256": store_manifest_sha256,
         "normalization": normalization.to_dict(),
@@ -602,6 +729,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "motion_scale_m": motion_scale,
         "validation": validation_metrics,
         "evaluation": metrics,
+        "trainer_source_sha256": trainer_source_sha256,
+        "code_sha256": code_sha256,
     }
     write_json(output_root / "runtime_manifest.json", runtime)
     store.close()

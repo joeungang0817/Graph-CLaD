@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import os
 import re
@@ -13,6 +14,14 @@ from typing import Any
 from .io import load_json_config, write_json
 from .contracts import canonical_sha256
 from .train_base_clad import train
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _path(value: Any) -> Path:
@@ -37,6 +46,17 @@ def _completed_runtime(
         or str(value.get("config_sha256")) != config_sha256
     ):
         raise ValueError(f"completed runtime seed mismatch: {path}")
+    for path_key, hash_key in (
+        ("checkpoint", "checkpoint_sha256"),
+        ("resume_checkpoint", "resume_checkpoint_sha256"),
+    ):
+        if not value.get(path_key) or not value.get(hash_key):
+            raise ValueError(f"completed base runtime is missing {path_key}/{hash_key}")
+        artifact = Path(str(value[path_key]))
+        if not artifact.exists():
+            raise FileNotFoundError(f"completed base artifact is missing: {artifact}")
+        if _sha256_file(artifact) != str(value.get(hash_key, "")):
+            raise ValueError(f"completed base artifact hash mismatch: {artifact}")
     return value
 
 
@@ -64,7 +84,7 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                 config_sha256=canonical_sha256(run_config),
             )
             results.append(result if result is not None else train(run_config))
-    summary = {"schema": "phase3c-base-clad-screen.v2", "status": "completed", "folds": list(folds), "seeds": list(seeds), "runs": results}
+    summary = {"schema": "phase3c-base-clad-screen.v3", "status": "completed", "folds": list(folds), "seeds": list(seeds), "runs": results}
     write_json(output_root / "screen_manifest.json", summary)
     return summary
 

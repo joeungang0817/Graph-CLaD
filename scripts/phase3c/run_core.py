@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import os
 import re
@@ -26,6 +27,14 @@ CORE_MODELS = (
     "C3-RelPool-PastAct",
     "C3-RelMPNN-PastAct",
 )
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _path(value: Any) -> Path:
@@ -51,6 +60,19 @@ def _completed_runtime(
         or str(value.get("config_sha256")) != config_sha256
     ):
         raise ValueError(f"completed runtime identity mismatch: {path}")
+    for path_key, hash_key in (
+        ("checkpoint", "checkpoint_sha256"),
+        ("resume_checkpoint", "resume_checkpoint_sha256"),
+        ("metrics", "metrics_sha256"),
+        ("predictions", "predictions_sha256"),
+    ):
+        if not value.get(path_key) or not value.get(hash_key):
+            raise ValueError(f"completed core runtime is missing {path_key}/{hash_key}")
+        artifact = Path(str(value[path_key]))
+        if not artifact.exists():
+            raise FileNotFoundError(f"completed core artifact is missing: {artifact}")
+        if _sha256_file(artifact) != str(value.get(hash_key, "")):
+            raise ValueError(f"completed core artifact hash mismatch: {artifact}")
     return value
 
 
@@ -146,7 +168,7 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                     result = train(run_config)
                 results.append(result)
     summary = {
-        "schema": "phase3c-core-screen.v2",
+        "schema": "phase3c-core-screen.v3",
         "status": "completed",
         "models": list(models),
         "folds": list(folds),

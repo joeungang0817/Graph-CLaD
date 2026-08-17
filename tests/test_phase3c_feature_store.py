@@ -13,6 +13,7 @@ from scripts.phase3c.build_semantic_feature_store import (
     normalize_camera_image,
     required_frame_keys,
 )
+from scripts.phase3c.qa_camera_orientation import select_orientation_samples
 
 
 class _FakeDecisionNCE:
@@ -86,6 +87,28 @@ class Phase3CFeatureStoreTest(unittest.TestCase):
         self.assertEqual(features.shape, (2, 4))
         self.assertEqual(encoder.encode_texts(["task"])[0].shape, (4,))
         self.assertEqual(encoder.feature_dim, 4)
+
+    def test_orientation_qa_selects_deterministic_task_coverage(self):
+        selected = select_orientation_samples(
+            {
+                (0, "demo_1"): {0, 6, 12, 18, 24},
+                (0, "demo_2"): {3, 9},
+                (1, "demo_0"): {0, 6, 12},
+            },
+            max_tasks=2,
+            frames_per_task=3,
+        )
+        self.assertEqual(
+            selected,
+            [
+                (0, "demo_1", 0),
+                (0, "demo_1", 12),
+                (0, "demo_1", 24),
+                (1, "demo_0", 0),
+                (1, "demo_0", 6),
+                (1, "demo_0", 12),
+            ],
+        )
 
     def test_official_loader_keeps_checkpoint_for_provenance_only(self):
         try:

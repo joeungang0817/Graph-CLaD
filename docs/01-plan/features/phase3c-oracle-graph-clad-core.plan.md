@@ -306,6 +306,9 @@ CLaD Stage 1 foresight residual로 다시 통합하고 원 latent prediction obj
 2. fold macro PR-AUC
 3. 3개 held-out task-fold macro
 4. same fold/seed `RelMPNN − comparator` paired difference
+5. inverse relation 중복을 줄인 relation-family macro를 함께 보고한다:
+   `left/right`, `front/behind`, `above/below`, `contact`, `on`. Family 내부를
+   먼저 평균한 뒤 family 간 macro를 계산하며, 기존 relation macro를 대체하지 않고 병기한다.
 
 ### 6.2 Secondary metric
 

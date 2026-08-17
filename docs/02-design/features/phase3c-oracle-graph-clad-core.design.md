@@ -34,7 +34,7 @@
 ```text
 Phase 2D graph shards + official HDF5 states
           |
-          +--> JoinedManifestBuilder --> joined_manifest.jsonl.gz
+          +--> JoinedManifestBuilder --> joined_manifest_full_demo_fixed.jsonl.gz
           |          |                    support_report.json
           |          +--> ActionTimingValidator
           |

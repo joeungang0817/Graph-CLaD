@@ -2,13 +2,13 @@
 
 The first implementation milestone contains the causal data contract and
 joined-manifest builder. It deliberately has no torch or LIBERO dependency.
+Legacy Phase 2D rows with a blank `demo_key` are repaired deterministically
+from `demo_id` or the `episode_id` suffix by the versioned builder; a one-off
+postprocessing script is not part of the protocol.
 
 ```powershell
 python -m scripts.phase3c.build_joined_manifest `
-  --config configs/phase3c_contract_v1.json `
-  --input <phase2d_task0.jsonl.gz> `
-  --output <phase3c_joined.jsonl.gz> `
-  --qa-output <phase3c_joined_qa.json>
+  --config configs/phase3c_joined_manifest_full_v2.json
 ```
 
 The builder joins `(t-6 -> t)` and `(t -> t+6)` samples, retains only the
@@ -16,6 +16,13 @@ left/past action window, and writes relation any-change targets from the
 current/future graph pair. It fails on graph hash mismatch, invalid action
 shape, unsupported relations, missing split metadata, or a forbidden future
 field in the model-input view.
+The canonical output used by every Phase 3C config is
+`data_contract/joined_manifest_full_demo_fixed.jsonl.gz`. Existing joined
+artifacts are immutable; reruns must use a new candidate/versioned path.
+For the current migrated artifact, build a v2 candidate at a different path
+and run `scripts.phase3c.attest_joined_manifest`. Only a `status=pass`
+attestation permits reuse of the semantic store whose raw source hash is tied
+to the legacy fixed gzip file.
 
 ## Milestone 2: semantic feature store
 
@@ -42,6 +49,19 @@ screen; this step does not train a model.
 The semantic-store config must include the exact DecisionNCE repository commit,
 checkpoint, and the action/state smoke's frozen state-restore tolerance. A
 completed store also hashes every shard and refuses provenance-free extraction.
+
+Before base training, render the configured and vertically flipped alternatives
+for both cameras and verify repeat-render determinism:
+
+```bash
+python -m scripts.phase3c.qa_camera_orientation \
+  --config "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store_full_config.json"
+```
+
+Inspect `semantic_store/qa/orientation_contact_sheet.png` and
+`semantic_store/qa/determinism.json`. If the flipped alternative is correct,
+create a new semantic-store version with both camera `vertical_flip` flags set
+to `true`; do not overwrite the completed store.
 
 ## Milestone 3: controlled CLaD
 
@@ -77,3 +97,12 @@ artifact into RAM. Relation eligibility and positive weights use train plus
 validation support only, validation fixes F1 thresholds, and held-out test does
 not optimize thresholds. The screen automatically parameter-matches every
 adapter to the configured RelMPNN reference within the declared tolerance.
+Base CLaD writes `best.pt` selected by minimum validation Stage-1 loss and a
+separate `last.pt` for exact resume. Core training has a 10,000-update maximum,
+validates every 500 updates, can stop after the frozen 3,000-update minimum,
+and likewise separates validation-best and resume checkpoints. Completed runs
+are skipped only after checkpoint, metric, and prediction hashes are verified.
+Metrics retain per-relation macros and additionally report horizontal
+(`left/right`), depth (`front/behind`), vertical (`above/below`), contact, and
+support family macros so inverse pairs are not presented as independent
+families of evidence.

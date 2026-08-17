@@ -8,7 +8,10 @@ future action window is never copied into the joined record.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
+import re
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
@@ -28,6 +31,21 @@ from .contracts import (
 from .io import atomic_json, atomic_jsonl, iter_phase2d_samples, load_json_config, write_json_line
 
 
+def _expand_path(value: Any) -> Path:
+    raw = os.path.expandvars(str(value))
+    if "$" in raw or "%" in raw:
+        raise ValueError(f"unresolved environment variable in path: {value}")
+    return Path(raw).expanduser()
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _int_field(sample: Mapping[str, Any], key: str) -> int:
     try:
         return int(sample[key])
@@ -35,11 +53,33 @@ def _int_field(sample: Mapping[str, Any], key: str) -> int:
         raise ValueError(f"sample missing integer {key}: {sample.get('sample_id')}") from exc
 
 
+def _demo_key(sample: Mapping[str, Any]) -> str:
+    """Resolve the HDF5 demo-group key, repairing legacy blank metadata."""
+
+    value = sample.get("demo_key")
+    if value is not None and str(value).strip():
+        return str(value)
+    demo_id = sample.get("demo_id")
+    if demo_id is not None and str(demo_id).strip():
+        try:
+            return f"demo_{int(demo_id)}"
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"invalid demo_id: {demo_id!r}") from exc
+    episode_id = str(sample.get("episode_id", "")).strip()
+    match = re.search(r"(?:^|_)demo_?(\d+)$", episode_id)
+    if match:
+        return f"demo_{int(match.group(1))}"
+    raise ValueError(
+        "Phase 2D sample requires non-empty demo_key, demo_id, or an "
+        f"episode_id ending in demoN: {episode_id!r}"
+    )
+
+
 def _episode_key(sample: Mapping[str, Any]) -> tuple[str, int, str, str]:
     return (
         str(sample.get("episode_id")),
         int(sample.get("task_id")),
-        str(sample.get("demo_key", "")),
+        _demo_key(sample),
         str(sample.get("split")),
     )
 
@@ -58,7 +98,7 @@ def _task_id(sample: Mapping[str, Any]) -> int:
 def _joined_sample_id(
     sample: Mapping[str, Any], *, prev_step: int, current_step: int, target_step: int, tau: int
 ) -> str:
-    episode = str(sample.get("episode_id") or f"task{_task_id(sample)}_{sample.get('demo_key', 'unknown')}")
+    episode = str(sample.get("episode_id") or f"task{_task_id(sample)}_{_demo_key(sample)}")
     safe_episode = episode.replace("/", "_").replace(" ", "_")
     return f"{safe_episode}_prev{prev_step}_cur{current_step}_next{target_step}_tau{tau}"
 
@@ -100,7 +140,7 @@ def _build_record(
         ),
         "task_id": _task_id(left),
         "episode_id": str(left.get("episode_id")),
-        "demo_key": str(left.get("demo_key", "")),
+        "demo_key": _demo_key(left),
         "split": str(left.get("split")),
         "tau": tau,
         "prev_step": prev_step,
@@ -161,6 +201,12 @@ def build_joined_manifest(
             raise ValueError("Phase 2D input path must differ from output paths")
     if output_path.resolve() == qa_path.resolve():
         raise ValueError("output_path and qa_path must differ")
+    existing = [path for path in (output_path, qa_path) if path.exists()]
+    if existing:
+        raise FileExistsError(
+            "Phase 3C joined artifacts are immutable; use a new versioned path: "
+            + ", ".join(str(path) for path in existing)
+        )
 
     counters = {
         "source_records": 0,
@@ -172,6 +218,7 @@ def build_joined_manifest(
         "hash_mismatches": 0,
         "duplicate_left_keys": 0,
         "invalid_samples": 0,
+        "repaired_blank_demo_keys": 0,
         "ignored_other_tau_samples": 0,
         "emitted_future_action_fields": 0,
     }
@@ -199,6 +246,12 @@ def build_joined_manifest(
                                 # malformed input.
                                 counters["ignored_other_tau_samples"] += 1
                                 continue
+                            if not str(sample.get("demo_key", "")).strip():
+                                # Count source samples repaired by the versioned
+                                # builder. The emitted record always contains
+                                # the resolved HDF5 group key.
+                                _demo_key(sample)
+                                counters["repaired_blank_demo_keys"] += 1
                             _validate_phase2d_sample(sample, tau=tau)
                             start = _int_field(sample, "start_step")
                             if start in by_start:
@@ -256,7 +309,7 @@ def build_joined_manifest(
 
     output_exists = output_path.exists()
     report = {
-        "contract": "phase3c-causal-join.v1",
+        "contract": "phase3c-causal-join.v2",
         "schema": PHASE3C_SCHEMA_VERSION,
         "tau": tau,
         "relations": list(relations),
@@ -266,6 +319,8 @@ def build_joined_manifest(
         "status": "pass" if error_text is None and counters["joined_samples"] > 0 else "fail",
         "error": error_text,
         "output": str(output_path),
+        "output_sha256": _sha256_file(output_path) if output_exists else None,
+        "demo_key_policy": "explicit_else_demo_id_else_episode_suffix",
     }
     with atomic_json(qa_path) as handle:
         json.dump(report, handle, ensure_ascii=False, indent=2, allow_nan=False)
@@ -314,9 +369,12 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
     config: dict[str, Any] = load_json_config(args.config) if args.config else {}
-    paths = tuple(args.input or tuple(Path(value) for value in config.get("inputs", [])))
-    output = args.output or (Path(config["output"]) if config.get("output") else None)
-    qa_output = args.qa_output or (Path(config["qa_output"]) if config.get("qa_output") else None)
+    paths = tuple(
+        _expand_path(value)
+        for value in (args.input or config.get("inputs", []))
+    )
+    output = _expand_path(args.output or config["output"]) if (args.output or config.get("output")) else None
+    qa_output = _expand_path(args.qa_output or config["qa_output"]) if (args.qa_output or config.get("qa_output")) else None
     if output is None or qa_output is None:
         raise SystemExit("--output and --qa-output are required (directly or in --config)")
     tau = int(args.tau if args.tau is not None else config.get("tau", TAU))
