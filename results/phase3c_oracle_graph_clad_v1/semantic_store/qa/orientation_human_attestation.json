@@ -1,0 +1,15 @@
+{
+  "schema": "phase3c-camera-orientation-human-attestation.v1",
+  "status": "pass",
+  "source_qa": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store/qa/determinism.json",
+  "source_qa_sha256": "b0b5dd885d70fff0157b6c7e59dfa6d9e414d8e56d97b18cce38127047ceecca",
+  "source_contact_sheet": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store/qa/orientation_contact_sheet.png",
+  "source_contact_sheet_sha256": "25da5850a9b37c38d67ab2cbce5ca4ca63174845654e899a5dbc8a3761db5872",
+  "reviewer": "phase3c-owner",
+  "choices": {
+    "external": "configured",
+    "wrist": "configured"
+  },
+  "accepted_existing_semantic_store": true,
+  "notes": "Configured orientation accepted from reviewed contact sheet; deadline pilot v1."
+}

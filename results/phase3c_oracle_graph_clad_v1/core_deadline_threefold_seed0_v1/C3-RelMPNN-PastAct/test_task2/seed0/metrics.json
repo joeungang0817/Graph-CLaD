@@ -1,0 +1,197 @@
+{
+  "status": "completed",
+  "split": "test",
+  "rows": 752,
+  "relation": {
+    "per_relation": {
+      "left": {
+        "valid_count": 752,
+        "positive_count": 137,
+        "pr_auc": 0.8979302094207382,
+        "f1": 0.671604938271605,
+        "threshold": 0.49999999999999994,
+        "threshold_values": null,
+        "brier": 0.1238322537122219,
+        "ece_10bin": 0.17187502621837786
+      },
+      "right": {
+        "valid_count": 752,
+        "positive_count": 136,
+        "pr_auc": 0.9014044702762251,
+        "f1": 0.671604938271605,
+        "threshold": 0.44999999999999996,
+        "threshold_values": null,
+        "brier": 0.11891315644928944,
+        "ece_10bin": 0.16704924392500897
+      },
+      "front": {
+        "valid_count": 752,
+        "positive_count": 142,
+        "pr_auc": 0.3386773776873028,
+        "f1": 0.15053763440860216,
+        "threshold": 0.7,
+        "threshold_values": null,
+        "brier": 0.16741905404486568,
+        "ece_10bin": 0.15298942048200448
+      },
+      "behind": {
+        "valid_count": 752,
+        "positive_count": 142,
+        "pr_auc": 0.3612407030032195,
+        "f1": 0.07894736842105263,
+        "threshold": 0.75,
+        "threshold_values": null,
+        "brier": 0.17238451993118864,
+        "ece_10bin": 0.16052716767907096
+      },
+      "above": {
+        "valid_count": 752,
+        "positive_count": 104,
+        "pr_auc": 0.7636755149606335,
+        "f1": 0.6280487804878049,
+        "threshold": 0.85,
+        "threshold_values": null,
+        "brier": 0.18952013511714527,
+        "ece_10bin": 0.23723274254752585
+      },
+      "below": {
+        "valid_count": 752,
+        "positive_count": 104,
+        "pr_auc": 0.7549529917474774,
+        "f1": 0.6319018404907976,
+        "threshold": 0.85,
+        "threshold_values": null,
+        "brier": 0.18895226875261745,
+        "ece_10bin": 0.23702469784636984
+      },
+      "contact": {
+        "valid_count": 752,
+        "positive_count": 60,
+        "pr_auc": 0.7567043667683861,
+        "f1": 0.6627906976744186,
+        "threshold": 0.9,
+        "threshold_values": null,
+        "brier": 0.18491249173819582,
+        "ece_10bin": 0.2698996277188549
+      },
+      "on": {
+        "valid_count": 0,
+        "positive_count": 0,
+        "pr_auc": null,
+        "f1": null,
+        "threshold": 0.5,
+        "threshold_values": null,
+        "brier": null,
+        "ece_10bin": null
+      }
+    },
+    "macro_pr_auc": 0.6820836619805689,
+    "macro_f1": 0.4993480282894122,
+    "macro_brier": 0.16370483996364632,
+    "macro_ece_10bin": 0.19951398948817328,
+    "valid_rows": 5264,
+    "threshold_source": "validation_fixed",
+    "per_family": {
+      "horizontal": {
+        "relations": [
+          "left",
+          "right"
+        ],
+        "evaluable_relations": [
+          "left",
+          "right"
+        ],
+        "relation_valid_count_sum": 1504,
+        "pr_auc": 0.8996673398484816,
+        "f1": 0.671604938271605,
+        "brier": 0.12137270508075568,
+        "ece_10bin": 0.16946213507169341
+      },
+      "depth": {
+        "relations": [
+          "front",
+          "behind"
+        ],
+        "evaluable_relations": [
+          "front",
+          "behind"
+        ],
+        "relation_valid_count_sum": 1504,
+        "pr_auc": 0.34995904034526115,
+        "f1": 0.11474250141482739,
+        "brier": 0.16990178698802716,
+        "ece_10bin": 0.1567582940805377
+      },
+      "vertical": {
+        "relations": [
+          "above",
+          "below"
+        ],
+        "evaluable_relations": [
+          "above",
+          "below"
+        ],
+        "relation_valid_count_sum": 1504,
+        "pr_auc": 0.7593142533540554,
+        "f1": 0.6299753104893012,
+        "brier": 0.18923620193488136,
+        "ece_10bin": 0.23712872019694786
+      },
+      "contact": {
+        "relations": [
+          "contact"
+        ],
+        "evaluable_relations": [
+          "contact"
+        ],
+        "relation_valid_count_sum": 752,
+        "pr_auc": 0.7567043667683861,
+        "f1": 0.6627906976744186,
+        "brier": 0.18491249173819582,
+        "ece_10bin": 0.2698996277188549
+      },
+      "support": {
+        "relations": [
+          "on"
+        ],
+        "evaluable_relations": [],
+        "relation_valid_count_sum": 0,
+        "pr_auc": null,
+        "f1": null,
+        "brier": null,
+        "ece_10bin": null
+      }
+    },
+    "family_macro_pr_auc": 0.6914112500790461,
+    "family_macro_f1": 0.519778361962538,
+    "family_macro_brier": 0.166355796435465,
+    "family_macro_ece_10bin": 0.20831219426700848,
+    "family_policy": "inverse-pair-mean-then-family-macro"
+  },
+  "no_change_fpr": {
+    "mean": 0.13373301161786924
+  },
+  "motion": {
+    "mae": 0.006168149657224586,
+    "rmse": 0.008352281554483948,
+    "moving_count": 351,
+    "moving_mae": 0.007952661375565577,
+    "moving_rmse": 0.010046298349896114,
+    "moving_threshold": 0.01
+  },
+  "prediction_path": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_deadline_threefold_seed0_v1/C3-RelMPNN-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz",
+  "threshold_selection": {
+    "split": "validation",
+    "excluded_task_id": 2,
+    "thresholds": {
+      "left": 0.49999999999999994,
+      "right": 0.44999999999999996,
+      "front": 0.7,
+      "behind": 0.75,
+      "above": 0.85,
+      "below": 0.85,
+      "contact": 0.9,
+      "on": 0.5
+    }
+  }
+}

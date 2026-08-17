@@ -1,0 +1,22 @@
+{
+  "schema": "phase3c-deadline-core-scope-selection.v1",
+  "status": "pass",
+  "decision_basis": "wall_clock_only_no_performance_metrics",
+  "benchmark_runtime": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_postcache_benchmark_v1/C3-Sem-PastAct/test_task0/seed0/runtime_manifest.json",
+  "benchmark_runtime_sha256": "a192d6d059c99275cc134144bd119c751e104295e8eb65ae44a4e5b03dfe0b00",
+  "benchmark_total_elapsed_seconds": 918.3514142036438,
+  "formal_updates": 200,
+  "benchmark_updates": 100,
+  "projection_policy": "complete_100_update_runtime_times_two_per_formal_run",
+  "projected": {
+    "three_model_hours": 4.591757071018219,
+    "six_model_hours": 9.183514142036438
+  },
+  "remaining_hours_at_decision": 7.0,
+  "reserved_hours": 1.0,
+  "available_core_hours": 6.0,
+  "selection": "three-model",
+  "core_config": "configs/phase3c_core_deadline_threefold_seed0_v1.json",
+  "analysis_config": "configs/phase3c_analysis_deadline_threefold_seed0_v1.json",
+  "performance_fields_consulted": []
+}

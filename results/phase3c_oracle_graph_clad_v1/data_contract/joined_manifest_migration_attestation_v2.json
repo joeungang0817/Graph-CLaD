@@ -1,0 +1,22 @@
+{
+  "schema": "phase3c-joined-manifest-migration-attestation.v1",
+  "status": "pass",
+  "equivalent_ordered_canonical_rows": true,
+  "legacy_semantic_store_source": {
+    "path": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+    "raw_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+    "canonical_rows_sha256": "31d127ee98bfde4404221a889b5b417aa5ee5c5f97e8cd71fe5f9d15e788feb2",
+    "rows": 15857,
+    "first_sample_id": "task0_demo0_prev0_cur6_next12_tau6",
+    "last_sample_id": "task2_demo49_prev122_cur128_next134_tau6"
+  },
+  "builder_v2_candidate": {
+    "path": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_builder_v2_candidate.jsonl.gz",
+    "raw_sha256": "4aa42bbd16afe7c446a1cf5ca78d1588329246f896f68f2d3d29d72fe2ed97d7",
+    "canonical_rows_sha256": "31d127ee98bfde4404221a889b5b417aa5ee5c5f97e8cd71fe5f9d15e788feb2",
+    "rows": 15857,
+    "first_sample_id": "task0_demo0_prev0_cur6_next12_tau6",
+    "last_sample_id": "task2_demo49_prev122_cur128_next134_tau6"
+  },
+  "decision": "legacy fixed manifest may remain the immutable semantic-store source"
+}

@@ -1,0 +1,48 @@
+{
+  "inventory": {
+    "agentview_image": {
+      "dtype": "uint8",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "channels_last_candidate": true
+    },
+    "robot0_eye_in_hand_image": {
+      "dtype": "uint8",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "channels_last_candidate": true
+    }
+  },
+  "selected": {
+    "external": {
+      "key": "agentview_image",
+      "name": "external",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "dtype": "uint8",
+      "channel_order": "rgb",
+      "vertical_flip": false
+    },
+    "wrist": {
+      "key": "robot0_eye_in_hand_image",
+      "name": "wrist",
+      "shape": [
+        224,
+        224,
+        3
+      ],
+      "dtype": "uint8",
+      "channel_order": "rgb",
+      "vertical_flip": false
+    }
+  }
+}

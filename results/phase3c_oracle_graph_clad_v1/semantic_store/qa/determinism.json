@@ -1,0 +1,155 @@
+{
+  "schema": "phase3c-camera-orientation-qa.v1",
+  "status": "pass",
+  "review_status": "pending_human_orientation_choice",
+  "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+  "runtime_image_convention": "opengl",
+  "recorded_image_convention_by_task": {
+    "0": "opengl",
+    "1": "opengl",
+    "2": "opengl"
+  },
+  "camera_specs": [
+    {
+      "name": "external",
+      "key": "agentview_image",
+      "channel_order": "rgb",
+      "vertical_flip": false
+    },
+    {
+      "name": "wrist",
+      "key": "robot0_eye_in_hand_image",
+      "channel_order": "rgb",
+      "vertical_flip": false
+    }
+  ],
+  "rows": [
+    {
+      "task_id": 0,
+      "demo_key": "demo_0",
+      "step": 0,
+      "configured_sha256": [
+        "52b367a4959924f9d0226d749039874c4179bdcdf20c505da8dfa148320c1343",
+        "dd89b54e01bb2aac58f6209fd4273f3673a9befcef1a264becc7459d06974dfc"
+      ],
+      "repeat_sha256": [
+        "52b367a4959924f9d0226d749039874c4179bdcdf20c505da8dfa148320c1343",
+        "dd89b54e01bb2aac58f6209fd4273f3673a9befcef1a264becc7459d06974dfc"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 0,
+      "demo_key": "demo_0",
+      "step": 48,
+      "configured_sha256": [
+        "115a18c9fc02df71f46a2725a57232b8782162d0cc5190585d140ce425cb7cf2",
+        "aa7f21d1e88334750fa9e3d2cbe82806212c3b352c95e0b951dcdd3539e838fd"
+      ],
+      "repeat_sha256": [
+        "115a18c9fc02df71f46a2725a57232b8782162d0cc5190585d140ce425cb7cf2",
+        "aa7f21d1e88334750fa9e3d2cbe82806212c3b352c95e0b951dcdd3539e838fd"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 0,
+      "demo_key": "demo_0",
+      "step": 97,
+      "configured_sha256": [
+        "d6cd536de8cd5156bb260b7bd6b15990303ac1050745b23cc0c65652687e9a7b",
+        "d4de109ff85a73639ba8bf612a997229321ba78fecad08a8d1e3a6e0c33ab0e2"
+      ],
+      "repeat_sha256": [
+        "d6cd536de8cd5156bb260b7bd6b15990303ac1050745b23cc0c65652687e9a7b",
+        "d4de109ff85a73639ba8bf612a997229321ba78fecad08a8d1e3a6e0c33ab0e2"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 1,
+      "demo_key": "demo_0",
+      "step": 0,
+      "configured_sha256": [
+        "2fadae63783297b1a22c12ce99a152c525970290b7d969ce0869769cc2c64bf9",
+        "d6b06f56778e16a68773ac1d57a4ff07f6a9c3851fcab0cc47ebe4e47bac38fe"
+      ],
+      "repeat_sha256": [
+        "2fadae63783297b1a22c12ce99a152c525970290b7d969ce0869769cc2c64bf9",
+        "d6b06f56778e16a68773ac1d57a4ff07f6a9c3851fcab0cc47ebe4e47bac38fe"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 1,
+      "demo_key": "demo_0",
+      "step": 76,
+      "configured_sha256": [
+        "8ecafbc0ecf6fa05b37843e5af1eadfe3c4b69d3d0b6a7c0a62206920e5dde68",
+        "8576275dbe886cdcfb64c0f9fca7ae691ed672329e891d1d4e17d66f682bcdd5"
+      ],
+      "repeat_sha256": [
+        "8ecafbc0ecf6fa05b37843e5af1eadfe3c4b69d3d0b6a7c0a62206920e5dde68",
+        "8576275dbe886cdcfb64c0f9fca7ae691ed672329e891d1d4e17d66f682bcdd5"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 1,
+      "demo_key": "demo_0",
+      "step": 151,
+      "configured_sha256": [
+        "3e2efe035c8b11ee59f9c894d206fbe27564f976eef0850bfa6d0dbf5fbc2b01",
+        "e0d597aabf6be1b39cdc2ffa96003057f9b48220fe4be2bc873e86aaf767ce79"
+      ],
+      "repeat_sha256": [
+        "3e2efe035c8b11ee59f9c894d206fbe27564f976eef0850bfa6d0dbf5fbc2b01",
+        "e0d597aabf6be1b39cdc2ffa96003057f9b48220fe4be2bc873e86aaf767ce79"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 2,
+      "demo_key": "demo_0",
+      "step": 0,
+      "configured_sha256": [
+        "79c242eef117d4ff67dcf7e4d273574cc9b6d0acfcd3389222d3f3dab0594a1f",
+        "2ae7cca4b62fd4c8970111464f040d42a798310cc87babbbf65a4f25f0f74137"
+      ],
+      "repeat_sha256": [
+        "79c242eef117d4ff67dcf7e4d273574cc9b6d0acfcd3389222d3f3dab0594a1f",
+        "2ae7cca4b62fd4c8970111464f040d42a798310cc87babbbf65a4f25f0f74137"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 2,
+      "demo_key": "demo_0",
+      "step": 51,
+      "configured_sha256": [
+        "36aa0c860f79cf19e08b0c86f9200471593d43341e46605e43b075a4a78f8e49",
+        "5c0311ef514446f3f0167949101cbf00578518e57c8c79c9bb5891743a057b22"
+      ],
+      "repeat_sha256": [
+        "36aa0c860f79cf19e08b0c86f9200471593d43341e46605e43b075a4a78f8e49",
+        "5c0311ef514446f3f0167949101cbf00578518e57c8c79c9bb5891743a057b22"
+      ],
+      "repeat_match": true
+    },
+    {
+      "task_id": 2,
+      "demo_key": "demo_0",
+      "step": 102,
+      "configured_sha256": [
+        "c771db63e7a81cc1350b7c666a8c122cf2bd68c40c7748722ec755e691cab4b7",
+        "aff6ad7923b3ec324e6652cc87550ddcc7b6f3ef265c7eb9315ec1e486664ff3"
+      ],
+      "repeat_sha256": [
+        "c771db63e7a81cc1350b7c666a8c122cf2bd68c40c7748722ec755e691cab4b7",
+        "aff6ad7923b3ec324e6652cc87550ddcc7b6f3ef265c7eb9315ec1e486664ff3"
+      ],
+      "repeat_match": true
+    }
+  ],
+  "contact_sheet": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store/qa/orientation_contact_sheet.png"
+}

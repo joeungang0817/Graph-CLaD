@@ -1,0 +1,3219 @@
+{
+  "contract": "phase3c-action-timing-batch.v1",
+  "reports": [
+    {
+      "contract": "phase3c-action-timing.v1",
+      "source_hdf5": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial/pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate_demo.hdf5",
+      "source_sha256": "ff6f26121653c77280eb40a38773a74141c11a8509f3466058cb56dd2cc60ead",
+      "task_id": null,
+      "bddl_path": "/home/ubuntu/external-src/LIBERO/libero/libero/bddl_files/libero_spatial/pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate.bddl",
+      "render": false,
+      "max_steps_per_demo": 3,
+      "frozen_tolerance": null,
+      "rows": [
+        {
+          "demo_key": "demo_0",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.09825343516488752,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_0",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.061380165000881115,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_0",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.02455765424702088,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0024114913563113988,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678247224,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561845,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003232011939640206,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003238136079916509,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003240121275277808,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032803180342968466,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032499789669171615,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032432446549389307,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917263719,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767830125,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539292,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032103120304251796,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003232293560157067,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032385403680050784,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172675386,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767826777,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855396986,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265558,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678277603,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855626073,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.000325815201201076,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032445066974184396,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241796671073733,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172605916,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767824226,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562577,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172662826,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827821,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855630377,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.27614775768219174,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.27602714205737555,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.2759718950118069,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917260811,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678242323,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855612726,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917262441,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678247804,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285565003,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265914,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678290445,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285538932,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003238392921391842,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032397468351060303,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032405490922887714,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032036335562307065,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032305592530307054,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032380763941995016,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003191091787368809,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032274224468109916,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032372371282552717,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.9970277088601189,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.44814712841069054,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.019009638288828838,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.25517224362577934,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.2555660876037243,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.2557898818023535,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.005354677695940785,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00701797569162794,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0045961395011715365,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003268859631310964,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032458982380165614,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003242064349899651,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.22238385514605535,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.2236581005739349,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.22607435126332764,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172674405,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678260055,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.000324141528553932,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003231342737265914,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032382283314373584,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003240166620414427,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0002990141854677525,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003215436261468155,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003233971272852826,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003255021010658116,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.000324467178491704,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241913500923076,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264729,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678254694,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855576324,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172613137,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767824753,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562159,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.4076981844922076,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.022034895765249567,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032364665417481027,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172617734,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678228424,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855619004,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917268812,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767832061,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285557031,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917266704,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767828856,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285538921,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032000894972215,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003229413358207126,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.000323775026298032,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.1731724307017914,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678220433,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562582,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172633335,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678227686,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855626924,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00030143936367029757,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032172596936577876,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003234468029813774,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.02119656866146996,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032166105106148576,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032342902354661016,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172668973,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767831159,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285558039,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.30162074530165595,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827853,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855411965,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032476415289243635,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003242355848365842,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032412639187523386,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265575,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678274036,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561606,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172648834,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678271765,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855623167,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917266272,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.000324338276782727,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855393403,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00031604595084834194,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032187996278807383,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032348841147695985,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 1.8350234838033725,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.027314023274893063,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032348023029668527,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917266024,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767830616,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561724,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00031375280282740746,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003213891811991278,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003233543900387839,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917263356,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.000324338276782147,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561409,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917261798,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678218585,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285560652,
+          "within_tolerance": null
+        }
+      ],
+      "summary": {
+        "checked": 150,
+        "mean_max_abs_state_error": 0.04508497171934457,
+        "max_max_abs_state_error": 1.8350234838033725,
+        "within_tolerance": null,
+        "outside_tolerance": null
+      },
+      "errors": [],
+      "status": "pass"
+    },
+    {
+      "contract": "phase3c-action-timing.v1",
+      "source_hdf5": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial/pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate_demo.hdf5",
+      "source_sha256": "bf1090dd4826eacb49eb052f17d04798e2a1eb2f74f8d024bc3b9c5d234c25f9",
+      "task_id": null,
+      "bddl_path": "/home/ubuntu/external-src/LIBERO/libero/libero/bddl_files/libero_spatial/pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate.bddl",
+      "render": false,
+      "max_steps_per_demo": 3,
+      "frozen_tolerance": null,
+      "rows": [
+        {
+          "demo_key": "demo_0",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.09818443804108025,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_0",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0613663865831649,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_0",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.024464965227099997,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0023409580859788705,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678221534,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855613117,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917266192,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678266056,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285564282,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917262527,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767822011,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561537,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917267083,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678266083,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855567174,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.13955924458618846,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767829248,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855622885,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264577,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767826698,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855615036,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.24576759483414462,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.24548663126513007,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562669,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172615365,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678248855,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855631136,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265511,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678296213,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285538545,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172666913,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678259605,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285564012,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172632636,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678236555,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562234,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265791,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767829949,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285557815,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172660955,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678275137,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855620614,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172656787,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678267124,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285557366,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.04302599867841028,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678234967,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562168,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917263067,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767822501,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562031,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917274906,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767824593,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855615486,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917262074,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678223984,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855617394,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917259274,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767821667,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561409,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917266245,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678299585,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285537616,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172669635,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767829123,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.000324141528553998,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264807,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678278714,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539452,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172669233,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767825219,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285564815,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917260895,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678227665,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561791,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172612313,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678216644,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562018,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172654434,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678283013,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855638113,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265605,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767826811,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285563501,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.060555298782709294,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.06047153994498017,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855625867,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917263959,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678224824,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561888,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.000325778491726114,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767824855,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285564147,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.12061015239579707,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.000324338276782488,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562246,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917259834,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767824378,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562375,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.2226726236800874,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.2203536795573545,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.21937075899767783,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.2267141652806987,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.22242591519934904,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855618955,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.01757034751320489,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678257854,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285563672,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265502,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767828067,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285540456,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264999,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678270973,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855627054,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172620645,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767822141,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855614754,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917267575,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767828495,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855398044,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264942,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767829137,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539031,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265831,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678279186,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855392785,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264978,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678309126,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285560672,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917268563,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827286,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.000324141528555714,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264403,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678275917,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562582,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172654575,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767829899,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539584,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172664544,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767828847,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285538177,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172607217,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678246996,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561594,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264968,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678272263,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.000324141528554031,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172615685,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678220395,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855626523,
+          "within_tolerance": null
+        }
+      ],
+      "summary": {
+        "checked": 150,
+        "mean_max_abs_state_error": 0.01516083902765335,
+        "max_max_abs_state_error": 0.24576759483414462,
+        "within_tolerance": null,
+        "outside_tolerance": null
+      },
+      "errors": [],
+      "status": "pass"
+    },
+    {
+      "contract": "phase3c-action-timing.v1",
+      "source_hdf5": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial/pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate_demo.hdf5",
+      "source_sha256": "75ede0cf5fbfc925093671b55032ad80f1b1f1cf35442ec6c663460d37d3e0b3",
+      "task_id": null,
+      "bddl_path": "/home/ubuntu/external-src/LIBERO/libero/libero/bddl_files/libero_spatial/pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate.bddl",
+      "render": false,
+      "max_steps_per_demo": 3,
+      "frozen_tolerance": null,
+      "rows": [
+        {
+          "demo_key": "demo_0",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.09822536310975512,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_0",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.06138005711922472,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_0",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.02455620565623975,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00241653443313114,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003242149726492966,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_1",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032412324071178205,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172656,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827956,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_2",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285537981,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.1776986799993746,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003245650402079288,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_3",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032421597246431685,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0282003401374414,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.02860355464129826,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_4",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.03032778726649522,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.03153661863796541,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.03151536113280213,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_5",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.03148741251479188,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917268468,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827263,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_6",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285556044,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917267997,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678264967,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_7",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285556978,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0551560809846576,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.05500441294502265,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_8",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.05483604078492407,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264864,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678284694,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_9",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855377986,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.11154257530645027,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.11064595740365929,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_10",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285557672,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917267179,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767829571,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_11",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855392997,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172657535,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827978,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_12",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855626,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.18337139888527007,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.18282975968455947,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_13",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.18236749348155665,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917264792,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767825811,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_14",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285563444,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.30199116284439104,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.3009946833163545,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_15",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.30017065246913793,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265832,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767831599,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_16",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855569207,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0002957451363445919,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032557174332198163,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_17",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032436956478275027,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.16121491599670074,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.15480521479393877,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_18",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.15777165914022565,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172670556,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767825997,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_19",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285564315,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032719711168879666,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032477676148717365,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_20",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032426477151079264,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172678075,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678265465,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_21",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539915,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.18341092688719712,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.1856537281164191,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_22",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539053,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.01724336456322396,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.01709526366598249,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_23",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.01730258008981967,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.05427770965141539,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.054540681214020933,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_24",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855398645,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.07030138230248238,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003235417955671602,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_25",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032392813750290833,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265589,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827083,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_26",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855618413,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172658993,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678295417,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_27",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285538271,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.12076874401345265,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003245889891160493,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_28",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003242228361062115,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.06147237113694725,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.060802385182389077,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_29",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.060969329437043765,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172681745,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678266143,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_30",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285563403,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.07224682170722857,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767825844,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_31",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285539608,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003263604134700819,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003246408270693256,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_32",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032423430079622946,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.04702178348821742,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.04730296245067784,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_33",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855643973,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.025396483987349422,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.021998144365116636,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_34",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.020146126636831796,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.02547213678015171,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.021931858823648842,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_35",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.020058985388738685,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172683225,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678282666,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_36",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285556947,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265206,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827338,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_37",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855614656,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.05653827272842944,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.05638781470505458,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_38",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855633505,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.03349285424564914,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.033503174434215216,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_39",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.031028972823974568,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917262583,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767821662,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_40",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285561011,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172674074,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678279967,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_41",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855621254,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917267338,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678266463,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_42",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855393734,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.12334337404154984,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.11977389567801344,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_43",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.11991748303069313,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917265451,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827981,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_44",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285562022,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.33118921042239474,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.002290096478577238,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_45",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0005738818348314855,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172668756,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678265905,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_46",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285538666,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.0003257784917268263,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.0003243382767827524,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_47",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0003241415285558737,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.00032577849172665466,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.00032433827678276237,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_48",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.00032414152855619557,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 0,
+          "next_step": 1,
+          "max_abs_state_error": 0.07908031254702985,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 1,
+          "next_step": 2,
+          "max_abs_state_error": 0.07890648332501206,
+          "within_tolerance": null
+        },
+        {
+          "demo_key": "demo_49",
+          "step": 2,
+          "next_step": 3,
+          "max_abs_state_error": 0.0787648748798033,
+          "within_tolerance": null
+        }
+      ],
+      "summary": {
+        "checked": 150,
+        "mean_max_abs_state_error": 0.03492031883564854,
+        "max_max_abs_state_error": 0.33118921042239474,
+        "within_tolerance": null,
+        "outside_tolerance": null
+      },
+      "errors": [],
+      "status": "pass"
+    }
+  ],
+  "status": "pass"
+}

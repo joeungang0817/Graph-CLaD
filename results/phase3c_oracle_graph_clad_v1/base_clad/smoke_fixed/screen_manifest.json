@@ -1,0 +1,74 @@
+{
+  "schema": "phase3c-base-clad-screen.v2",
+  "status": "completed",
+  "folds": [
+    "test_task0",
+    "test_task1",
+    "test_task2"
+  ],
+  "seeds": [
+    0
+  ],
+  "runs": [
+    {
+      "schema": "phase3c-base-clad-run.v2",
+      "status": "completed",
+      "config_sha256": "331f55fb873e6b7515832e932c557f575e8643cfd2e6794af166084a4713f190",
+      "split": "train",
+      "fold": "test_task0",
+      "seed": 0,
+      "updates": 100,
+      "batch_size": 8,
+      "shuffle_buffer": 64,
+      "device": "cuda",
+      "elapsed_seconds": 74.08995747566223,
+      "mean_last_100_loss": 0.2123573961108923,
+      "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad/smoke_fixed/test_task0/seed0/checkpoints/last.pt",
+      "checkpoint_sha256": "b81ac84e688f129af560827c617d7027f1b4ebb0ed56806be1ca314bf41c5ffe",
+      "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+      "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+      "semantic_store": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store",
+      "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e"
+    },
+    {
+      "schema": "phase3c-base-clad-run.v2",
+      "status": "completed",
+      "config_sha256": "b0ff3cad0b2b8af8b2d13e85e556ef297dfe579edd222617150309feb6d23f6d",
+      "split": "train",
+      "fold": "test_task1",
+      "seed": 0,
+      "updates": 100,
+      "batch_size": 8,
+      "shuffle_buffer": 64,
+      "device": "cuda",
+      "elapsed_seconds": 36.856335401535034,
+      "mean_last_100_loss": 0.20239098086953164,
+      "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad/smoke_fixed/test_task1/seed0/checkpoints/last.pt",
+      "checkpoint_sha256": "caa1e3595fc26e3e4dd38f6906a296a3e10301173bd11e6ba6a85402deb83d66",
+      "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+      "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+      "semantic_store": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store",
+      "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e"
+    },
+    {
+      "schema": "phase3c-base-clad-run.v2",
+      "status": "completed",
+      "config_sha256": "451fd0f95ac6040128c89da323927389614c2e3825bd030d4cbd91353922d874",
+      "split": "train",
+      "fold": "test_task2",
+      "seed": 0,
+      "updates": 100,
+      "batch_size": 8,
+      "shuffle_buffer": 64,
+      "device": "cuda",
+      "elapsed_seconds": 38.15383815765381,
+      "mean_last_100_loss": 0.19455715380609034,
+      "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad/smoke_fixed/test_task2/seed0/checkpoints/last.pt",
+      "checkpoint_sha256": "1bc730859b8e5cb11c33afc83dc594978d2ecd62d1584d66c845c0a6693ecfa9",
+      "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+      "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+      "semantic_store": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store",
+      "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "joined_manifest": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+  "semantic_store": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/semantic_store",
+  "output_root": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0",
+  "folds": [
+    "test_task0"
+  ],
+  "seeds": [
+    0
+  ],
+  "split": "train",
+  "updates": 100,
+  "validation_split": "validation",
+  "validation_interval": 100,
+  "resume": true,
+  "batch_size": 8,
+  "vl_dim": 1024,
+  "hidden_dim": 1024,
+  "max_nodes": 32,
+  "shuffle_buffer": 64,
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0001,
+  "recon_weight": 0.1,
+  "device": "cuda",
+  "seed": 0,
+  "fold": "test_task0",
+  "held_out_task_id": 0
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "phase3c-run-state.v1",
+  "status": "completed",
+  "updated_at_utc": "2026-08-17T04:12:30.222558+00:00",
+  "model_id": "C3-SceneSet-PastAct",
+  "fold": "test_task0",
+  "seed": 0,
+  "config_sha256": "522955b49f7745d76b1825fa86d210541ee09de096c04a68b4b802db2990c1bc",
+  "runtime_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-SceneSet-PastAct/test_task0/seed0/runtime_manifest.json"
+}

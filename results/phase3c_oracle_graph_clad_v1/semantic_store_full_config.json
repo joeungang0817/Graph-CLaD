@@ -1,0 +1,44 @@
+{
+  "semantic_feature_store": {
+    "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+    "output_root": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store",
+    "hdf5_by_task": {
+      "0": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial/pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate_demo.hdf5",
+      "1": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial/pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate_demo.hdf5",
+      "2": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/libero_datasets/libero_spatial/pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate_demo.hdf5"
+    },
+    "bddl_roots": [
+      "/home/ubuntu/external-src/LIBERO/libero/libero/bddl_files"
+    ],
+    "libero_suite": "libero_spatial",
+    "camera_size": 224,
+    "encode_batch_size": 8,
+    "state_restore_tolerance": 1.05,
+    "cameras": [
+      {
+        "name": "external",
+        "key": "agentview_image",
+        "channel_order": "rgb",
+        "vertical_flip": false
+      },
+      {
+        "name": "wrist",
+        "key": "robot0_eye_in_hand_image",
+        "channel_order": "rgb",
+        "vertical_flip": false
+      }
+    ],
+    "decisionnce": {
+      "model_id": "DecisionNCE-P",
+      "python_module": "DecisionNCE",
+      "repository_commit": "ebdc585c5e6833ec3a2ba77f801b15c74d7a28f8",
+      "checkpoint": "/home/ubuntu/.cache/DecisionNCE/DecisionNCE-P",
+      "checkpoint_argument": null,
+      "preprocess": "rgb_01",
+      "device": "cuda",
+      "load_kwargs": {
+        "device": "cuda"
+      }
+    }
+  }
+}

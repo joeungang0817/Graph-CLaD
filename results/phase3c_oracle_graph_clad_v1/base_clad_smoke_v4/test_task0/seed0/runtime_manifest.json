@@ -1,0 +1,59 @@
+{
+  "schema": "phase3c-base-clad-run.v3",
+  "status": "completed",
+  "config_sha256": "32b5f368d535abcf02ff702a5ca91794f0130fa364a41cbc6f69196c8b3f68ab",
+  "split": "train",
+  "fold": "test_task0",
+  "seed": 0,
+  "updates": 100,
+  "resumed_from_update": 0,
+  "selected_update": 100,
+  "best_validation_stage1_loss": 0.05363930849027464,
+  "validation_split": "validation",
+  "validation_interval": 100,
+  "validation_history": [
+    {
+      "update": 100,
+      "split": "validation",
+      "rows": 1542,
+      "total": 0.05363930849027464,
+      "loss_p": 0.0033211774185502806,
+      "loss_s": 0.001115950443069227,
+      "loss_p_recon": 0.4910990752946542,
+      "loss_v_recon": 0.0009227212457754559,
+      "action_mask_ratio": 0.0,
+      "stochastic_submodules": "disabled"
+    }
+  ],
+  "batch_size": 8,
+  "shuffle_buffer": 64,
+  "device": "cuda",
+  "elapsed_seconds": 237.941223859787,
+  "training_samples_this_process": 800,
+  "training_samples_per_second": 3.362174855717396,
+  "peak_cuda_memory_bytes": 5542446592,
+  "runtime_environment": {
+    "torch_version": "2.13.0+cu130",
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GeForce RTX 3090",
+    "determinism": {
+      "seed": 0,
+      "cudnn_deterministic": true,
+      "cudnn_benchmark": false,
+      "deterministic_algorithms": true,
+      "deterministic_warn_only": true
+    },
+    "amp_mode": "disabled"
+  },
+  "mean_last_100_loss": 0.2123573961108923,
+  "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0/checkpoints/best.pt",
+  "checkpoint_sha256": "deda2c5037209a36268b3c024ff3e55ac8f39d65f4210267142c7134f9f174c3",
+  "resume_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0/checkpoints/last.pt",
+  "resume_checkpoint_sha256": "7e14a1a18cc570b666d83c869d55155611366a92c303cec0c4a18ac56832eadd",
+  "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+  "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+  "semantic_store": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store",
+  "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e",
+  "trainer_source_sha256": "a4125f8592c561cadb19b5baaff26276f070963fc7d662aed209c1c5377222ab",
+  "code_sha256": "ab2172e79f5d8d17eef58b4cd0b47a07946345654a25128ef8ff6f58b86ac8da"
+}

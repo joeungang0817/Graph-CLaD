@@ -1,0 +1,594 @@
+{
+  "schema": "phase3c-core-run.v3",
+  "status": "completed",
+  "config_sha256": "03c403baab0bb7927ab6168119ccc00c0db6ac16b2cbc4f42d697ab9eb8ea94e",
+  "model_id": "C3-Pair-PastAct",
+  "fold": "test_task0",
+  "split": "train",
+  "seed": 0,
+  "updates": 20,
+  "completed_updates": 20,
+  "resumed_from_update": 0,
+  "selected_update": 20,
+  "best_validation_macro_pr_auc": 0.5857088539987831,
+  "validation_interval": 20,
+  "early_stopping_patience": 1,
+  "minimum_updates": 20,
+  "validation_history": [
+    {
+      "update": 20,
+      "macro_pr_auc": 0.5857088539987831,
+      "family_macro_pr_auc": 0.5674974848365733,
+      "macro_f1": 0.614925937750642,
+      "family_macro_f1": 0.6143313819724897,
+      "motion_mae": 0.01404589321602741
+    }
+  ],
+  "batch_size": 64,
+  "trainable_parameters": 839419,
+  "shuffle_buffer": 512,
+  "device": "cuda",
+  "elapsed_seconds": 552.6040844917297,
+  "training_samples_this_process": 1280,
+  "training_samples_per_second": 2.3163057167362586,
+  "peak_cuda_memory_bytes": 1496571904,
+  "runtime_environment": {
+    "torch_version": "2.13.0+cu130",
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GeForce RTX 3090",
+    "determinism": {
+      "seed": 0,
+      "cudnn_deterministic": true,
+      "cudnn_benchmark": false,
+      "deterministic_algorithms": true,
+      "deterministic_warn_only": true
+    },
+    "amp_requested": true,
+    "amp_mode": "bf16"
+  },
+  "mean_last_100_loss": 0.8648420944809914,
+  "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Pair-PastAct/test_task0/seed0/checkpoints/best.pt",
+  "checkpoint_sha256": "a6f47ab81756a1ed16a2d1d0710db1de714a21b5f3cd844631f99655abbd7f83",
+  "resume_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Pair-PastAct/test_task0/seed0/checkpoints/last.pt",
+  "resume_checkpoint_sha256": "9605609bda4176f9729c238b9df528dc6d9bde753beed5fbba433a51c8fdee9a",
+  "metrics": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Pair-PastAct/test_task0/seed0/metrics.json",
+  "metrics_sha256": "6adf90d0e832e3404d8676e26e0d7edf4502f240db2ecf869d1e7779b76a9526",
+  "predictions": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Pair-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+  "predictions_sha256": "f207426e1dfa56485f51e9d6191621b2717f8f93c4fa6e5c15947aafaef405ff",
+  "base_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0/checkpoints/best.pt",
+  "base_checkpoint_sha256": "deda2c5037209a36268b3c024ff3e55ac8f39d65f4210267142c7134f9f174c3",
+  "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+  "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e",
+  "normalization": {
+    "node_mean": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.5951742262138463,
+      0.06367465611513494,
+      0.011371763116661411,
+      0.0
+    ],
+    "node_std": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.16784588453176771,
+      0.1896586973478009,
+      0.055804667574868926,
+      1.0
+    ],
+    "proprio_mean": [
+      0.1835131160246324,
+      0.5801254673991617,
+      0.15166848377510153,
+      -1.8005720200528446,
+      -0.2648835622207408,
+      2.37707683922952,
+      1.4001362582520849,
+      0.05059849785954972,
+      0.2236823807512407,
+      0.009132200514484932,
+      0.2413229071315805,
+      -0.05205362185004402,
+      -0.008555221206897768,
+      0.13014919121274232,
+      0.01997189076670955,
+      -0.019950014486272587
+    ],
+    "proprio_std": [
+      0.13077185671910907,
+      0.39194804319440546,
+      0.12999367203233947,
+      0.4800235830063643,
+      0.2598627902328291,
+      0.24916648608569167,
+      0.4480333780662585,
+      0.0978554283361355,
+      0.29691616018699307,
+      0.14693726775175345,
+      0.3445519804736498,
+      0.2803801976894884,
+      0.3238966502091096,
+      0.34299940296225,
+      0.017476582208544287,
+      0.0172836510488439
+    ],
+    "edge_geometry_mean": [
+      -7.983947272361823e-21,
+      -1.682419191483854e-19,
+      -7.062054479671474e-21,
+      0.3560076218260578,
+      0.0
+    ],
+    "edge_geometry_std": [
+      0.2514539454215812,
+      0.28549902803301674,
+      0.08203049120559056,
+      0.15724616486599,
+      1.0
+    ],
+    "continuous_node_indices": [
+      4,
+      5,
+      6
+    ]
+  },
+  "train_relation_support": {
+    "left": {
+      "positive": 1653,
+      "negative": 6706
+    },
+    "right": {
+      "positive": 1633,
+      "negative": 6726
+    },
+    "front": {
+      "positive": 1284,
+      "negative": 7075
+    },
+    "behind": {
+      "positive": 1284,
+      "negative": 7075
+    },
+    "above": {
+      "positive": 1278,
+      "negative": 7081
+    },
+    "below": {
+      "positive": 1283,
+      "negative": 7076
+    },
+    "contact": {
+      "positive": 767,
+      "negative": 7592
+    },
+    "on": {
+      "positive": 0,
+      "negative": 8359
+    }
+  },
+  "validation_relation_support": {
+    "left": {
+      "positive": 282,
+      "negative": 1260
+    },
+    "right": {
+      "positive": 289,
+      "negative": 1253
+    },
+    "front": {
+      "positive": 239,
+      "negative": 1303
+    },
+    "behind": {
+      "positive": 239,
+      "negative": 1303
+    },
+    "above": {
+      "positive": 250,
+      "negative": 1292
+    },
+    "below": {
+      "positive": 250,
+      "negative": 1292
+    },
+    "contact": {
+      "positive": 142,
+      "negative": 1400
+    },
+    "on": {
+      "positive": 0,
+      "negative": 1542
+    }
+  },
+  "eligible_relations": {
+    "left": true,
+    "right": true,
+    "front": true,
+    "behind": true,
+    "above": true,
+    "below": true,
+    "contact": true,
+    "on": false
+  },
+  "relation_pos_weight": {
+    "left": 4.05686630369026,
+    "right": 4.118799755052051,
+    "front": 5.5101246105919,
+    "behind": 5.5101246105919,
+    "above": 5.540688575899844,
+    "below": 5.515198752922837,
+    "contact": 9.898305084745763,
+    "on": 1.0
+  },
+  "motion_scale_m": 0.038450208614795325,
+  "validation": {
+    "status": "completed",
+    "split": "validation",
+    "rows": 1542,
+    "relation": {
+      "per_relation": {
+        "left": {
+          "valid_count": 1542,
+          "positive_count": 282,
+          "pr_auc": 0.5612824883246625,
+          "f1": 0.5441441441441441,
+          "threshold": 0.6,
+          "brier": 0.14330356883094236,
+          "ece_10bin": 0.1476385480460601
+        },
+        "right": {
+          "valid_count": 1542,
+          "positive_count": 289,
+          "pr_auc": 0.7102311840642942,
+          "f1": 0.6654275092936803,
+          "threshold": 0.6,
+          "brier": 0.13035534709229638,
+          "ece_10bin": 0.15515447372075808
+        },
+        "front": {
+          "valid_count": 1542,
+          "positive_count": 239,
+          "pr_auc": 0.5423013817415113,
+          "f1": 0.5702970297029702,
+          "threshold": 0.75,
+          "brier": 0.1683049417832577,
+          "ece_10bin": 0.23920797223686746
+        },
+        "behind": {
+          "valid_count": 1542,
+          "positive_count": 239,
+          "pr_auc": 0.5799630884980395,
+          "f1": 0.5679442508710801,
+          "threshold": 0.65,
+          "brier": 0.15159182056639975,
+          "ece_10bin": 0.19761257135439209
+        },
+        "above": {
+          "valid_count": 1542,
+          "positive_count": 250,
+          "pr_auc": 0.6143552314130192,
+          "f1": 0.6676258992805756,
+          "threshold": 0.7999999999999999,
+          "brier": 0.15530039923139008,
+          "ece_10bin": 0.21993274897935747
+        },
+        "below": {
+          "valid_count": 1542,
+          "positive_count": 250,
+          "pr_auc": 0.6518107032488505,
+          "f1": 0.6788732394366197,
+          "threshold": 0.7999999999999999,
+          "brier": 0.16096850994980566,
+          "ece_10bin": 0.23004605016294227
+        },
+        "contact": {
+          "valid_count": 1542,
+          "positive_count": 142,
+          "pr_auc": 0.4400179007011047,
+          "f1": 0.6101694915254238,
+          "threshold": 0.85,
+          "brier": 0.15972111754833393,
+          "ece_10bin": 0.22994377251825338
+        },
+        "on": {
+          "valid_count": 0,
+          "positive_count": 0,
+          "pr_auc": null,
+          "f1": null,
+          "threshold": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "macro_pr_auc": 0.5857088539987831,
+      "macro_f1": 0.614925937750642,
+      "macro_brier": 0.15279224357177515,
+      "macro_ece_10bin": 0.20279087671694726,
+      "valid_rows": 10794,
+      "threshold_source": "optimized_on_rows",
+      "per_family": {
+        "horizontal": {
+          "relations": [
+            "left",
+            "right"
+          ],
+          "evaluable_relations": [
+            "left",
+            "right"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.6357568361944783,
+          "f1": 0.6047858267189122,
+          "brier": 0.13682945796161938,
+          "ece_10bin": 0.1513965108834091
+        },
+        "depth": {
+          "relations": [
+            "front",
+            "behind"
+          ],
+          "evaluable_relations": [
+            "front",
+            "behind"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.5611322351197754,
+          "f1": 0.5691206402870252,
+          "brier": 0.15994838117482874,
+          "ece_10bin": 0.21841027179562977
+        },
+        "vertical": {
+          "relations": [
+            "above",
+            "below"
+          ],
+          "evaluable_relations": [
+            "above",
+            "below"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.6330829673309348,
+          "f1": 0.6732495693585976,
+          "brier": 0.15813445459059788,
+          "ece_10bin": 0.22498939957114988
+        },
+        "contact": {
+          "relations": [
+            "contact"
+          ],
+          "evaluable_relations": [
+            "contact"
+          ],
+          "relation_valid_count_sum": 1542,
+          "pr_auc": 0.4400179007011047,
+          "f1": 0.6101694915254238,
+          "brier": 0.15972111754833393,
+          "ece_10bin": 0.22994377251825338
+        },
+        "support": {
+          "relations": [
+            "on"
+          ],
+          "evaluable_relations": [],
+          "relation_valid_count_sum": 0,
+          "pr_auc": null,
+          "f1": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "family_macro_pr_auc": 0.5674974848365733,
+      "family_macro_f1": 0.6143313819724897,
+      "family_macro_brier": 0.153658352818845,
+      "family_macro_ece_10bin": 0.20618498869211055,
+      "family_policy": "inverse-pair-mean-then-family-macro"
+    },
+    "no_change_fpr": {
+      "mean": 0.11660874664590508
+    },
+    "motion": {
+      "mae": 0.01404589321602741,
+      "rmse": 0.016930709910065057,
+      "moving_count": 734,
+      "moving_mae": 0.017551496600600885,
+      "moving_rmse": 0.021281180875579554,
+      "moving_threshold": 0.01
+    },
+    "prediction_path": null
+  },
+  "evaluation": {
+    "status": "completed",
+    "split": "test",
+    "rows": 456,
+    "relation": {
+      "per_relation": {
+        "left": {
+          "valid_count": 456,
+          "positive_count": 52,
+          "pr_auc": 0.39640277768769516,
+          "f1": 0.43870967741935485,
+          "threshold": 0.6,
+          "brier": 0.17056378053467994,
+          "ece_10bin": 0.23495872812454702
+        },
+        "right": {
+          "valid_count": 456,
+          "positive_count": 66,
+          "pr_auc": 0.6675118167686906,
+          "f1": 0.6911764705882353,
+          "threshold": 0.6,
+          "brier": 0.1274784670583702,
+          "ece_10bin": 0.1756841401052162
+        },
+        "front": {
+          "valid_count": 456,
+          "positive_count": 74,
+          "pr_auc": 0.2913293299357429,
+          "f1": 0.2676056338028169,
+          "threshold": 0.75,
+          "brier": 0.21713017132784548,
+          "ece_10bin": 0.2529424002708444
+        },
+        "behind": {
+          "valid_count": 456,
+          "positive_count": 74,
+          "pr_auc": 0.28051738138171545,
+          "f1": 0.25301204819277107,
+          "threshold": 0.65,
+          "brier": 0.20100126551321668,
+          "ece_10bin": 0.2113190659280925
+        },
+        "above": {
+          "valid_count": 456,
+          "positive_count": 85,
+          "pr_auc": 0.3232706788348554,
+          "f1": 0.47619047619047616,
+          "threshold": 0.7999999999999999,
+          "brier": 0.22205689805355028,
+          "ece_10bin": 0.24332837896401022
+        },
+        "below": {
+          "valid_count": 456,
+          "positive_count": 85,
+          "pr_auc": 0.640257303011698,
+          "f1": 0.5622119815668203,
+          "threshold": 0.7999999999999999,
+          "brier": 0.20701191403354807,
+          "ece_10bin": 0.24590811967742554
+        },
+        "contact": {
+          "valid_count": 456,
+          "positive_count": 48,
+          "pr_auc": 0.20865128813470254,
+          "f1": 0.25477707006369427,
+          "threshold": 0.85,
+          "brier": 0.27003972911181934,
+          "ece_10bin": 0.3189523839348766
+        },
+        "on": {
+          "valid_count": 0,
+          "positive_count": 0,
+          "pr_auc": null,
+          "f1": null,
+          "threshold": 0.5,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "macro_pr_auc": 0.4011343679650143,
+      "macro_f1": 0.4205261939748813,
+      "macro_brier": 0.20218317509043282,
+      "macro_ece_10bin": 0.24044188814357323,
+      "valid_rows": 3192,
+      "threshold_source": "validation_fixed",
+      "per_family": {
+        "horizontal": {
+          "relations": [
+            "left",
+            "right"
+          ],
+          "evaluable_relations": [
+            "left",
+            "right"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.531957297228193,
+          "f1": 0.5649430740037951,
+          "brier": 0.14902112379652507,
+          "ece_10bin": 0.20532143411488163
+        },
+        "depth": {
+          "relations": [
+            "front",
+            "behind"
+          ],
+          "evaluable_relations": [
+            "front",
+            "behind"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.2859233556587292,
+          "f1": 0.26030884099779394,
+          "brier": 0.20906571842053107,
+          "ece_10bin": 0.23213073309946847
+        },
+        "vertical": {
+          "relations": [
+            "above",
+            "below"
+          ],
+          "evaluable_relations": [
+            "above",
+            "below"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.4817639909232767,
+          "f1": 0.5192012288786483,
+          "brier": 0.21453440604354918,
+          "ece_10bin": 0.24461824932071788
+        },
+        "contact": {
+          "relations": [
+            "contact"
+          ],
+          "evaluable_relations": [
+            "contact"
+          ],
+          "relation_valid_count_sum": 456,
+          "pr_auc": 0.20865128813470254,
+          "f1": 0.25477707006369427,
+          "brier": 0.27003972911181934,
+          "ece_10bin": 0.3189523839348766
+        },
+        "support": {
+          "relations": [
+            "on"
+          ],
+          "evaluable_relations": [],
+          "relation_valid_count_sum": 0,
+          "pr_auc": null,
+          "f1": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "family_macro_pr_auc": 0.3770739829862253,
+      "family_macro_f1": 0.39980755348598285,
+      "family_macro_brier": 0.21066524434310613,
+      "family_macro_ece_10bin": 0.25025570011748616,
+      "family_policy": "inverse-pair-mean-then-family-macro"
+    },
+    "no_change_fpr": {
+      "mean": 0.17124250009705594
+    },
+    "motion": {
+      "mae": 0.015884023828492962,
+      "rmse": 0.01977838320587806,
+      "moving_count": 199,
+      "moving_mae": 0.021963821966101617,
+      "moving_rmse": 0.02661891353387094,
+      "moving_threshold": 0.01
+    },
+    "prediction_path": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Pair-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+    "threshold_selection": {
+      "split": "validation",
+      "excluded_task_id": 0,
+      "thresholds": {
+        "left": 0.6,
+        "right": 0.6,
+        "front": 0.75,
+        "behind": 0.65,
+        "above": 0.7999999999999999,
+        "below": 0.7999999999999999,
+        "contact": 0.85,
+        "on": 0.5
+      }
+    }
+  },
+  "trainer_source_sha256": "d5006db0ed01d63aae891dd82b7bb61c4c50656b7244d6e8e21d749592f883cd",
+  "code_sha256": "6d489c699b9ce4b499185b8484b826fe297f16ff5e95b3596dab2c4f729b2bf6"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "phase3c-run-state.v1",
+  "status": "completed",
+  "updated_at_utc": "2026-08-17T01:41:28.815882+00:00",
+  "fold": "test_task0",
+  "seed": 0,
+  "config_sha256": "32b5f368d535abcf02ff702a5ca91794f0130fa364a41cbc6f69196c8b3f68ab",
+  "runtime_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0/runtime_manifest.json"
+}

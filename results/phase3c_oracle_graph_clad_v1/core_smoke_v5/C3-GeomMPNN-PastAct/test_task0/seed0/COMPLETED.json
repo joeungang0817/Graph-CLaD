@@ -1,0 +1,10 @@
+{
+  "schema": "phase3c-run-state.v1",
+  "status": "completed",
+  "updated_at_utc": "2026-08-17T04:39:50.510825+00:00",
+  "model_id": "C3-GeomMPNN-PastAct",
+  "fold": "test_task0",
+  "seed": 0,
+  "config_sha256": "4035647fc6184a8ad7d5315024c689ce74c998b1d5e27884e1773138cb105ccf",
+  "runtime_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-GeomMPNN-PastAct/test_task0/seed0/runtime_manifest.json"
+}

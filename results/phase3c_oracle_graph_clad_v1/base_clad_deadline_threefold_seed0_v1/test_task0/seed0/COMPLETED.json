@@ -1,0 +1,9 @@
+{
+  "schema": "phase3c-run-state.v1",
+  "status": "completed",
+  "updated_at_utc": "2026-08-17T05:43:55.039358+00:00",
+  "fold": "test_task0",
+  "seed": 0,
+  "config_sha256": "a4dca9503f3abee3736bea1cef96920d49c011760a8810d12706bf769d7a500a",
+  "runtime_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_deadline_threefold_seed0_v1/test_task0/seed0/runtime_manifest.json"
+}

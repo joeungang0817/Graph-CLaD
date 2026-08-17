@@ -1,0 +1,594 @@
+{
+  "schema": "phase3c-core-run.v3",
+  "status": "completed",
+  "config_sha256": "84fe1094bdbca05c099cf28fb716e7a6b67b6bfe641c9121ee00fbb42a88e82e",
+  "model_id": "C3-Sem-PastAct",
+  "fold": "test_task0",
+  "split": "train",
+  "seed": 0,
+  "updates": 100,
+  "completed_updates": 100,
+  "resumed_from_update": 0,
+  "selected_update": 100,
+  "best_validation_macro_pr_auc": 0.4511891430648819,
+  "validation_interval": 100,
+  "early_stopping_patience": 1,
+  "minimum_updates": 100,
+  "validation_history": [
+    {
+      "update": 100,
+      "macro_pr_auc": 0.4511891430648819,
+      "family_macro_pr_auc": 0.45518829998497623,
+      "macro_f1": 0.538582215829697,
+      "family_macro_f1": 0.5371863318013765,
+      "motion_mae": 0.01073097450892972
+    }
+  ],
+  "batch_size": 8,
+  "trainable_parameters": 849370,
+  "shuffle_buffer": 64,
+  "device": "cuda",
+  "elapsed_seconds": 540.1243019104004,
+  "training_samples_this_process": 800,
+  "training_samples_per_second": 1.4811405396321338,
+  "peak_cuda_memory_bytes": 1478412288,
+  "runtime_environment": {
+    "torch_version": "2.13.0+cu130",
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GeForce RTX 3090",
+    "determinism": {
+      "seed": 0,
+      "cudnn_deterministic": true,
+      "cudnn_benchmark": false,
+      "deterministic_algorithms": true,
+      "deterministic_warn_only": true
+    },
+    "amp_requested": true,
+    "amp_mode": "bf16"
+  },
+  "mean_last_100_loss": 0.8238553774356842,
+  "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v4/C3-Sem-PastAct/test_task0/seed0/checkpoints/best.pt",
+  "checkpoint_sha256": "fcdd2222db342450331f984a0cd496307ff664214db0dc315a18ed0bb5e0c382",
+  "resume_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v4/C3-Sem-PastAct/test_task0/seed0/checkpoints/last.pt",
+  "resume_checkpoint_sha256": "2592f88ec06ff8e4cb9a5d5f554a0d24471dbfb9a327307a02a365a8de023e5b",
+  "metrics": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v4/C3-Sem-PastAct/test_task0/seed0/metrics.json",
+  "metrics_sha256": "ad907b40ba8c8faa065ec77fcc4a7142daeaf7e0873e759d71e265be02d591ab",
+  "predictions": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v4/C3-Sem-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+  "predictions_sha256": "93e5a143d23a1d2b74b836438d0a4cec99dd04d1219228cb24601493fbe8b4ae",
+  "base_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0/checkpoints/best.pt",
+  "base_checkpoint_sha256": "deda2c5037209a36268b3c024ff3e55ac8f39d65f4210267142c7134f9f174c3",
+  "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+  "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e",
+  "normalization": {
+    "node_mean": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.5951742262138463,
+      0.06367465611513494,
+      0.011371763116661411,
+      0.0
+    ],
+    "node_std": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.16784588453176771,
+      0.1896586973478009,
+      0.055804667574868926,
+      1.0
+    ],
+    "proprio_mean": [
+      0.1835131160246324,
+      0.5801254673991617,
+      0.15166848377510153,
+      -1.8005720200528446,
+      -0.2648835622207408,
+      2.37707683922952,
+      1.4001362582520849,
+      0.05059849785954972,
+      0.2236823807512407,
+      0.009132200514484932,
+      0.2413229071315805,
+      -0.05205362185004402,
+      -0.008555221206897768,
+      0.13014919121274232,
+      0.01997189076670955,
+      -0.019950014486272587
+    ],
+    "proprio_std": [
+      0.13077185671910907,
+      0.39194804319440546,
+      0.12999367203233947,
+      0.4800235830063643,
+      0.2598627902328291,
+      0.24916648608569167,
+      0.4480333780662585,
+      0.0978554283361355,
+      0.29691616018699307,
+      0.14693726775175345,
+      0.3445519804736498,
+      0.2803801976894884,
+      0.3238966502091096,
+      0.34299940296225,
+      0.017476582208544287,
+      0.0172836510488439
+    ],
+    "edge_geometry_mean": [
+      -7.983947272361823e-21,
+      -1.682419191483854e-19,
+      -7.062054479671474e-21,
+      0.3560076218260578,
+      0.0
+    ],
+    "edge_geometry_std": [
+      0.2514539454215812,
+      0.28549902803301674,
+      0.08203049120559056,
+      0.15724616486599,
+      1.0
+    ],
+    "continuous_node_indices": [
+      4,
+      5,
+      6
+    ]
+  },
+  "train_relation_support": {
+    "left": {
+      "positive": 1653,
+      "negative": 6706
+    },
+    "right": {
+      "positive": 1633,
+      "negative": 6726
+    },
+    "front": {
+      "positive": 1284,
+      "negative": 7075
+    },
+    "behind": {
+      "positive": 1284,
+      "negative": 7075
+    },
+    "above": {
+      "positive": 1278,
+      "negative": 7081
+    },
+    "below": {
+      "positive": 1283,
+      "negative": 7076
+    },
+    "contact": {
+      "positive": 767,
+      "negative": 7592
+    },
+    "on": {
+      "positive": 0,
+      "negative": 8359
+    }
+  },
+  "validation_relation_support": {
+    "left": {
+      "positive": 282,
+      "negative": 1260
+    },
+    "right": {
+      "positive": 289,
+      "negative": 1253
+    },
+    "front": {
+      "positive": 239,
+      "negative": 1303
+    },
+    "behind": {
+      "positive": 239,
+      "negative": 1303
+    },
+    "above": {
+      "positive": 250,
+      "negative": 1292
+    },
+    "below": {
+      "positive": 250,
+      "negative": 1292
+    },
+    "contact": {
+      "positive": 142,
+      "negative": 1400
+    },
+    "on": {
+      "positive": 0,
+      "negative": 1542
+    }
+  },
+  "eligible_relations": {
+    "left": true,
+    "right": true,
+    "front": true,
+    "behind": true,
+    "above": true,
+    "below": true,
+    "contact": true,
+    "on": false
+  },
+  "relation_pos_weight": {
+    "left": 4.05686630369026,
+    "right": 4.118799755052051,
+    "front": 5.5101246105919,
+    "behind": 5.5101246105919,
+    "above": 5.540688575899844,
+    "below": 5.515198752922837,
+    "contact": 9.898305084745763,
+    "on": 1.0
+  },
+  "motion_scale_m": 0.038450208614795325,
+  "validation": {
+    "status": "completed",
+    "split": "validation",
+    "rows": 1542,
+    "relation": {
+      "per_relation": {
+        "left": {
+          "valid_count": 1542,
+          "positive_count": 282,
+          "pr_auc": 0.42593026980671705,
+          "f1": 0.50682261208577,
+          "threshold": 0.7,
+          "brier": 0.2264658272635395,
+          "ece_10bin": 0.26065705071247514
+        },
+        "right": {
+          "valid_count": 1542,
+          "positive_count": 289,
+          "pr_auc": 0.416471027238563,
+          "f1": 0.5238095238095238,
+          "threshold": 0.49999999999999994,
+          "brier": 0.14139042528891074,
+          "ece_10bin": 0.10909740531777354
+        },
+        "front": {
+          "valid_count": 1542,
+          "positive_count": 239,
+          "pr_auc": 0.516276230904476,
+          "f1": 0.4937388193202147,
+          "threshold": 0.39999999999999997,
+          "brier": 0.12147732497932642,
+          "ece_10bin": 0.09247614599729713
+        },
+        "behind": {
+          "valid_count": 1542,
+          "positive_count": 239,
+          "pr_auc": 0.5010618624095899,
+          "f1": 0.49828178694158076,
+          "threshold": 0.3,
+          "brier": 0.1149412722604475,
+          "ece_10bin": 0.0732181889887504
+        },
+        "above": {
+          "valid_count": 1542,
+          "positive_count": 250,
+          "pr_auc": 0.40755687620182107,
+          "f1": 0.6115288220551378,
+          "threshold": 0.75,
+          "brier": 0.19535832502798944,
+          "ece_10bin": 0.2398606562320828
+        },
+        "below": {
+          "valid_count": 1542,
+          "positive_count": 250,
+          "pr_auc": 0.4078453364673693,
+          "f1": 0.6084788029925187,
+          "threshold": 0.65,
+          "brier": 0.18157064085195276,
+          "ece_10bin": 0.22087361812995854
+        },
+        "contact": {
+          "valid_count": 1542,
+          "positive_count": 142,
+          "pr_auc": 0.4831823984256366,
+          "f1": 0.5274151436031331,
+          "threshold": 0.9,
+          "brier": 0.21946227786472236,
+          "ece_10bin": 0.3090632988560289
+        },
+        "on": {
+          "valid_count": 0,
+          "positive_count": 0,
+          "pr_auc": null,
+          "f1": null,
+          "threshold": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "macro_pr_auc": 0.4511891430648819,
+      "macro_f1": 0.538582215829697,
+      "macro_brier": 0.17152372764812696,
+      "macro_ece_10bin": 0.18646376631919523,
+      "valid_rows": 10794,
+      "threshold_source": "optimized_on_rows",
+      "per_family": {
+        "horizontal": {
+          "relations": [
+            "left",
+            "right"
+          ],
+          "evaluable_relations": [
+            "left",
+            "right"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.42120064852264005,
+          "f1": 0.515316067947647,
+          "brier": 0.18392812627622512,
+          "ece_10bin": 0.18487722801512435
+        },
+        "depth": {
+          "relations": [
+            "front",
+            "behind"
+          ],
+          "evaluable_relations": [
+            "front",
+            "behind"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.5086690466570329,
+          "f1": 0.4960103031308977,
+          "brier": 0.11820929861988697,
+          "ece_10bin": 0.08284716749302376
+        },
+        "vertical": {
+          "relations": [
+            "above",
+            "below"
+          ],
+          "evaluable_relations": [
+            "above",
+            "below"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.4077011063345952,
+          "f1": 0.6100038125238283,
+          "brier": 0.1884644829399711,
+          "ece_10bin": 0.23036713718102067
+        },
+        "contact": {
+          "relations": [
+            "contact"
+          ],
+          "evaluable_relations": [
+            "contact"
+          ],
+          "relation_valid_count_sum": 1542,
+          "pr_auc": 0.4831823984256366,
+          "f1": 0.5274151436031331,
+          "brier": 0.21946227786472236,
+          "ece_10bin": 0.3090632988560289
+        },
+        "support": {
+          "relations": [
+            "on"
+          ],
+          "evaluable_relations": [],
+          "relation_valid_count_sum": 0,
+          "pr_auc": null,
+          "f1": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "family_macro_pr_auc": 0.45518829998497623,
+      "family_macro_f1": 0.5371863318013765,
+      "family_macro_brier": 0.17751604642520138,
+      "family_macro_ece_10bin": 0.2017887078862994,
+      "family_policy": "inverse-pair-mean-then-family-macro"
+    },
+    "no_change_fpr": {
+      "mean": 0.21269589470318598
+    },
+    "motion": {
+      "mae": 0.01073097450892972,
+      "rmse": 0.014755452847880528,
+      "moving_count": 734,
+      "moving_mae": 0.01660201618569549,
+      "moving_rmse": 0.020338054851417375,
+      "moving_threshold": 0.01
+    },
+    "prediction_path": null
+  },
+  "evaluation": {
+    "status": "completed",
+    "split": "test",
+    "rows": 456,
+    "relation": {
+      "per_relation": {
+        "left": {
+          "valid_count": 456,
+          "positive_count": 52,
+          "pr_auc": 0.2676375375381413,
+          "f1": 0.3262411347517731,
+          "threshold": 0.7,
+          "brier": 0.26744102162897654,
+          "ece_10bin": 0.324480143250947
+        },
+        "right": {
+          "valid_count": 456,
+          "positive_count": 66,
+          "pr_auc": 0.27072196285034855,
+          "f1": 0.43478260869565216,
+          "threshold": 0.49999999999999994,
+          "brier": 0.1521225614633957,
+          "ece_10bin": 0.14907695158453238
+        },
+        "front": {
+          "valid_count": 456,
+          "positive_count": 74,
+          "pr_auc": 0.31892046471942587,
+          "f1": 0.3310344827586207,
+          "threshold": 0.39999999999999997,
+          "brier": 0.15808987385660372,
+          "ece_10bin": 0.11009175840111197
+        },
+        "behind": {
+          "valid_count": 456,
+          "positive_count": 74,
+          "pr_auc": 0.305308326274221,
+          "f1": 0.3424657534246575,
+          "threshold": 0.3,
+          "brier": 0.15645695014739097,
+          "ece_10bin": 0.11115910836932705
+        },
+        "above": {
+          "valid_count": 456,
+          "positive_count": 85,
+          "pr_auc": 0.30217957135559104,
+          "f1": 0.49361702127659574,
+          "threshold": 0.75,
+          "brier": 0.24986934270601904,
+          "ece_10bin": 0.2676157752939917
+        },
+        "below": {
+          "valid_count": 456,
+          "positive_count": 85,
+          "pr_auc": 0.31262360630633373,
+          "f1": 0.5182186234817814,
+          "threshold": 0.65,
+          "brier": 0.23110820586485054,
+          "ece_10bin": 0.24410573700564214
+        },
+        "contact": {
+          "valid_count": 456,
+          "positive_count": 48,
+          "pr_auc": 0.3244001830963134,
+          "f1": 0.43564356435643564,
+          "threshold": 0.9,
+          "brier": 0.2473516597220989,
+          "ece_10bin": 0.29667208887591356
+        },
+        "on": {
+          "valid_count": 0,
+          "positive_count": 0,
+          "pr_auc": null,
+          "f1": null,
+          "threshold": 0.5,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "macro_pr_auc": 0.3002559503057678,
+      "macro_f1": 0.4117147412493595,
+      "macro_brier": 0.20891994505561934,
+      "macro_ece_10bin": 0.21474308039735227,
+      "valid_rows": 3192,
+      "threshold_source": "validation_fixed",
+      "per_family": {
+        "horizontal": {
+          "relations": [
+            "left",
+            "right"
+          ],
+          "evaluable_relations": [
+            "left",
+            "right"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.2691797501942449,
+          "f1": 0.3805118717237126,
+          "brier": 0.20978179154618612,
+          "ece_10bin": 0.23677854741773968
+        },
+        "depth": {
+          "relations": [
+            "front",
+            "behind"
+          ],
+          "evaluable_relations": [
+            "front",
+            "behind"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.3121143954968234,
+          "f1": 0.33675011809163913,
+          "brier": 0.15727341200199735,
+          "ece_10bin": 0.11062543338521952
+        },
+        "vertical": {
+          "relations": [
+            "above",
+            "below"
+          ],
+          "evaluable_relations": [
+            "above",
+            "below"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.30740158883096236,
+          "f1": 0.5059178223791886,
+          "brier": 0.2404887742854348,
+          "ece_10bin": 0.25586075614981696
+        },
+        "contact": {
+          "relations": [
+            "contact"
+          ],
+          "evaluable_relations": [
+            "contact"
+          ],
+          "relation_valid_count_sum": 456,
+          "pr_auc": 0.3244001830963134,
+          "f1": 0.43564356435643564,
+          "brier": 0.2473516597220989,
+          "ece_10bin": 0.29667208887591356
+        },
+        "support": {
+          "relations": [
+            "on"
+          ],
+          "evaluable_relations": [],
+          "relation_valid_count_sum": 0,
+          "pr_auc": null,
+          "f1": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "family_macro_pr_auc": 0.303273979404586,
+      "family_macro_f1": 0.414705844137744,
+      "family_macro_brier": 0.2137239093889293,
+      "family_macro_ece_10bin": 0.22498420645717243,
+      "family_policy": "inverse-pair-mean-then-family-macro"
+    },
+    "no_change_fpr": {
+      "mean": 0.2193974944783417
+    },
+    "motion": {
+      "mae": 0.011342780845036359,
+      "rmse": 0.014961215399491455,
+      "moving_count": 199,
+      "moving_mae": 0.0160188156638725,
+      "moving_rmse": 0.020218720603923598,
+      "moving_threshold": 0.01
+    },
+    "prediction_path": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v4/C3-Sem-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+    "threshold_selection": {
+      "split": "validation",
+      "excluded_task_id": 0,
+      "thresholds": {
+        "left": 0.7,
+        "right": 0.49999999999999994,
+        "front": 0.39999999999999997,
+        "behind": 0.3,
+        "above": 0.75,
+        "below": 0.65,
+        "contact": 0.9,
+        "on": 0.5
+      }
+    }
+  },
+  "trainer_source_sha256": "69f2b0dc5c25df33d2979bce26294cac41e2605cbde23448eeb82dcea19fce1d",
+  "code_sha256": "c0572e958c8909d6f7ddcd32e84989f181a8e9c452bb9f19c299a6fd95b2d639"
+}

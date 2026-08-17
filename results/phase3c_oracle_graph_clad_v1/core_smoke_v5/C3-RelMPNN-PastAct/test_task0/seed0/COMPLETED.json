@@ -1,0 +1,10 @@
+{
+  "schema": "phase3c-run-state.v1",
+  "status": "completed",
+  "updated_at_utc": "2026-08-17T05:07:37.392228+00:00",
+  "model_id": "C3-RelMPNN-PastAct",
+  "fold": "test_task0",
+  "seed": 0,
+  "config_sha256": "fe2ad202b07bb9a17b1b872ff6bd618c0d3650ad298830c645da240e2b75485d",
+  "runtime_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-RelMPNN-PastAct/test_task0/seed0/runtime_manifest.json"
+}

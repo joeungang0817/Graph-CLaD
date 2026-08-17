@@ -1,0 +1,594 @@
+{
+  "schema": "phase3c-core-run.v3",
+  "status": "completed",
+  "config_sha256": "0e7db32b9b65e81377713d2755867f6af0ffe44cb75d4daad2ab88838bff59a1",
+  "model_id": "C3-Sem-PastAct",
+  "fold": "test_task0",
+  "split": "train",
+  "seed": 0,
+  "updates": 20,
+  "completed_updates": 20,
+  "resumed_from_update": 0,
+  "selected_update": 20,
+  "best_validation_macro_pr_auc": 0.47474878650767965,
+  "validation_interval": 20,
+  "early_stopping_patience": 1,
+  "minimum_updates": 20,
+  "validation_history": [
+    {
+      "update": 20,
+      "macro_pr_auc": 0.47474878650767965,
+      "family_macro_pr_auc": 0.47850849019443265,
+      "macro_f1": 0.5492937894519009,
+      "family_macro_f1": 0.551603932778086,
+      "motion_mae": 0.009921199610464317
+    }
+  ],
+  "batch_size": 64,
+  "trainable_parameters": 849370,
+  "shuffle_buffer": 512,
+  "device": "cuda",
+  "elapsed_seconds": 548.7323000431061,
+  "training_samples_this_process": 1280,
+  "training_samples_per_second": 2.3326492716019245,
+  "peak_cuda_memory_bytes": 1495199744,
+  "runtime_environment": {
+    "torch_version": "2.13.0+cu130",
+    "cuda_version": "13.0",
+    "gpu_name": "NVIDIA GeForce RTX 3090",
+    "determinism": {
+      "seed": 0,
+      "cudnn_deterministic": true,
+      "cudnn_benchmark": false,
+      "deterministic_algorithms": true,
+      "deterministic_warn_only": true
+    },
+    "amp_requested": true,
+    "amp_mode": "bf16"
+  },
+  "mean_last_100_loss": 0.8778713136911392,
+  "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Sem-PastAct/test_task0/seed0/checkpoints/best.pt",
+  "checkpoint_sha256": "e8685abfb1a06a4dfa179c768554dede928d671202313252298e9b30933e4ffd",
+  "resume_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Sem-PastAct/test_task0/seed0/checkpoints/last.pt",
+  "resume_checkpoint_sha256": "6cebe884670c6bc6bff83c3c2fed478db2b90aecc5950c39507aa2eddcf23192",
+  "metrics": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Sem-PastAct/test_task0/seed0/metrics.json",
+  "metrics_sha256": "7c2642ed770d806ecc8f2d64724f84aae20f27e718d5ccac9d7c74101bfaf0ab",
+  "predictions": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Sem-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+  "predictions_sha256": "c0e7d5958c4b8b2828b3a1c136d50e7e72ce6ff45649ad62eee42ad22085701d",
+  "base_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v4/test_task0/seed0/checkpoints/best.pt",
+  "base_checkpoint_sha256": "deda2c5037209a36268b3c024ff3e55ac8f39d65f4210267142c7134f9f174c3",
+  "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+  "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e",
+  "normalization": {
+    "node_mean": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.5951742262138463,
+      0.06367465611513494,
+      0.011371763116661411,
+      0.0
+    ],
+    "node_std": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      0.16784588453176771,
+      0.1896586973478009,
+      0.055804667574868926,
+      1.0
+    ],
+    "proprio_mean": [
+      0.1835131160246324,
+      0.5801254673991617,
+      0.15166848377510153,
+      -1.8005720200528446,
+      -0.2648835622207408,
+      2.37707683922952,
+      1.4001362582520849,
+      0.05059849785954972,
+      0.2236823807512407,
+      0.009132200514484932,
+      0.2413229071315805,
+      -0.05205362185004402,
+      -0.008555221206897768,
+      0.13014919121274232,
+      0.01997189076670955,
+      -0.019950014486272587
+    ],
+    "proprio_std": [
+      0.13077185671910907,
+      0.39194804319440546,
+      0.12999367203233947,
+      0.4800235830063643,
+      0.2598627902328291,
+      0.24916648608569167,
+      0.4480333780662585,
+      0.0978554283361355,
+      0.29691616018699307,
+      0.14693726775175345,
+      0.3445519804736498,
+      0.2803801976894884,
+      0.3238966502091096,
+      0.34299940296225,
+      0.017476582208544287,
+      0.0172836510488439
+    ],
+    "edge_geometry_mean": [
+      -7.983947272361823e-21,
+      -1.682419191483854e-19,
+      -7.062054479671474e-21,
+      0.3560076218260578,
+      0.0
+    ],
+    "edge_geometry_std": [
+      0.2514539454215812,
+      0.28549902803301674,
+      0.08203049120559056,
+      0.15724616486599,
+      1.0
+    ],
+    "continuous_node_indices": [
+      4,
+      5,
+      6
+    ]
+  },
+  "train_relation_support": {
+    "left": {
+      "positive": 1653,
+      "negative": 6706
+    },
+    "right": {
+      "positive": 1633,
+      "negative": 6726
+    },
+    "front": {
+      "positive": 1284,
+      "negative": 7075
+    },
+    "behind": {
+      "positive": 1284,
+      "negative": 7075
+    },
+    "above": {
+      "positive": 1278,
+      "negative": 7081
+    },
+    "below": {
+      "positive": 1283,
+      "negative": 7076
+    },
+    "contact": {
+      "positive": 767,
+      "negative": 7592
+    },
+    "on": {
+      "positive": 0,
+      "negative": 8359
+    }
+  },
+  "validation_relation_support": {
+    "left": {
+      "positive": 282,
+      "negative": 1260
+    },
+    "right": {
+      "positive": 289,
+      "negative": 1253
+    },
+    "front": {
+      "positive": 239,
+      "negative": 1303
+    },
+    "behind": {
+      "positive": 239,
+      "negative": 1303
+    },
+    "above": {
+      "positive": 250,
+      "negative": 1292
+    },
+    "below": {
+      "positive": 250,
+      "negative": 1292
+    },
+    "contact": {
+      "positive": 142,
+      "negative": 1400
+    },
+    "on": {
+      "positive": 0,
+      "negative": 1542
+    }
+  },
+  "eligible_relations": {
+    "left": true,
+    "right": true,
+    "front": true,
+    "behind": true,
+    "above": true,
+    "below": true,
+    "contact": true,
+    "on": false
+  },
+  "relation_pos_weight": {
+    "left": 4.05686630369026,
+    "right": 4.118799755052051,
+    "front": 5.5101246105919,
+    "behind": 5.5101246105919,
+    "above": 5.540688575899844,
+    "below": 5.515198752922837,
+    "contact": 9.898305084745763,
+    "on": 1.0
+  },
+  "motion_scale_m": 0.038450208614795325,
+  "validation": {
+    "status": "completed",
+    "split": "validation",
+    "rows": 1542,
+    "relation": {
+      "per_relation": {
+        "left": {
+          "valid_count": 1542,
+          "positive_count": 282,
+          "pr_auc": 0.49534549114861537,
+          "f1": 0.5127161749745677,
+          "threshold": 0.5499999999999999,
+          "brier": 0.1747966207623052,
+          "ece_10bin": 0.2022139604546031
+        },
+        "right": {
+          "valid_count": 1542,
+          "positive_count": 289,
+          "pr_auc": 0.5329303136224798,
+          "f1": 0.5119705340699816,
+          "threshold": 0.65,
+          "brier": 0.16502182936639345,
+          "ece_10bin": 0.1840032730126167
+        },
+        "front": {
+          "valid_count": 1542,
+          "positive_count": 239,
+          "pr_auc": 0.48787797048563974,
+          "f1": 0.509090909090909,
+          "threshold": 0.5499999999999999,
+          "brier": 0.14044706290933734,
+          "ece_10bin": 0.17169756597530944
+        },
+        "behind": {
+          "valid_count": 1542,
+          "positive_count": 239,
+          "pr_auc": 0.41787520899717734,
+          "f1": 0.5070422535211268,
+          "threshold": 0.44999999999999996,
+          "brier": 0.12085833380916818,
+          "ece_10bin": 0.07816131572758714
+        },
+        "above": {
+          "valid_count": 1542,
+          "positive_count": 250,
+          "pr_auc": 0.4463226518927616,
+          "f1": 0.6224489795918368,
+          "threshold": 0.7,
+          "brier": 0.18564293343077307,
+          "ece_10bin": 0.24282781254223576
+        },
+        "below": {
+          "valid_count": 1542,
+          "positive_count": 250,
+          "pr_auc": 0.4380634534053803,
+          "f1": 0.6140127388535032,
+          "threshold": 0.65,
+          "brier": 0.16935605875220383,
+          "ece_10bin": 0.22241744201088914
+        },
+        "contact": {
+          "valid_count": 1542,
+          "positive_count": 142,
+          "pr_auc": 0.5048264160017035,
+          "f1": 0.5677749360613811,
+          "threshold": 0.7999999999999999,
+          "brier": 0.151772104202857,
+          "ece_10bin": 0.25648006188620287
+        },
+        "on": {
+          "valid_count": 0,
+          "positive_count": 0,
+          "pr_auc": null,
+          "f1": null,
+          "threshold": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "macro_pr_auc": 0.47474878650767965,
+      "macro_f1": 0.5492937894519009,
+      "macro_brier": 0.1582707061761483,
+      "macro_ece_10bin": 0.19397163308706347,
+      "valid_rows": 10794,
+      "threshold_source": "optimized_on_rows",
+      "per_family": {
+        "horizontal": {
+          "relations": [
+            "left",
+            "right"
+          ],
+          "evaluable_relations": [
+            "left",
+            "right"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.5141379023855476,
+          "f1": 0.5123433545222746,
+          "brier": 0.16990922506434933,
+          "ece_10bin": 0.1931086167336099
+        },
+        "depth": {
+          "relations": [
+            "front",
+            "behind"
+          ],
+          "evaluable_relations": [
+            "front",
+            "behind"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.45287658974140854,
+          "f1": 0.5080665813060179,
+          "brier": 0.13065269835925275,
+          "ece_10bin": 0.12492944085144829
+        },
+        "vertical": {
+          "relations": [
+            "above",
+            "below"
+          ],
+          "evaluable_relations": [
+            "above",
+            "below"
+          ],
+          "relation_valid_count_sum": 3084,
+          "pr_auc": 0.44219305264907094,
+          "f1": 0.61823085922267,
+          "brier": 0.17749949609148846,
+          "ece_10bin": 0.23262262727656247
+        },
+        "contact": {
+          "relations": [
+            "contact"
+          ],
+          "evaluable_relations": [
+            "contact"
+          ],
+          "relation_valid_count_sum": 1542,
+          "pr_auc": 0.5048264160017035,
+          "f1": 0.5677749360613811,
+          "brier": 0.151772104202857,
+          "ece_10bin": 0.25648006188620287
+        },
+        "support": {
+          "relations": [
+            "on"
+          ],
+          "evaluable_relations": [],
+          "relation_valid_count_sum": 0,
+          "pr_auc": null,
+          "f1": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "family_macro_pr_auc": 0.47850849019443265,
+      "family_macro_f1": 0.551603932778086,
+      "family_macro_brier": 0.15745838092948689,
+      "family_macro_ece_10bin": 0.2017851866869559,
+      "family_policy": "inverse-pair-mean-then-family-macro"
+    },
+    "no_change_fpr": {
+      "mean": 0.17139817015207318
+    },
+    "motion": {
+      "mae": 0.009921199610464317,
+      "rmse": 0.012183822932677595,
+      "moving_count": 734,
+      "moving_mae": 0.010892753940662787,
+      "moving_rmse": 0.014026159687818516,
+      "moving_threshold": 0.01
+    },
+    "prediction_path": null
+  },
+  "evaluation": {
+    "status": "completed",
+    "split": "test",
+    "rows": 456,
+    "relation": {
+      "per_relation": {
+        "left": {
+          "valid_count": 456,
+          "positive_count": 52,
+          "pr_auc": 0.26956035497083464,
+          "f1": 0.32209737827715357,
+          "threshold": 0.5499999999999999,
+          "brier": 0.19955201395526603,
+          "ece_10bin": 0.2569454874043961
+        },
+        "right": {
+          "valid_count": 456,
+          "positive_count": 66,
+          "pr_auc": 0.3274602551720484,
+          "f1": 0.4,
+          "threshold": 0.65,
+          "brier": 0.17517508157071005,
+          "ece_10bin": 0.20591669475523364
+        },
+        "front": {
+          "valid_count": 456,
+          "positive_count": 74,
+          "pr_auc": 0.34839814732782404,
+          "f1": 0.2727272727272727,
+          "threshold": 0.5499999999999999,
+          "brier": 0.15981583230334737,
+          "ece_10bin": 0.14497791228939866
+        },
+        "behind": {
+          "valid_count": 456,
+          "positive_count": 74,
+          "pr_auc": 0.34393444153992664,
+          "f1": 0.2857142857142857,
+          "threshold": 0.44999999999999996,
+          "brier": 0.14782401603881698,
+          "ece_10bin": 0.08939733069072553
+        },
+        "above": {
+          "valid_count": 456,
+          "positive_count": 85,
+          "pr_auc": 0.35102557041985094,
+          "f1": 0.5106382978723404,
+          "threshold": 0.7,
+          "brier": 0.22901219433229056,
+          "ece_10bin": 0.2358297735894212
+        },
+        "below": {
+          "valid_count": 456,
+          "positive_count": 85,
+          "pr_auc": 0.318502753417534,
+          "f1": 0.5042735042735043,
+          "threshold": 0.65,
+          "brier": 0.211651883558153,
+          "ece_10bin": 0.20627024874717792
+        },
+        "contact": {
+          "valid_count": 456,
+          "positive_count": 48,
+          "pr_auc": 0.2616394582305022,
+          "f1": 0.36538461538461536,
+          "threshold": 0.7999999999999999,
+          "brier": 0.17632888995435475,
+          "ece_10bin": 0.23786256343025813
+        },
+        "on": {
+          "valid_count": 0,
+          "positive_count": 0,
+          "pr_auc": null,
+          "f1": null,
+          "threshold": 0.5,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "macro_pr_auc": 0.3172172830112173,
+      "macro_f1": 0.3801193363213103,
+      "macro_brier": 0.1856228445304198,
+      "macro_ece_10bin": 0.1967428587009444,
+      "valid_rows": 3192,
+      "threshold_source": "validation_fixed",
+      "per_family": {
+        "horizontal": {
+          "relations": [
+            "left",
+            "right"
+          ],
+          "evaluable_relations": [
+            "left",
+            "right"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.2985103050714415,
+          "f1": 0.3610486891385768,
+          "brier": 0.18736354776298803,
+          "ece_10bin": 0.23143109107981485
+        },
+        "depth": {
+          "relations": [
+            "front",
+            "behind"
+          ],
+          "evaluable_relations": [
+            "front",
+            "behind"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.34616629443387537,
+          "f1": 0.2792207792207792,
+          "brier": 0.15381992417108217,
+          "ece_10bin": 0.1171876214900621
+        },
+        "vertical": {
+          "relations": [
+            "above",
+            "below"
+          ],
+          "evaluable_relations": [
+            "above",
+            "below"
+          ],
+          "relation_valid_count_sum": 912,
+          "pr_auc": 0.33476416191869246,
+          "f1": 0.5074559010729223,
+          "brier": 0.2203320389452218,
+          "ece_10bin": 0.22105001116829956
+        },
+        "contact": {
+          "relations": [
+            "contact"
+          ],
+          "evaluable_relations": [
+            "contact"
+          ],
+          "relation_valid_count_sum": 456,
+          "pr_auc": 0.2616394582305022,
+          "f1": 0.36538461538461536,
+          "brier": 0.17632888995435475,
+          "ece_10bin": 0.23786256343025813
+        },
+        "support": {
+          "relations": [
+            "on"
+          ],
+          "evaluable_relations": [],
+          "relation_valid_count_sum": 0,
+          "pr_auc": null,
+          "f1": null,
+          "brier": null,
+          "ece_10bin": null
+        }
+      },
+      "family_macro_pr_auc": 0.31027005491362786,
+      "family_macro_f1": 0.3782774962042234,
+      "family_macro_brier": 0.18446110020841167,
+      "family_macro_ece_10bin": 0.20188282179210867,
+      "family_policy": "inverse-pair-mean-then-family-macro"
+    },
+    "no_change_fpr": {
+      "mean": 0.18692343316129925
+    },
+    "motion": {
+      "mae": 0.012859360910523265,
+      "rmse": 0.01568998676757068,
+      "moving_count": 199,
+      "moving_mae": 0.01572670242819355,
+      "moving_rmse": 0.018663358306521344,
+      "moving_threshold": 0.01
+    },
+    "prediction_path": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_smoke_v5/C3-Sem-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+    "threshold_selection": {
+      "split": "validation",
+      "excluded_task_id": 0,
+      "thresholds": {
+        "left": 0.5499999999999999,
+        "right": 0.65,
+        "front": 0.5499999999999999,
+        "behind": 0.44999999999999996,
+        "above": 0.7,
+        "below": 0.65,
+        "contact": 0.7999999999999999,
+        "on": 0.5
+      }
+    }
+  },
+  "trainer_source_sha256": "d5006db0ed01d63aae891dd82b7bb61c4c50656b7244d6e8e21d749592f883cd",
+  "code_sha256": "6d489c699b9ce4b499185b8484b826fe297f16ff5e95b3596dab2c4f729b2bf6"
+}

@@ -1,0 +1,125 @@
+{
+  "contract": "phase3c-causal-join.v1",
+  "schema": "phase3c-joined-sample.v1",
+  "tau": 6,
+  "relations": [
+    "left",
+    "right",
+    "front",
+    "behind",
+    "above",
+    "below",
+    "contact",
+    "on"
+  ],
+  "inputs": [
+    "/home/ubuntu/graphclad-artifacts/phase2d/data/phase2d_full_demo_v2_inputclean_stream1/task0/phase2d_task0_graph_dataset.jsonl.gz",
+    "/home/ubuntu/graphclad-artifacts/phase2d/data/phase2d_full_demo_v2_inputclean_stream1/task1/phase2d_task1_graph_dataset.jsonl.gz",
+    "/home/ubuntu/graphclad-artifacts/phase2d/data/phase2d_full_demo_v2_inputclean_stream1/task2/phase2d_task2_graph_dataset.jsonl.gz"
+  ],
+  "counters": {
+    "source_records": 150,
+    "source_samples": 51471,
+    "candidate_left_samples": 16757,
+    "joined_samples": 15857,
+    "boundary_drops": 900,
+    "missing_right_samples": 0,
+    "hash_mismatches": 0,
+    "duplicate_left_keys": 0,
+    "invalid_samples": 0,
+    "ignored_other_tau_samples": 34714,
+    "emitted_future_action_fields": 0
+  },
+  "support": {
+    "contract": "phase3c-relation-support.v1",
+    "total_records": 15857,
+    "selection_source": [
+      "train",
+      "validation"
+    ],
+    "test_counts_inspected_for_selection": false,
+    "thresholds": {
+      "train_positive": 20,
+      "train_negative": 20,
+      "validation_positive": 5,
+      "validation_negative": 5
+    },
+    "relations": {
+      "left": {
+        "train_positive": 2231,
+        "train_negative": 9663,
+        "validation_positive": 365,
+        "validation_negative": 1654,
+        "test_positive": 319,
+        "test_negative": 1625,
+        "eligible_without_test": true
+      },
+      "right": {
+        "train_positive": 2307,
+        "train_negative": 9587,
+        "validation_positive": 388,
+        "validation_negative": 1631,
+        "test_positive": 351,
+        "test_negative": 1593,
+        "eligible_without_test": true
+      },
+      "front": {
+        "train_positive": 1652,
+        "train_negative": 10242,
+        "validation_positive": 308,
+        "validation_negative": 1711,
+        "test_positive": 281,
+        "test_negative": 1663,
+        "eligible_without_test": true
+      },
+      "behind": {
+        "train_positive": 1652,
+        "train_negative": 10242,
+        "validation_positive": 308,
+        "validation_negative": 1711,
+        "test_positive": 281,
+        "test_negative": 1663,
+        "eligible_without_test": true
+      },
+      "above": {
+        "train_positive": 1946,
+        "train_negative": 9948,
+        "validation_positive": 354,
+        "validation_negative": 1665,
+        "test_positive": 283,
+        "test_negative": 1661,
+        "eligible_without_test": true
+      },
+      "below": {
+        "train_positive": 1952,
+        "train_negative": 9942,
+        "validation_positive": 354,
+        "validation_negative": 1665,
+        "test_positive": 283,
+        "test_negative": 1661,
+        "eligible_without_test": true
+      },
+      "contact": {
+        "train_positive": 1190,
+        "train_negative": 10704,
+        "validation_positive": 201,
+        "validation_negative": 1818,
+        "test_positive": 175,
+        "test_negative": 1769,
+        "eligible_without_test": true
+      },
+      "on": {
+        "train_positive": 0,
+        "train_negative": 11894,
+        "validation_positive": 0,
+        "validation_negative": 2019,
+        "test_positive": 0,
+        "test_negative": 1944,
+        "eligible_without_test": false
+      }
+    }
+  },
+  "status": "pass",
+  "error": null,
+  "output": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest.jsonl.gz"
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "phase3c-run-state.v1",
+  "status": "completed",
+  "updated_at_utc": "2026-08-17T06:50:22.556553+00:00",
+  "model_id": "C3-Sem-PastAct",
+  "fold": "test_task0",
+  "seed": 0,
+  "config_sha256": "cf60328e1b2e60cb4e2cc3eabe27706b132855dc573f7b0e6eab136200b60dfd",
+  "runtime_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/core_postcache_benchmark_v1/C3-Sem-PastAct/test_task0/seed0/runtime_manifest.json"
+}

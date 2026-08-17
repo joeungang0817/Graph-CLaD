@@ -1,0 +1,55 @@
+{
+  "schema": "phase3c-base-clad-screen.v3",
+  "status": "completed",
+  "folds": [
+    "test_task0"
+  ],
+  "seeds": [
+    0
+  ],
+  "runs": [
+    {
+      "schema": "phase3c-base-clad-run.v3",
+      "status": "completed",
+      "config_sha256": "0faea1252a5d2e1c2c5fc5b9ebfc92b95e462c5a077353ed91d9b4b6dd965d02",
+      "split": "train",
+      "fold": "test_task0",
+      "seed": 0,
+      "updates": 100,
+      "resumed_from_update": 0,
+      "selected_update": 100,
+      "best_validation_stage1_loss": 0.05363930849027464,
+      "validation_split": "validation",
+      "validation_interval": 100,
+      "validation_history": [
+        {
+          "update": 100,
+          "split": "validation",
+          "rows": 1542,
+          "total": 0.05363930849027464,
+          "loss_p": 0.0033211774185502806,
+          "loss_s": 0.001115950443069227,
+          "loss_p_recon": 0.4910990752946542,
+          "loss_v_recon": 0.0009227212457754559,
+          "action_mask_ratio": 0.0,
+          "stochastic_submodules": "disabled"
+        }
+      ],
+      "batch_size": 8,
+      "shuffle_buffer": 64,
+      "device": "cuda",
+      "elapsed_seconds": 236.54820346832275,
+      "mean_last_100_loss": 0.2123573961108923,
+      "checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v3/test_task0/seed0/checkpoints/best.pt",
+      "checkpoint_sha256": "3a6d8864b5d8125fe0833d398deb9aaa8d30036aca277909d84aecea3e7c6e02",
+      "resume_checkpoint": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/base_clad_smoke_v3/test_task0/seed0/checkpoints/last.pt",
+      "resume_checkpoint_sha256": "f2a59705213a8586c648fc792590bc86b7bef377a32084b8a51cc4846c886a54",
+      "joined_manifest": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/data_contract/joined_manifest_full_demo_fixed.jsonl.gz",
+      "joined_manifest_sha256": "3a39178376114d0a03dfd9dff8d35b691f0a69abdc3cf11e3bca2810e25ae3bd",
+      "semantic_store": "/home/ubuntu/graphclad-artifacts/phase3c_oracle_graph_clad_v1/semantic_store",
+      "semantic_store_manifest_sha256": "7c89f35d60e4a01de9c75cbf414e97fc30394c7e0156cf313dedbf85ffe9cb7e",
+      "trainer_source_sha256": "d614db55690e577a3a318c99bf97162ee2cb9e2987c593c650e9fea3b46a4dc9",
+      "code_sha256": "e2ec03c49c523a4d10de9fe095617e6ee1ca5a998887f235c94ab3ad1988cc7f"
+    }
+  ]
+}
