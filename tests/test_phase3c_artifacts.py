@@ -7,6 +7,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts.phase3c.contracts import canonical_sha256
+
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -70,8 +72,12 @@ class Phase3CArtifactTest(unittest.TestCase):
             root = Path(directory)
             best = root / "best.pt"
             last = root / "last.pt"
+            stdout = root / "stdout.log"
+            stderr = root / "stderr.log"
             best.write_bytes(b"best")
             last.write_bytes(b"last")
+            stdout.write_bytes(b"stdout")
+            stderr.write_bytes(b"stderr")
             runtime = root / "runtime_manifest.json"
             runtime.write_text(
                 json.dumps(
@@ -84,6 +90,10 @@ class Phase3CArtifactTest(unittest.TestCase):
                         "checkpoint_sha256": _sha(best),
                         "resume_checkpoint": str(last),
                         "resume_checkpoint_sha256": _sha(last),
+                        "stdout_log": str(stdout),
+                        "stdout_log_sha256": _sha(stdout),
+                        "stderr_log": str(stderr),
+                        "stderr_log_sha256": _sha(stderr),
                     }
                 ),
                 encoding="utf-8",
@@ -96,6 +106,14 @@ class Phase3CArtifactTest(unittest.TestCase):
                     config_sha256="config",
                 )
             )
+            with self.assertRaisesRegex(ValueError, "current code"):
+                _completed_runtime(
+                    runtime,
+                    fold="test_task0",
+                    seed=0,
+                    config_sha256="config",
+                    code_sha256="different-code",
+                )
             best.write_bytes(b"corrupted")
             with self.assertRaises(ValueError):
                 _completed_runtime(
@@ -113,7 +131,14 @@ class Phase3CArtifactTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             artifacts = {}
-            for name in ("checkpoint", "resume_checkpoint", "metrics", "predictions"):
+            for name in (
+                "checkpoint",
+                "resume_checkpoint",
+                "metrics",
+                "predictions",
+                "stdout_log",
+                "stderr_log",
+            ):
                 path = root / name
                 path.write_bytes(name.encode("ascii"))
                 artifacts[name] = path
@@ -138,6 +163,15 @@ class Phase3CArtifactTest(unittest.TestCase):
                     config_sha256="config",
                 )
             )
+            with self.assertRaisesRegex(ValueError, "current code"):
+                _completed_runtime(
+                    runtime,
+                    model_id="C3-RelMPNN-PastAct",
+                    fold="test_task0",
+                    seed=0,
+                    config_sha256="config",
+                    trainer_source_sha256="different-trainer",
+                )
             artifacts["metrics"].write_bytes(b"corrupted")
             with self.assertRaises(ValueError):
                 _completed_runtime(
@@ -170,6 +204,9 @@ class Phase3CArtifactTest(unittest.TestCase):
 
             def close(self):
                 pass
+
+            def verify_integrity(self, **kwargs):
+                return {"verified_shards": 1, "orientation_attestation_sha256": "qa"}
 
         class FakeControlled(nn.Module):
             def __init__(self, **kwargs):
@@ -238,7 +275,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 first = train_base_clad.train(config)
                 second = train_base_clad.train(config)
 
-            self.assertEqual(first["schema"], "phase3c-base-clad-run.v3")
+            self.assertEqual(first["schema"], "phase3c-base-clad-run.v4")
             self.assertTrue((output / "checkpoints" / "best.pt").exists())
             self.assertTrue((output / "checkpoints" / "last.pt").exists())
             self.assertEqual(second["resumed_from_update"], 2)
@@ -287,7 +324,7 @@ class Phase3CArtifactTest(unittest.TestCase):
             ), patch.object(run_core, "trainable_parameter_count", return_value=100):
                 result = run_core.run(config)
 
-            self.assertEqual(result["schema"], "phase3c-core-screen.v3")
+            self.assertEqual(result["schema"], "phase3c-core-screen.v4")
             self.assertEqual(len(calls), 18)
             self.assertTrue(all(call["updates"] == 10000 for call in calls))
             self.assertEqual(
@@ -321,6 +358,9 @@ class Phase3CArtifactTest(unittest.TestCase):
 
             def close(self):
                 pass
+
+            def verify_integrity(self, **kwargs):
+                return {"verified_shards": 1, "orientation_attestation_sha256": "qa"}
 
         class FakeClad(nn.Module):
             def __init__(self, **kwargs):
@@ -404,11 +444,17 @@ class Phase3CArtifactTest(unittest.TestCase):
             base = root / "base.pt"
             torch.save(
                 {
-                    "schema": "phase3c-base-clad-checkpoint.v3",
+                    "schema": "phase3c-base-clad-checkpoint.v4",
                     "kind": "validation_best",
                     "model_state": {},
                     "source_joined_manifest_sha256": _sha(joined),
                     "semantic_store_manifest_sha256": _sha(store_manifest),
+                    "semantic_store_integrity_sha256": canonical_sha256(
+                        {
+                            "verified_shards": 1,
+                            "orientation_attestation_sha256": "qa",
+                        }
+                    ),
                     "vl_dim": 4,
                     "hidden_dim": 4,
                 },
@@ -466,7 +512,7 @@ class Phase3CArtifactTest(unittest.TestCase):
                 first = train_core.train(config)
                 second = train_core.train(config)
 
-            self.assertEqual(first["schema"], "phase3c-core-run.v3")
+            self.assertEqual(first["schema"], "phase3c-core-run.v4")
             self.assertTrue((output / "checkpoints" / "best.pt").exists())
             self.assertTrue((output / "checkpoints" / "last.pt").exists())
             self.assertEqual(second["resumed_from_update"], 2)

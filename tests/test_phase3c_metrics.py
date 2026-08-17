@@ -62,6 +62,17 @@ class Phase3CMetricsTest(unittest.TestCase):
         self.assertEqual(result["per_relation"]["left"]["threshold"], 0.9)
         self.assertEqual(no_change_fpr([[0.0], [2.0]], [[0], [0]], [[1], [1]], [0.5])["mean"], 1.0)
 
+    def test_fold_specific_row_thresholds_are_supported(self):
+        result = evaluate_relation_predictions(
+            [[0.0], [0.2], [0.4], [0.6]],
+            [[0], [0], [1], [1]],
+            [[1], [1], [1], [1]],
+            fixed_thresholds=[[0.4], [0.4], [0.6], [0.6]],
+        )
+        self.assertEqual(result["threshold_source"], "validation_fixed_per_row")
+        self.assertIsNone(result["per_relation"]["left"]["threshold"])
+        self.assertEqual(result["per_relation"]["left"]["threshold_values"], [0.4, 0.6])
+
     def test_inverse_relations_are_reported_once_per_family(self):
         report = aggregate_relation_families(
             {

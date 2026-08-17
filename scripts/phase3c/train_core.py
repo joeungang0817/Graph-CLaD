@@ -33,6 +33,7 @@ from .models.adapters import Phase3CAdapter, SemanticPastActEncoder
 from .models.semantic_clad import ControlledCLaD
 from .models.structured import build_structured_model
 from .parameter_match import trainable_parameter_count
+from .provenance import runtime_provenance
 
 
 def _get(config: dict[str, Any], key: str, default: Any = None) -> Any:
@@ -57,12 +58,16 @@ def _code_sha256() -> str:
     repository = Path(__file__).resolve().parents[2]
     paths = (
         Path(__file__),
+        repository / "scripts" / "phase3c" / "contracts.py",
         repository / "scripts" / "phase3c" / "dataset.py",
+        repository / "scripts" / "phase3c" / "io.py",
         repository / "scripts" / "phase3c" / "losses.py",
         repository / "scripts" / "phase3c" / "metrics.py",
         repository / "scripts" / "phase3c" / "models" / "adapters.py",
         repository / "scripts" / "phase3c" / "models" / "semantic_clad.py",
         repository / "scripts" / "phase3c" / "models" / "structured.py",
+        repository / "scripts" / "phase3c" / "parameter_match.py",
+        repository / "scripts" / "phase3c" / "provenance.py",
     )
     return canonical_sha256(
         {str(path.relative_to(repository)): _sha256_file(path) for path in paths}
@@ -332,8 +337,10 @@ def _evaluate_adapter(
                             "sample_id": str(record["sample_id"]),
                             "task_id": int(record["task_id"]),
                             "episode_id": str(record["episode_id"]),
+                            "prev_step": int(record["prev_step"]),
                             "current_step": int(record["current_step"]),
                             "target_step": int(record["target_step"]),
+                            "tau": int(record.get("tau", 6)),
                             "relation": relation,
                             "eligible": eligible,
                             "valid": valid,
@@ -346,6 +353,9 @@ def _evaluate_adapter(
                             "scene_motion": float(predicted_motion[row]),
                             "target_scene_motion": float(target_motion[row]),
                         }
+                        prevalence = (prediction_metadata or {}).get("train_prevalence")
+                        if isinstance(prevalence, dict) and relation in prevalence:
+                            payload["train_prevalence"] = float(prevalence[relation])
                         write_json_line(handle, payload)
     if not evaluated_rows:
         raise ValueError(
@@ -440,10 +450,23 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("learning_rate must be positive and weight_decay non-negative")
     if min(min_train_positive, min_train_negative, min_validation_positive, min_validation_negative) < 1:
         raise ValueError("relation support thresholds must be positive")
+    provenance_start = runtime_provenance()
+    if bool(_get(config, "require_clean_git", False)) and provenance_start.get(
+        "git_dirty"
+    ) is not False:
+        raise RuntimeError(
+            "formal Phase3C training requires a clean git checkout with readable provenance"
+        )
     if not joined_path.exists():
         raise FileNotFoundError(joined_path)
     joined_sha256 = _sha256_file(joined_path)
     store = SemanticFeatureStore(store_root)
+    semantic_store_integrity = store.verify_integrity(
+        require_orientation_attestation=bool(
+            _get(config, "require_orientation_attestation", True)
+        )
+    )
+    semantic_store_integrity_sha256 = canonical_sha256(semantic_store_integrity)
     store_manifest_sha256 = _sha256_file(store_root / "manifest.json")
     store_source_sha = str(
         (store.manifest.get("source") or {}).get("joined_manifest_sha256", "")
@@ -454,16 +477,23 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError(f"semantic store feature_dim={store.feature_dim} does not match vl_dim={vl_dim}")
     checkpoint = _torch_load(base_checkpoint, map_location="cpu")
     if (
-        checkpoint.get("schema") != "phase3c-base-clad-checkpoint.v3"
+        checkpoint.get("schema") != "phase3c-base-clad-checkpoint.v4"
         or checkpoint.get("kind") != "validation_best"
     ):
         raise ValueError(
-            "core training requires a Phase3C v3 validation-best base checkpoint"
+            "core training requires a Phase3C v4 validation-best base checkpoint"
         )
     if str(checkpoint.get("source_joined_manifest_sha256", "")) != joined_sha256:
         raise ValueError("base checkpoint was not trained from the configured joined manifest")
     if str(checkpoint.get("semantic_store_manifest_sha256", "")) != store_manifest_sha256:
         raise ValueError("base checkpoint was not trained from the configured semantic store")
+    if (
+        str(checkpoint.get("semantic_store_integrity_sha256", ""))
+        != semantic_store_integrity_sha256
+    ):
+        raise ValueError(
+            "base checkpoint semantic-store integrity/QA attestation does not match"
+        )
     normalization = (
         NormalizationStats.from_dict(checkpoint["normalization"])
         if checkpoint.get("normalization")
@@ -546,6 +576,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             "base_checkpoint_sha256": base_checkpoint_sha256,
             "source_joined_manifest_sha256": joined_sha256,
             "semantic_store_manifest_sha256": store_manifest_sha256,
+            "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
             "model_id": model_id,
             "fold": fold,
             "seed": seed,
@@ -671,7 +702,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                 _atomic_torch_save(
                     checkpoint_path,
                     {
-                        "schema": "phase3c-core-checkpoint.v3",
+                        "schema": "phase3c-core-checkpoint.v4",
                         "kind": "validation_best",
                         "model_id": model_id,
                         "fold": fold,
@@ -687,6 +718,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                         "base_checkpoint_sha256": base_checkpoint_sha256,
                         "source_joined_manifest_sha256": joined_sha256,
                         "semantic_store_manifest_sha256": store_manifest_sha256,
+                        "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
                         "code_sha256": code_sha256,
                         "trainable_parameters": trainable_parameters,
                         "motion_scale_m": motion_scale,
@@ -702,7 +734,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             _atomic_torch_save(
                 last_checkpoint_path,
                 {
-                    "schema": "phase3c-core-resume.v3",
+                    "schema": "phase3c-core-resume.v4",
                     "kind": "resume_last",
                     "model_id": model_id,
                     "fold": fold,
@@ -724,6 +756,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                     "base_checkpoint_sha256": base_checkpoint_sha256,
                     "source_joined_manifest_sha256": joined_sha256,
                     "semantic_store_manifest_sha256": store_manifest_sha256,
+                    "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
                 },
             )
             adapter.train()
@@ -754,6 +787,17 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     for relation in PRIMARY_RELATIONS:
         value = validation_metrics["relation"]["per_relation"][relation]["threshold"]
         validation_thresholds.append(0.5 if value is None else float(value))
+    train_prevalence = {
+        name: (
+            train_relation_support[name]["positive"]
+            / max(
+                1,
+                train_relation_support[name]["positive"]
+                + train_relation_support[name]["negative"],
+            )
+        )
+        for name in PRIMARY_RELATIONS
+    }
     metrics = _evaluate_adapter(
         adapter=adapter,
         clad=clad,
@@ -767,7 +811,12 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         include_task_id=held_out_task_id,
         fixed_thresholds=validation_thresholds,
         prediction_path=prediction_path,
-        prediction_metadata={"model_id": model_id, "fold": fold, "seed": seed},
+        prediction_metadata={
+            "model_id": model_id,
+            "fold": fold,
+            "seed": seed,
+            "train_prevalence": train_prevalence,
+        },
         motion_scale=motion_scale,
         eligible_relations=eligible_relations,
     )
@@ -780,7 +829,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     elapsed_seconds = time.time() - start
     updates_this_process = max(0, completed_updates - start_update)
     runtime = {
-        "schema": "phase3c-core-run.v3",
+        "schema": "phase3c-core-run.v4",
         "status": "completed",
         "config_sha256": config_sha256,
         "model_id": model_id,
@@ -815,6 +864,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             "determinism": determinism,
             "amp_requested": amp_requested,
             "amp_mode": amp_mode,
+            "provenance_start": provenance_start,
+            "provenance_end": runtime_provenance(),
         },
         "mean_last_100_loss": float(np.mean(losses[-100:])),
         "checkpoint": str(checkpoint_path),
@@ -829,6 +880,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "base_checkpoint_sha256": base_checkpoint_sha256,
         "joined_manifest_sha256": joined_sha256,
         "semantic_store_manifest_sha256": store_manifest_sha256,
+        "semantic_store_integrity": semantic_store_integrity,
+        "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
         "normalization": normalization.to_dict(),
         "train_relation_support": train_relation_support,
         "validation_relation_support": validation_relation_support,

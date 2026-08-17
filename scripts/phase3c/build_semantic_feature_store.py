@@ -467,6 +467,11 @@ def build_store(config: Mapping[str, Any]) -> dict[str, Any]:
     store = dict(config.get("semantic_feature_store", config))
     joined_path = _expand_path(str(store["joined_manifest"]))
     output_root = _expand_path(str(store["output_root"]))
+    if output_root.exists() and any(output_root.iterdir()):
+        raise FileExistsError(
+            "completed/partial semantic feature stores are immutable; "
+            f"use a new versioned output_root instead of {output_root}"
+        )
     camera_specs = store.get("cameras")
     if not isinstance(camera_specs, Sequence) or isinstance(camera_specs, (str, bytes)):
         raise ValueError("semantic_feature_store.cameras must contain exactly two entries")

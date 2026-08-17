@@ -37,12 +37,24 @@ def attest(
         qa = json.load(handle)
     if qa.get("schema") != "phase3c-camera-orientation-qa.v1" or qa.get("status") != "pass":
         raise ValueError("human attestation requires a passing camera-orientation QA v1")
+    contact_sheet = Path(str(qa.get("contact_sheet", "")))
+    if not contact_sheet.is_absolute():
+        contact_sheet = (Path(qa_path).parent / contact_sheet).resolve()
+    if not contact_sheet.exists():
+        raise FileNotFoundError(
+            f"camera-orientation contact sheet is missing: {contact_sheet}"
+        )
+    contact_sheet_sha256 = _sha256(contact_sheet)
+    declared_contact_sha = qa.get("contact_sheet_sha256")
+    if declared_contact_sha is not None and str(declared_contact_sha) != contact_sheet_sha256:
+        raise ValueError("camera-orientation QA contact-sheet hash mismatch")
     result = {
         "schema": "phase3c-camera-orientation-human-attestation.v1",
         "status": "pass",
         "source_qa": str(Path(qa_path)),
         "source_qa_sha256": _sha256(Path(qa_path)),
-        "source_contact_sheet": qa.get("contact_sheet"),
+        "source_contact_sheet": str(contact_sheet),
+        "source_contact_sheet_sha256": contact_sheet_sha256,
         "reviewer": reviewer.strip(),
         "choices": choices,
         "accepted_existing_semantic_store": all(

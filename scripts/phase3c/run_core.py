@@ -16,7 +16,10 @@ from .contracts import canonical_sha256
 from .models.adapters import Phase3CAdapter, SemanticPastActEncoder
 from .models.structured import build_structured_model
 from .parameter_match import select_width, trainable_parameter_count
-from .train_core import train
+from . import train_core as train_core_module
+from .provenance import attach_log_provenance, tee_run_output
+
+train = train_core_module.train
 
 
 CORE_MODELS = (
@@ -45,7 +48,15 @@ def _path(value: Any) -> Path:
 
 
 def _completed_runtime(
-    path: Path, *, model_id: str, fold: str, seed: int, config_sha256: str
+    path: Path,
+    *,
+    model_id: str,
+    fold: str,
+    seed: int,
+    config_sha256: str,
+    trainer_source_sha256: str | None = None,
+    code_sha256: str | None = None,
+    runner_source_sha256: str | None = None,
 ) -> dict[str, Any] | None:
     if not path.exists():
         return None
@@ -60,11 +71,23 @@ def _completed_runtime(
         or str(value.get("config_sha256")) != config_sha256
     ):
         raise ValueError(f"completed runtime identity mismatch: {path}")
+    for name, expected in (
+        ("trainer_source_sha256", trainer_source_sha256),
+        ("code_sha256", code_sha256),
+        ("runner_source_sha256", runner_source_sha256),
+    ):
+        if expected is not None and str(value.get(name, "")) != str(expected):
+            raise ValueError(
+                f"completed core runtime {name} does not match the current code; "
+                "use a new versioned output_root"
+            )
     for path_key, hash_key in (
         ("checkpoint", "checkpoint_sha256"),
         ("resume_checkpoint", "resume_checkpoint_sha256"),
         ("metrics", "metrics_sha256"),
         ("predictions", "predictions_sha256"),
+        ("stdout_log", "stdout_log_sha256"),
+        ("stderr_log", "stderr_log_sha256"),
     ):
         if not value.get(path_key) or not value.get(hash_key):
             raise ValueError(f"completed core runtime is missing {path_key}/{hash_key}")
@@ -94,6 +117,9 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
     width_candidates = tuple(
         int(value) for value in config.get("width_candidates", range(64, 385, 8))
     )
+    current_trainer_source_sha256 = _sha256_file(Path(train_core_module.__file__))
+    current_code_sha256 = train_core_module._code_sha256()
+    current_runner_source_sha256 = _sha256_file(Path(__file__))
 
     def adapter_for(model_id: str, width: int) -> Phase3CAdapter:
         if model_id == "C3-Sem-PastAct":
@@ -170,12 +196,19 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                     fold=fold,
                     seed=seed,
                     config_sha256=identity["config_sha256"],
+                    trainer_source_sha256=current_trainer_source_sha256,
+                    code_sha256=current_code_sha256,
+                    runner_source_sha256=current_runner_source_sha256,
                 )
                 if result is None:
                     write_json(run_root / "run_config.json", run_config)
                     set_run_state(run_root, "RUNNING", identity)
                     try:
-                        result = train(run_config)
+                        with tee_run_output(run_root) as (stdout_path, stderr_path):
+                            result = train(run_config)
+                        attach_log_provenance(result, stdout_path, stderr_path)
+                        result["runner_source_sha256"] = current_runner_source_sha256
+                        write_json(runtime_path, result)
                     except Exception as exc:
                         set_run_state(
                             run_root,
@@ -190,7 +223,7 @@ def run(config: dict[str, Any]) -> dict[str, Any]:
                 )
                 results.append(result)
     summary = {
-        "schema": "phase3c-core-screen.v3",
+        "schema": "phase3c-core-screen.v4",
         "status": "completed",
         "models": list(models),
         "folds": list(folds),

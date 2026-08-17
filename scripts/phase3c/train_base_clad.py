@@ -25,6 +25,7 @@ from .dataset import (
 from .contracts import canonical_sha256
 from .io import load_json_config, write_json
 from .models.semantic_clad import ControlledCLaD
+from .provenance import runtime_provenance
 
 
 def _get(config: dict[str, Any], key: str, default: Any = None) -> Any:
@@ -49,8 +50,11 @@ def _code_sha256() -> str:
     repository = Path(__file__).resolve().parents[2]
     paths = (
         Path(__file__),
+        repository / "scripts" / "phase3c" / "contracts.py",
         repository / "scripts" / "phase3c" / "dataset.py",
+        repository / "scripts" / "phase3c" / "io.py",
         repository / "scripts" / "phase3c" / "models" / "semantic_clad.py",
+        repository / "scripts" / "phase3c" / "provenance.py",
         repository / "baseline_code" / "LatentDynamics.py",
     )
     return canonical_sha256(
@@ -255,6 +259,13 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("hidden_dim, vl_dim, and max_nodes must be positive")
     if learning_rate <= 0.0 or weight_decay < 0.0 or recon_weight < 0.0:
         raise ValueError("optimizer values must be non-negative and learning_rate positive")
+    provenance_start = runtime_provenance()
+    if bool(_get(config, "require_clean_git", False)) and provenance_start.get(
+        "git_dirty"
+    ) is not False:
+        raise RuntimeError(
+            "formal Phase3C training requires a clean git checkout with readable provenance"
+        )
     determinism = _configure_determinism(seed)
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
@@ -267,6 +278,12 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         )
     )
     store = SemanticFeatureStore(store_root)
+    semantic_store_integrity = store.verify_integrity(
+        require_orientation_attestation=bool(
+            _get(config, "require_orientation_attestation", True)
+        )
+    )
+    semantic_store_integrity_sha256 = canonical_sha256(semantic_store_integrity)
     store_source_sha = str(
         (store.manifest.get("source") or {}).get("joined_manifest_sha256", "")
     )
@@ -295,6 +312,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             "config_sha256": config_sha256,
             "source_joined_manifest_sha256": joined_sha256,
             "semantic_store_manifest_sha256": store_manifest_sha256,
+            "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
             "trainer_source_sha256": trainer_source_sha256,
             "code_sha256": code_sha256,
             "fold": fold,
@@ -364,7 +382,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                 _atomic_torch_save(
                     best_checkpoint,
                     {
-                        "schema": "phase3c-base-clad-checkpoint.v3",
+                        "schema": "phase3c-base-clad-checkpoint.v4",
                         "kind": "validation_best",
                         "model_state": model.state_dict(),
                         "selected_update": update,
@@ -377,6 +395,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                         "proprio_dim": 16,
                         "source_joined_manifest_sha256": joined_sha256,
                         "semantic_store_manifest_sha256": store_manifest_sha256,
+                        "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
                         "code_sha256": code_sha256,
                         "normalization": normalization.to_dict(),
                         "ema_initialized": model.ema_initialization_state(),
@@ -385,7 +404,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             _atomic_torch_save(
                 last_checkpoint,
                 {
-                    "schema": "phase3c-base-clad-resume.v3",
+                    "schema": "phase3c-base-clad-resume.v4",
                     "kind": "resume_last",
                     "model_state": model.state_dict(),
                     "ema_initialized": model.ema_initialization_state(),
@@ -403,6 +422,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
                     "code_sha256": code_sha256,
                     "source_joined_manifest_sha256": joined_sha256,
                     "semantic_store_manifest_sha256": store_manifest_sha256,
+                    "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
                 },
             )
     if not best_checkpoint.exists() or best_update <= 0:
@@ -410,7 +430,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     elapsed_seconds = time.time() - start
     updates_this_process = max(0, updates - start_update)
     runtime = {
-        "schema": "phase3c-base-clad-run.v3",
+        "schema": "phase3c-base-clad-run.v4",
         "status": "completed",
         "config_sha256": config_sha256,
         "split": split,
@@ -440,6 +460,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
             "gpu_name": torch.cuda.get_device_name(device) if device.type == "cuda" else None,
             "determinism": determinism,
             "amp_mode": "disabled",
+            "provenance_start": provenance_start,
+            "provenance_end": runtime_provenance(),
         },
         "mean_last_100_loss": float(np.mean(losses[-100:])),
         "checkpoint": str(best_checkpoint),
@@ -450,6 +472,8 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "joined_manifest_sha256": joined_sha256,
         "semantic_store": str(store_root),
         "semantic_store_manifest_sha256": store_manifest_sha256,
+        "semantic_store_integrity": semantic_store_integrity,
+        "semantic_store_integrity_sha256": semantic_store_integrity_sha256,
         "trainer_source_sha256": trainer_source_sha256,
         "code_sha256": code_sha256,
     }

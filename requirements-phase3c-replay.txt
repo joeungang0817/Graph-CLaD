@@ -1,0 +1,12 @@
+# Extra packages used only to reproduce LIBERO state replay and camera-feature
+# extraction. Install after requirements-phase3c.txt; keep the cluster's CUDA
+# PyTorch wheel unchanged.
+h5py==3.11.0
+mujoco==2.3.7
+robosuite==1.4.0
+setuptools<81
+
+# Install these repositories editable at the commits recorded in the semantic
+# feature-store manifest:
+# LIBERO      8f1084e3132a39270c3a13ebe37270a43ece2a01
+# DecisionNCE ebdc585c5e6833ec3a2ba77f801b15c74d7a28f8

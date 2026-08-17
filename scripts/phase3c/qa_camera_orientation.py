@@ -29,6 +29,16 @@ from .build_semantic_feature_store import (
 from .io import load_json_config, write_json
 
 
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def select_orientation_samples(
     required: Mapping[tuple[int, str], set[int]],
     *,
@@ -202,6 +212,7 @@ def run_orientation_qa(
         "camera_specs": [dict(spec) for spec in camera_specs],
         "rows": records,
         "contact_sheet": str(contact_sheet_path),
+        "contact_sheet_sha256": _sha256_file(contact_sheet_path),
     }
     report_path = qa_root / "determinism.json"
     write_json(report_path, determinism)

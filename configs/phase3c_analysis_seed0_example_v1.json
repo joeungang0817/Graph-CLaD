@@ -1,0 +1,48 @@
+{
+  "prediction_files": {
+    "C3-Sem-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-Sem-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-Sem-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-Sem-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ],
+    "C3-SceneSet-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-SceneSet-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-SceneSet-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-SceneSet-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ],
+    "C3-Pair-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-Pair-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-Pair-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-Pair-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ],
+    "C3-GeomMPNN-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-GeomMPNN-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-GeomMPNN-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-GeomMPNN-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ],
+    "C3-RelPool-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-RelPool-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-RelPool-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-RelPool-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ],
+    "C3-RelMPNN-PastAct": [
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-RelMPNN-PastAct/test_task0/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-RelMPNN-PastAct/test_task1/seed0/predictions/evaluation.jsonl.gz",
+      "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/core_screen_v6/C3-RelMPNN-PastAct/test_task2/seed0/predictions/evaluation.jsonl.gz"
+    ]
+  },
+  "primary_model": "C3-RelMPNN-PastAct",
+  "baseline_model": "C3-Sem-PastAct",
+  "expected_folds": ["test_task0", "test_task1", "test_task2"],
+  "expected_seeds": [0],
+  "comparators": [
+    "C3-Sem-PastAct",
+    "C3-SceneSet-PastAct",
+    "C3-Pair-PastAct",
+    "C3-GeomMPNN-PastAct",
+    "C3-RelPool-PastAct"
+  ],
+  "replicates": 2000,
+  "seed": 0,
+  "output": "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/analysis/core_screen_v6_seed0.json"
+}

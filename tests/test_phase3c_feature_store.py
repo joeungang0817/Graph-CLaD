@@ -38,6 +38,21 @@ class _FakeDecisionNCE:
 
 
 class Phase3CFeatureStoreTest(unittest.TestCase):
+    def test_completed_semantic_store_is_immutable(self):
+        import tempfile
+        from pathlib import Path
+        from scripts.phase3c.build_semantic_feature_store import build_store
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            joined = root / "joined.jsonl"
+            joined.write_text("{}\n", encoding="utf-8")
+            output = root / "store"
+            output.mkdir()
+            (output / "manifest.json").write_text("{}\n", encoding="utf-8")
+            with self.assertRaisesRegex(FileExistsError, "immutable"):
+                build_store({"joined_manifest": str(joined), "output_root": str(output)})
+
     def test_human_orientation_attestation_requires_passing_qa(self):
         import tempfile
         from pathlib import Path
@@ -47,6 +62,8 @@ class Phase3CFeatureStoreTest(unittest.TestCase):
             root = Path(directory)
             qa = root / "qa.json"
             output = root / "attestation.json"
+            sheet = root / "sheet.png"
+            sheet.write_bytes(b"reviewed image")
             qa.write_text(
                 json.dumps({
                     "schema": "phase3c-camera-orientation-qa.v1",

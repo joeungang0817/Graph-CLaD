@@ -75,6 +75,12 @@ python -m scripts.phase3c.attest_camera_orientation \
   --wrist-choice configured
 ```
 
+The attestation hashes both `determinism.json` and the exact reviewed contact
+sheet. Base/Core startup hashes every declared `.npz` shard and verifies this
+attestation before loading a checkpoint. If an older attestation has no
+`source_contact_sheet_sha256`, rerun only the attestation command; the accepted
+semantic features and contact sheet do not need to be regenerated.
+
 ## Milestone 3: controlled CLaD
 
 `models/semantic_clad.py` wraps the original `baseline_code.LatentDynamics`
@@ -116,7 +122,11 @@ Base CLaD writes `best.pt` selected by minimum validation Stage-1 loss and a
 separate `last.pt` for exact resume. Core training has a 10,000-update maximum,
 validates every 500 updates, can stop after the frozen 3,000-update minimum,
 and likewise separates validation-best and resume checkpoints. Completed runs
-are skipped only after checkpoint, metric, and prediction hashes are verified.
+are skipped only after current runner/trainer/code identity and checkpoint,
+metric, prediction, stdout, and stderr hashes are verified. Formal configs
+also require a clean git checkout and record start/end commit, dirty-state,
+Python, package, CUDA, and GPU provenance. A stale completed directory is an
+error; it is never silently mixed with current code.
 Metrics retain per-relation macros and additionally report horizontal
 (`left/right`), depth (`front/behind`), vertical (`above/below`), contact, and
 support family macros so inverse pairs are not presented as independent
@@ -125,3 +135,27 @@ CUDA Core runs select bf16 when supported and otherwise fp16 with GradScaler;
 runtime manifests record the actual mode, deterministic settings, peak CUDA
 memory, and observed training throughput. Each orchestrated run also keeps one
 atomic `RUNNING.json`, `COMPLETED.json`, or `FAILED.json` marker.
+
+The post-integrity contract uses Base output root `base_clad_v5` and Core
+output root `core_screen_v6`. Earlier v4/v5 smoke artifacts remain historical
+executability evidence and are not accepted by the new Base-checkpoint gate.
+
+After all three folds finish, analyze the complete seed-0 prediction set with
+fold-specific validation thresholds, inverse-relation family macros, paired
+task/episode bootstrap, no-change and train-prevalence trivial baselines, and
+the `prev_step=0` sensitivity exclusion:
+
+```bash
+python -m scripts.phase3c.analyze_core \
+  --config configs/phase3c_analysis_seed0_example_v1.json
+```
+
+The action-replay sensitivity uses uniformly spaced early/middle/late probes
+and preserves the known initial-transition outlier rather than relaxing the
+frozen 1.05 tolerance:
+
+```bash
+python -m scripts.phase3c.validate_action_timing \
+  --config configs/phase3c_action_timing_uniform_example_v1.json \
+  --output "$GRAPH_CLAD_ARTIFACT_ROOT/phase3c_oracle_graph_clad_v1/action_timing_uniform_v2.json"
+```

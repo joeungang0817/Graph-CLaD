@@ -1,11 +1,53 @@
 # Graph-CLaD 현재 상태와 실행 인계
 
 기준 시각: 2026-08-17 (Asia/Seoul)
-공식 현재 단계: **Phase 3B action-alignment gate 판정 완료 — 실패, Phase 3C Milestone 1 구현 중**
+공식 현재 단계: **Phase 3B action-alignment gate 실패 확정, Phase 3C post-integrity smoke 검증 대기**
 이 문서는 다음 세션에서 가장 먼저 읽는 단일 현재상태 문서다. 공식 연구 질문과 단계별
 gate는 `01-plan/features/graph-clad-integrated-research-v4.plan.md`, 시간순 근거는
 `research_log.md`를 따른다. `revised_research_roadmap_v3.md`는 v4 이전의 단계 개정
 근거로 보존한다.
+
+## 0. 2026-08-17 최신 인계 (아래의 오래된 미완료 목록보다 우선)
+
+- Causal join은 15,857 rows로 완료됐고 builder-v2 candidate와 legacy fixed manifest의
+  ordered canonical rows가 동일하다는 migration attestation이 통과했다. Semantic store는
+  150 shards, 1024-D이며 camera repeat-render QA와 사람의 configured/configured 판정도
+  끝났다.
+- 수정 전 Base v4-path smoke와 Core v4-path six-model smoke는 실행 가능성 근거로만
+  보존한다. Dead trainable parameters를 제거한 Core v5-path smoke는 사용자가 SSH에서
+  실행했으나 이 문서 갱신 시점에는 최종 결과가 전달되지 않았다. 실행 중인 process는
+  중단하지 않는다.
+- 이후 정식 입력 계약은 runtime/checkpoint schema v4다. Base는
+  `base_clad_smoke_v5`/`base_clad_v5`, Core는 `core_smoke_v6`/`core_screen_v6`의 새
+  경로만 사용한다. 예전 Base checkpoint는 새 Core가 거부한다.
+- 새 시작 gate는 (1) 150 semantic shards의 manifest SHA 검증, (2) QA JSON과 사람이
+  본 contact sheet 양쪽의 hash attestation, (3) clean git checkout, (4) 현재 runner,
+  trainer, transitive Phase3C code SHA 일치다. stdout/stderr도 각 run artifact로 해시된다.
+- 모델 adapter가 받는 객체는 `graph[t-6]`, `graph[t]`, `action[t-6:t]`만 담는 별도
+  causal view다. future target, task metadata를 물리적으로 제거하며 poison regression을
+  둔다.
+- 분석기는 3 folds를 한 모델 collection으로 읽고 fold별 validation threshold를 그대로
+  적용한다. RelMPNN을 Sem/SceneSet/Pair/GeomMPNN/RelPool과 paired task→episode
+  bootstrap으로 비교하고, relation-family macro, no-change/train-prevalence baseline,
+  `prev_step=0` 제외 민감도까지 함께 출력한다.
+- 로컬 검증은 Phase3C 63 tests 중 35 pass, 28 torch-dependent skip, compile/JSON parse
+  pass다. 새 torch 테스트에는 모든 set/graph encoder의 permutation contract,
+  RelPool–RelMPNN raw edge-token parity, adapter-off independence, tiny-batch overfit,
+  dead-gradient, artifact/resume가 포함된다. SSH 전체 통과 전에는 새 full training을
+  시작하지 않는다.
+- Phase 4의 architecture-independent residual foresight interface도 구현됐다. Semantic
+  foresight의 proprio/scene 두 branch에 별도 zero-initialized graph residual을 더하고
+  정규화하며 Stage-2-facing shape를 동일하게 유지한다. `alpha=0`은 semantic interface와
+  exact equality, adapter-off는 structured encoder 자체를 호출하지 않도록 테스트한다.
+  다만 Phase 3C winner/fairness control 선택과 SSH torch equivalence가 아직 없으므로
+  Phase 4 trainer 및 Stage 2 DDPM은 사전 등록 gate에 따라 아직 시작하지 않는다.
+- 제출 시간 제한 결정: 이미 실행한 corrected `core_smoke_v5`가 six-model 전체에서
+  finite loss, dead-gradient gate, parameter match, checkpoint/metric/prediction 생성을
+  완료했다면 이를 최종 technical smoke로 인정하고 중복 `core_smoke_v6`는 실행하지
+  않는다. 새 변경은 모델 수식보다 무결성·causal view·artifact/analysis 계약이므로 SSH
+  66-test 통과로 보완한다. 단, v5 smoke checkpoint/점수는 정식 성능 근거나 full-run
+  resume 입력으로 사용하지 않는다. 본 학습은 새 schema v4 코드와 새 Base full
+  checkpoint로 시작한다.
 
 ## 1. 한 줄 상태
 
