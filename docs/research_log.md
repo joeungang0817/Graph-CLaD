@@ -1664,3 +1664,17 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   scores and checkpoints remain ineligible for formal model selection. It
   satisfies only the previously documented technical-smoke waiver; formal
   runs use the post-integrity schema-v4 code and new versioned output roots.
+
+## 2026-08-17 — Deadline Base fold `test_task0` completed
+
+- The first formal reduced-Base fold completed all 500 requested updates and
+  selected update 500 by validation Stage-1 loss. The best validation loss was
+  0.0243074396, elapsed trainer time was 1,197.86 s (19.96 min), reported
+  training throughput was 26.714 samples/s, and peak CUDA allocation was
+  5,561,317,888 bytes (about 5.18 GiB) on the RTX 3090.
+- This is a healthy completion signal: the loss is finite, the final
+  validation checkpoint was selected, batch 64 fits with substantial memory
+  headroom, and the remaining two Base folds may continue unchanged. It does
+  not by itself isolate the semantic-shard cache speedup because the earlier
+  Base smoke used batch 8; the preregistered 100-update Core benchmark remains
+  the same-model/batch wall-clock measurement used for formal Core scope.
