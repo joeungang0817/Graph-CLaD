@@ -1632,3 +1632,14 @@ Natural conditional/oracle-current event stdout과 기존 aligned H3 기준값�
   The benchmark was increased from 20 to 100 updates, and the wall-clock
   selector now projects each formal run by multiplying the complete benchmark
   runtime by two. No performance result was inspected in making this change.
+
+### Pre-execution wall-clock selector correction
+
+- The technical throughput benchmark was restricted from the held-out test
+  split to the validation split, so the deadline scope decision cannot inspect
+  test performance.
+- Core runtime manifests now record `total_elapsed_seconds` from trainer entry
+  through completion, including semantic-shard integrity verification and
+  model/data setup. The scope selector requires this complete wall time rather
+  than the narrower training-loop `elapsed_seconds`; it still consults no
+  performance metric.

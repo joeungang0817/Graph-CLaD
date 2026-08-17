@@ -395,6 +395,7 @@ def _evaluate_adapter(
 
 
 def train(config: dict[str, Any]) -> dict[str, Any]:
+    total_start = time.time()
     joined_path = _path(_get(config, "joined_manifest"))
     store_root = _path(_get(config, "semantic_store"))
     base_checkpoint = _path(_get(config, "base_checkpoint"))
@@ -827,6 +828,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
     }
     write_json(metrics_path, metrics)
     elapsed_seconds = time.time() - start
+    total_elapsed_seconds = time.time() - total_start
     updates_this_process = max(0, completed_updates - start_update)
     runtime = {
         "schema": "phase3c-core-run.v4",
@@ -852,6 +854,7 @@ def train(config: dict[str, Any]) -> dict[str, Any]:
         "shuffle_buffer": shuffle_buffer,
         "device": str(device),
         "elapsed_seconds": elapsed_seconds,
+        "total_elapsed_seconds": total_elapsed_seconds,
         "training_samples_this_process": updates_this_process * batch_size,
         "training_samples_per_second": (
             updates_this_process * batch_size / elapsed_seconds if elapsed_seconds > 0 else None

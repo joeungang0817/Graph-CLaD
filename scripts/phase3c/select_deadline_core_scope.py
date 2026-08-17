@@ -59,9 +59,11 @@ def select_scope(
     }
     if mismatches:
         raise ValueError(f"throughput benchmark identity mismatch: {mismatches}")
-    elapsed_seconds = float(runtime.get("elapsed_seconds", float("nan")))
+    elapsed_seconds = float(runtime.get("total_elapsed_seconds", float("nan")))
     if not math.isfinite(elapsed_seconds) or elapsed_seconds <= 0.0:
-        raise ValueError("throughput benchmark elapsed_seconds must be finite and positive")
+        raise ValueError(
+            "throughput benchmark total_elapsed_seconds must be finite and positive"
+        )
     remaining_hours = float(remaining_hours)
     reserve_hours = float(reserve_hours)
     if (
@@ -107,7 +109,7 @@ def select_scope(
         "decision_basis": "wall_clock_only_no_performance_metrics",
         "benchmark_runtime": str(path),
         "benchmark_runtime_sha256": _sha256(path),
-        "benchmark_elapsed_seconds": elapsed_seconds,
+        "benchmark_total_elapsed_seconds": elapsed_seconds,
         "formal_updates": FORMAL_UPDATES,
         "benchmark_updates": BENCHMARK_UPDATES,
         "projection_policy": "complete_100_update_runtime_times_two_per_formal_run",

@@ -150,6 +150,7 @@ class Phase3CArtifactTest(unittest.TestCase):
         self.assertEqual(benchmark["folds"], ["test_task0"])
         self.assertEqual(benchmark["updates"], 100)
         self.assertEqual(benchmark["batch_size"], 64)
+        self.assertEqual(benchmark["evaluation_split"], "validation")
 
         six_model = json.loads(
             (
@@ -199,22 +200,29 @@ class Phase3CArtifactTest(unittest.TestCase):
                 "updates": 100,
                 "batch_size": 64,
                 "elapsed_seconds": 100.0,
+                "total_elapsed_seconds": 100.0,
                 "best_validation_macro_pr_auc": 0.99,
             }
             runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
             fast = select_scope(runtime_path, remaining_hours=10.0)
             self.assertEqual(fast["selection"], "six-model")
             self.assertEqual(fast["performance_fields_consulted"], [])
+            self.assertEqual(fast["benchmark_total_elapsed_seconds"], 100.0)
 
-            runtime["elapsed_seconds"] = 1200.0
+            runtime["total_elapsed_seconds"] = 1200.0
             runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
             medium = select_scope(runtime_path, remaining_hours=10.0)
             self.assertEqual(medium["selection"], "three-model")
 
-            runtime["elapsed_seconds"] = 2000.0
+            runtime["total_elapsed_seconds"] = 2000.0
             runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
             slow = select_scope(runtime_path, remaining_hours=10.0)
             self.assertEqual(slow["selection"], "insufficient-time")
+
+            runtime.pop("total_elapsed_seconds")
+            runtime_path.write_text(json.dumps(runtime), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "total_elapsed_seconds"):
+                select_scope(runtime_path, remaining_hours=10.0)
 
     def test_completed_base_runtime_checks_artifact_hashes(self):
         if self.torch is None:
